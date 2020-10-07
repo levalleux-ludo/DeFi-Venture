@@ -1,0 +1,52 @@
+.button {
+    border-radius: 4px;
+    border: 1px solid #eee;
+    // background-color: #fafafa;
+    height: 16px;
+    width: 200px;
+    margin: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+    line-height: 24px;
+    cursor: pointer;
+}
+
+.button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 17px rgba(black, 0.35);
+}
+
+.button:hover .material-icons path {
+    fill: rgb(105, 103, 103);
+}
+
+.spacer {
+    flex: 1;
+}
+
+.mat-icon {
+    margin: 8px;
+}
+
+.ethereum-connect {
+    width: 550px;
+    border-radius: 16px;
+    border: 1px;
+    border-color: cadetblue;
+    margin: 8px;
+    border-block-end: 8px;
+    border-style: outset;
+    // background-color: white;
+}
+
+img {
+    margin: 8px;
+}
+
+input {
+    text-align: center;
+}

@@ -1,0 +1,24 @@
+<div fxLayout="row" fxLayoutWrap fxLayoutAlign="center start" class="ethereum-connect">
+    <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
+        <div>
+            <img src="../../../assets/ethereum.png" height="100px;">
+        </div>
+        <div fxFlex *ngIf=" address == undefined ">
+            <h3>Connect using MetaMask extension.</h3>
+            <a href="https://metamask.io" target="_blank"><img src="../../../assets//MetaMask.png" height="124px;"></a>
+        </div>
+        <div fxFlex *ngIf=" address != undefined ">
+            account:{{address}}
+        </div>
+        <div fxFlex fxLayout="row">
+            <div fxFlex *ngIf=" address != undefined ">
+                balance:{{balance}} ETH
+            </div>
+        </div>
+        <div fxFlex *ngIf=" address != undefined " class="button" (click)="logout()">
+            <mat-icon>clear</mat-icon>
+            <span>Reconnect</span>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,14 @@
+<div fxLayout="row" fxLayoutWrap fxLayoutAlign="center start" class="game-connect">
+    <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
+        <div fxFlex *ngIf=" (username == undefined) || (username == '')">
+            <h3>Please enter a username:</h3>
+        </div>
+        <div class="example-container">
+            <mat-form-field appearance="fill">
+                <mat-label>Input</mat-label>
+                <input matInput [value]="username" (change)="setUsername($event.target.value)">
+            </mat-form-field>
+        </div>
+    </div>
+
+</div>

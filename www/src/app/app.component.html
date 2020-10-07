@@ -1,4 +1,5 @@
-<div style="height: 100vh;">
+<div style="height: 100vh;" class="mat-app-background">
     <app-toolbar></app-toolbar>
-    <app-navigation></app-navigation>
+    <app-navigation *ngIf="isAuthenticated"></app-navigation>
+    <app-connection *ngIf="!isAuthenticated"></app-connection>
 </div>

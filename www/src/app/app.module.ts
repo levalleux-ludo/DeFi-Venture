@@ -1,5 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
+
+import { FlexLayoutModule } from '@angular/flex-layout';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -16,12 +18,25 @@ import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTreeModule } from '@angular/material/tree';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import {MatInputModule} from '@angular/material/input';
+import {MatSelectModule} from '@angular/material/select';
 
 import { NavigationComponent } from './_components/navigation/navigation.component';
 import { DashboardComponent } from './_components/dashboard/dashboard.component';
 import { PlayersTreeComponent } from './_components/players-tree/players-tree.component';
 import { ToolbarComponent } from './_components/toolbar/toolbar.component';
 import { NotFoundComponent } from './_components/not-found/not-found.component';
+import { ConnectionComponent } from './_components/connection/connection.component';
+import { EthereumConnectComponent } from './_components/ethereum-connect/ethereum-connect.component';
+import { WEB3PROVIDER } from './_services/ethereum.service';
+import { GameConnectComponent } from './_components/game-connect/game-connect.component';
+import { ContractGameMasterComponent } from './_components/contract-game-master/contract-game-master.component';
+
+export function enableWeb3Provider(provider) {
+  return () => {
+    provider.enable();  // Ask the user to enable MetaMask at load time.
+  };
+}
 
 @NgModule({
   declarations: [
@@ -30,7 +45,11 @@ import { NotFoundComponent } from './_components/not-found/not-found.component';
     DashboardComponent,
     PlayersTreeComponent,
     ToolbarComponent,
-    NotFoundComponent
+    NotFoundComponent,
+    ConnectionComponent,
+    EthereumConnectComponent,
+    GameConnectComponent,
+    ContractGameMasterComponent
   ],
   imports: [
     BrowserModule,
@@ -47,9 +66,19 @@ import { NotFoundComponent } from './_components/not-found/not-found.component';
     MatCardModule,
     MatMenuModule,
     MatTreeModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatInputModule,
+    MatSelectModule,
+    FlexLayoutModule
   ],
-  providers: [],
+  providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: enableWeb3Provider,
+      deps: [WEB3PROVIDER],
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
