@@ -14,7 +14,9 @@
             <div>nbPlayers: {{nbPlayers}}</div>
             <div>Status: {{status}}</div>
             <div>Next Player: {{nextPlayer}}</div>
+            <app-players-table></app-players-table>
         </div>
+
     </div>
     <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
         <button mat-raised-button color="primary" [disabled]="!canRegister" (click)="register()">Register</button>

@@ -1,5 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { HttpClientModule } from "@angular/common/http";
 
 import { FlexLayoutModule } from '@angular/flex-layout';
 
@@ -31,6 +32,7 @@ import { EthereumConnectComponent } from './_components/ethereum-connect/ethereu
 import { WEB3PROVIDER } from './_services/ethereum.service';
 import { GameConnectComponent } from './_components/game-connect/game-connect.component';
 import { ContractGameMasterComponent } from './_components/contract-game-master/contract-game-master.component';
+import { PlayersTableComponent } from './_components/players-table/players-table.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -49,7 +51,8 @@ export function enableWeb3Provider(provider) {
     ConnectionComponent,
     EthereumConnectComponent,
     GameConnectComponent,
-    ContractGameMasterComponent
+    ContractGameMasterComponent,
+    PlayersTableComponent
   ],
   imports: [
     BrowserModule,
@@ -69,7 +72,8 @@ export function enableWeb3Provider(provider) {
     MatProgressBarModule,
     MatInputModule,
     MatSelectModule,
-    FlexLayoutModule
+    FlexLayoutModule,
+    HttpClientModule
   ],
   providers: [
     {

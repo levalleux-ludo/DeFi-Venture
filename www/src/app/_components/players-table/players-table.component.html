@@ -1,0 +1,17 @@
+<table>
+    <tr>
+        <th></th>
+        <th>Username</th>
+        <th>ETH account</th>
+        <th>Position</th>
+    </tr>
+    <tr *ngFor="let player of players">
+        <td *ngIf="nextPlayer == player.address; else emptyCell">NEXT--></td>
+        <ng-template #emptyCell>
+            <td></td>
+        </ng-template>
+        <td>{{player.username}}</td>
+        <td>{{player.address}}</td>
+        <td>{{player.position}}</td>
+    </tr>
+</table>
