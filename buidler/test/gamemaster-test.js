@@ -54,11 +54,12 @@ describe("GameMaster", function() {
     it("Should allow to register", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
-        await gameMaster.connect(addr1).register();
-        expect(await gameMaster.getNbPlayers()).to.equal(1);
         const addr1Address = await addr1.getAddress();
+        await expect(gameMaster.connect(addr1).register()).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
+        expect(await gameMaster.getNbPlayers()).to.equal(1);
         expect(await gameMaster.getNextPlayer()).to.equal(addr1Address);
-        await gameMaster.connect(addr2).register();
+        const addr2Address = await addr2.getAddress();
+        await expect(gameMaster.connect(addr2).register()).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
         expect(await gameMaster.getNbPlayers()).to.equal(2);
     });
     it("Should not allow to register same player twice", async function() {
@@ -79,14 +80,14 @@ describe("GameMaster", function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
-        await startGame(gameMaster);
+        await expect(gameMaster.start()).to.emit(gameMaster, 'StatusChanged').withArgs(STATUS.started);
         expect(await gameMaster.getStatus()).to.equal(STATUS.started);
     });
     it("Should not allow to start game if already started", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
-        await startGame(gameMaster);
+        await gameMaster.start()
         expect(await gameMaster.getStatus()).to.equal(STATUS.started);
         expect(gameMaster.connect(owner).start()).to.be.revertedWith(revertMessage("INVALID_GAME_STATE"));
     });
@@ -115,7 +116,8 @@ describe("GameMaster", function() {
         const gameMaster = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
-        await gameMaster.connect(addr1).play();
+        const addr1Address = await addr1.getAddress();
+        await expect(gameMaster.connect(addr1).play()).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address);
         const addr2Address = await addr2.getAddress();
         expect(await gameMaster.getNextPlayer()).to.equal(addr2Address, "next player shall be changed");
     });

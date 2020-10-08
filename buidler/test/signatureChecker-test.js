@@ -122,31 +122,31 @@ describe("SignatureChecker", function() {
     //     expect(await signatureChecker.verifyString(payload, signature2_2) == addr2Address).to.equal(false, "Signature should not match signer");
     //     expect(await signatureChecker.verifyString(payload2, signature2) == addr2Address).to.equal(false, "Signature should not match signer");
     // });
-    it("Well signed payload", async function() {
-        const signatureChecker = await createContract();
-        const [owner, addr1, addr2] = await ethers.getSigners();
-        const dices = [1, 5];
-        const spaceId = 12;
-        console.log("compute options hashes");
-        const options = [
-            ethers.utils.keccak256(ethers.utils.toUtf8Bytes('option1')),
-            ethers.utils.keccak256(ethers.utils.toUtf8Bytes('option2'))
-        ];
-        // const payload = ethers.utils.defaultAbiCoder.encode();
-        console.log("serialize payload");
-        const payload = ethers.utils.solidityPack([
-            "uint8", "uint8", // dices
-            "uint8", // spaceId
-            "bytes32", "bytes32" // options
-        ], [
-            dices[0], dices[1],
-            spaceId,
-            options[0], options[1]
-        ]);
-        console.log('payload', payload);
-        const addr1Address = await addr1.getAddress();
-        const signature1 = await addr1.signMessage(payload);
-        console.log('signature', signature1);
-        expect(await signatureChecker.verifyPayload(dices, spaceId, options, signature1) == addr1Address).to.equal(true, "Signature does not match signer");
-    });
+    // it("Well signed payload", async function() {
+    //     const signatureChecker = await createContract();
+    //     const [owner, addr1, addr2] = await ethers.getSigners();
+    //     const dices = [1, 5];
+    //     const spaceId = 12;
+    //     console.log("compute options hashes");
+    //     const options = [
+    //         ethers.utils.keccak256(ethers.utils.toUtf8Bytes('option1')),
+    //         ethers.utils.keccak256(ethers.utils.toUtf8Bytes('option2'))
+    //     ];
+    //     // const payload = ethers.utils.defaultAbiCoder.encode();
+    //     console.log("serialize payload");
+    //     const payload = ethers.utils.solidityPack([
+    //         "uint8", "uint8", // dices
+    //         "uint8", // spaceId
+    //         "bytes32", "bytes32" // options
+    //     ], [
+    //         dices[0], dices[1],
+    //         spaceId,
+    //         options[0], options[1]
+    //     ]);
+    //     console.log('payload', payload);
+    //     const addr1Address = await addr1.getAddress();
+    //     const signature1 = await addr1.signMessage(payload);
+    //     console.log('signature', signature1);
+    //     expect(await signatureChecker.verifyPayload(dices, spaceId, options, signature1) == addr1Address).to.equal(true, "Signature does not match signer");
+    // });
 });
