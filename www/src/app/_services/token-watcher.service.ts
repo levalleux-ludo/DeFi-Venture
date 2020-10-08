@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { EthereumService } from './ethereum.service';
 import { BigNumber, Contract, Signer } from 'ethers';
 import { Injectable } from '@angular/core';
@@ -29,13 +29,16 @@ const ERC20_abi = [
 export class TokenWatcherService {
 
   contracts = new Map<string, Contract>();
+  contractsAddresses = new Map<string, string>();
   signer: Signer = undefined;
   initialized: Observable<boolean>;
   isInitialized = false;
+  _balanceSubjects: Map<string, Map<string, BehaviorSubject<BigNumber>>> = new Map(); // per token, per account
 
   constructor(
     private ethService: EthereumService
   ) {
+    // this.contractsAddresses.set('usdc', addresses.goerli.usdc);
     this.initialized = new Observable(observer => {
       ethService.currentAccount.subscribe((accountData) => {
         if (accountData) {
@@ -45,9 +48,42 @@ export class TokenWatcherService {
         }
       });
     });
+    setInterval(() => this.updateBalances(), 2000);
   }
 
-  public async getBalance(token: string, network: string, account: string): Promise<BigNumber> {
+  public setContractAddress(token: string, address: string) {
+    this.contractsAddresses.set(token, address);
+    this.contracts.delete(token);
+  }
+
+  public balanceOf(token: string, account: string): Observable<BigNumber> {
+    let balancesForToken: Map<string, BehaviorSubject<BigNumber>>;
+    if (this._balanceSubjects.has(token)) {
+      balancesForToken = this._balanceSubjects.get(token);
+    } else {
+      balancesForToken = new Map();
+      this._balanceSubjects.set(token, balancesForToken);
+    }
+    if (!balancesForToken.has(account)) {
+      balancesForToken.set(account, new BehaviorSubject(BigNumber.from(0)));
+    }
+    this.updateBalances();
+    return balancesForToken.get(account).asObservable();
+  }
+
+  private updateBalances() {
+    this._balanceSubjects.forEach((balancesForToken, token) => {
+      balancesForToken.forEach((subject, account) => {
+        this.getBalance(token, account).then((balance) => {
+          subject.next(balance);
+        }).catch(e => {
+          console.error(e);
+        });
+      });
+    });
+  }
+
+  public async getBalance(token: string, account: string): Promise<BigNumber> {
     await new Promise((resolve) => {
       if (!this.isInitialized) {
         this.initialized.subscribe((init) => {
@@ -57,22 +93,29 @@ export class TokenWatcherService {
         resolve();
       }
     });
-    const contract = this.getContract(token, network);
+    const contract = await this.getContract(token);
+    if (!contract) {
+      return undefined;
+    }
     const decimals = await contract.decimals();
-    const balance = await this.getContract(token, network)?.balanceOf(account);
-    return balance.div(Math.pow(10, decimals));
+    const balance = await contract.balanceOf(account);
+    return balance.div(BigNumber.from(10).pow(decimals));
   }
 
-  getContract(token: string, network: string): Contract {
+  async getContract(token: string): Promise<Contract> {
+    if (!this.contractsAddresses.has(token)) {
+      return undefined;
+    }
     if (this.contracts.has(token)) {
       return this.contracts.get(token);
     } else {
       try {
         const contract = new Contract(
-          addresses[network][token],
+          this.contractsAddresses.get(token),
           ERC20_abi,
           this.signer
         );
+        await contract.deployed();
         this.contracts.set(token, contract);
         return contract;
       } catch (e) {

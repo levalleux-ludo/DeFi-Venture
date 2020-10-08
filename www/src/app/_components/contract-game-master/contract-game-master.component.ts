@@ -1,7 +1,5 @@
 import { ConnectionService } from './../../_services/connection.service';
 import { GameMasterContractService, GAME_STATUS } from './../../_services/game-master-contract.service';
-import { EthereumService } from './../../_services/ethereum.service';
-import { GameMaster } from './../../_contracts/game-master';
 import { Component, OnInit } from '@angular/core';
 
 
@@ -20,6 +18,9 @@ export class ContractGameMasterComponent implements OnInit {
   isAttached = false;
   alreadyRegistered = false;
   currentAccount = '';
+  currentUsername = '';
+  players = [];
+  events = [];
 
   constructor(
     private gameMasterContractService: GameMasterContractService,
@@ -28,17 +29,27 @@ export class ContractGameMasterComponent implements OnInit {
 
   ngOnInit(): void {
     this.address = this.gameMasterContractService.address;
-    this.updateContract();
+    this.gameMasterContractService.ready.then(() => {
+      this.gameMasterContractService.onEvent.subscribe((event: any) => {
+        this.events.push({log: event.type + event.value});
+        this.updateContract();
+      });
+      this.updateContract();
+    });
     this.connectionService.connected.subscribe((connectionData) => {
       this.currentAccount = connectionData.address;
+      this.currentUsername = connectionData.username;
     });
   }
 
   public setAddress(address: string) {
     this.address = address;
     try {
-      this.gameMasterContractService.setAddress(address);
-      this.updateContract();
+      this.gameMasterContractService.setAddress(address).then(() => {
+        this.updateContract();
+      }).catch(e => {
+        console.error(e);
+      })
     } catch(e) {
       console.error(e);
     }
@@ -63,6 +74,7 @@ export class ContractGameMasterComponent implements OnInit {
       });
       this.gameMasterContractService.contract.getNbPlayers().then((nbPlayers) => {
         this.nbPlayers = nbPlayers;
+        this.updatePlayers();
       }).catch(e => {
         console.error(e);
       });
@@ -75,6 +87,27 @@ export class ContractGameMasterComponent implements OnInit {
     } else {
       this.isAttached = false;
     }
+  }
+
+  async updatePlayers() {
+
+    let alreadyRegistered = false;
+    let players = [];
+    for (let i = 0; i < this.nbPlayers; i++) {
+      const playerAddress = await this.gameMasterContractService.contract.getPlayerAtIndex(i);
+      const isitme = (this.currentAccount === playerAddress);
+      if (isitme) {
+        alreadyRegistered = true;
+      }
+      players.push({
+        username: isitme ? this.currentUsername : '???',
+        address: playerAddress,
+        position: 0
+      });
+    }
+    this.alreadyRegistered = alreadyRegistered;
+    this.players = players;
+
   }
 
   register() {

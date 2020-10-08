@@ -1,7 +1,9 @@
+import { NgZone } from '@angular/core';
 import { Inject, Injectable } from '@angular/core';
 import { InjectionToken } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 import { BigNumber, getDefaultProvider, providers, Signer } from 'ethers';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 export const PROVIDER = new InjectionToken<providers.BaseProvider>('Ethereum Provider', {
@@ -23,8 +25,46 @@ export interface EthAccountData {
 @Injectable({ providedIn: 'root' })
 export class Provider extends providers.Web3Provider {
 
-  constructor(@Inject(WEB3PROVIDER) web3Provider) {
+  // navigationSubscription: Subscription;
+  constructor(
+    @Inject(WEB3PROVIDER) web3Provider,
+    private router: Router,
+    private ngZone: NgZone
+  ) {
     super(web3Provider);
+    web3Provider.on('chainChanged', this.onChainChanged);
+    web3Provider.on('networkChanged', this.onNetworkChanged);
+    web3Provider.on('accountsChanged', this.onAccountsChanged);
+
+  //   // subscribe to the router events. Store the subscription so we can
+  //  // unsubscribe later.
+  //   this.navigationSubscription = this.router.events.subscribe((e: any) => {
+  //   // If it is a NavigationEnd event re-initalise the component
+  //   if (e instanceof NavigationEnd) {
+  //     this.initialiseInvites();
+  //   }
+  // });
+  }
+  onChainChanged = (chainId: any) => {
+    console.log("ETH EVENT: chainChanged", chainId);
+    this.reloadCurrentPage();
+  }
+  onNetworkChanged = (networkId: any) => {
+    console.log("ETH EVENT: networkChanged", networkId);
+    this.reloadCurrentPage();
+  }
+  onAccountsChanged = (accounts: any) => {
+    console.log("ETH event accounts:", accounts);
+  }
+  reloadCurrentPage() {
+    (window as any).location.reload();
+    // let currentUrl = this.router.url;
+    // console.log('reload current page at url', currentUrl);
+    // this.ngZone.run(() => {
+    //   this.router.navigateByUrl('/', {skipLocationChange: true}).then(() => {
+    //       this.router.navigateByUrl(currentUrl + '?refresh=1');
+    //   });
+    // });
   }
 }
 
@@ -36,9 +76,31 @@ export class EthereumService {
   private _currentAccountSubject = new BehaviorSubject<EthAccountData>(null);
   private web3Provider;
 
-  constructor(@Inject(WEB3PROVIDER) web3Provider) {
-    this.web3Provider = new Provider(web3Provider);
+  constructor(
+    @Inject(WEB3PROVIDER) web3Provider
+  ) {
+    web3Provider.on('chainChanged', this.onChainChanged);
+    web3Provider.on('networkChanged', this.onNetworkChanged);
+    web3Provider.on('accountsChanged', this.onAccountsChanged);
+    this.web3Provider = new providers.Web3Provider(web3Provider);
+
     this.checkCurrentAccount();
+  }
+
+  private onChainChanged = (chainId: any) => {
+    console.log("ETH EVENT: chainChanged", chainId);
+    this.reloadCurrentPage();
+  }
+  private onNetworkChanged = (networkId: any) => {
+    console.log("ETH EVENT: networkChanged", networkId);
+    this.reloadCurrentPage();
+  }
+  private onAccountsChanged = (accounts: any) => {
+    console.log("ETH event accounts:", accounts);
+    this.checkCurrentAccount();
+  }
+  private reloadCurrentPage() {
+    (window as any).location.reload();
   }
 
   private async checkCurrentAccount() {
@@ -60,3 +122,4 @@ export class EthereumService {
   }
 
 }
+

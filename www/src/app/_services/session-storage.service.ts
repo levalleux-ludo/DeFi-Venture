@@ -3,7 +3,8 @@ import { Injectable } from '@angular/core';
 export const StorageKeys = {
   username: 'username',
   contracts: {
-    gameMaster: 'gameMasterContract'
+    gameMaster: 'gameMasterContract',
+    usdc: 'usdcContract'
   }
 };
 

@@ -33,6 +33,8 @@ import { WEB3PROVIDER } from './_services/ethereum.service';
 import { GameConnectComponent } from './_components/game-connect/game-connect.component';
 import { ContractGameMasterComponent } from './_components/contract-game-master/contract-game-master.component';
 import { PlayersTableComponent } from './_components/players-table/players-table.component';
+import { ContractUsdcComponent } from './_components/contract-usdc/contract-usdc.component';
+import { EventsLogComponent } from './_components/events-log/events-log.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -52,7 +54,9 @@ export function enableWeb3Provider(provider) {
     EthereumConnectComponent,
     GameConnectComponent,
     ContractGameMasterComponent,
-    PlayersTableComponent
+    PlayersTableComponent,
+    ContractUsdcComponent,
+    EventsLogComponent
   ],
   imports: [
     BrowserModule,

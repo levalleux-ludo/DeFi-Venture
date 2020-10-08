@@ -34,16 +34,27 @@ export class ToolbarComponent implements OnInit {
     this.connectionService.connected.subscribe((connectionData) => {
       this.ethAccount = connectionData?.address;
       this.username = connectionData?.username;
-      if (this.ethService.currentAccountValue) {
+      this.ethService.currentAccount.subscribe((accountData) => {
         this.balanceEth = ethers.utils.formatUnits(this.ethService.currentAccountValue?.balance, 'ether');
-        this.tokenWatcherService.getBalance('usdc', 'goerli', this.ethService.currentAccountValue.address)
-        .then(((usdc_bn) => {
-          this.balanceUSDc = usdc_bn.toString();
-        }));
-      } else {
-        this.balanceEth = '';
-        this.balanceUSDc = '';
-      }
+        this.tokenWatcherService.balanceOf('usdc', accountData.address).subscribe((usdc_bn) => {
+          this.balanceUSDc = usdc_bn?.toString();
+        });
+      });
+
+      // if (this.ethService.currentAccountValue) {
+
+      //   this.tokenWatcherService.getBalance('usdc', this.ethService.currentAccountValue.address)
+      //   .then(((usdc_bn) => {
+      //     this.balanceUSDc = usdc_bn?.toString();
+      //     console.log('toolbar update balanceUSDc', usdc_bn?.toString());
+      //   })).catch(e => {
+      //     this.balanceUSDc = '';
+      //     console.log('toolbar update balanceUSDc : undefined');
+      //   });
+      // } else {
+      //   this.balanceEth = '';
+      //   this.balanceUSDc = '';
+      // }
     });
   }
 
