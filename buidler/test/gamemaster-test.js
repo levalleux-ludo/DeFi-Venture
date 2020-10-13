@@ -43,7 +43,7 @@ describe("GameMaster", function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         const ownerAddress = await owner.getAddress();
-        expect(await gameMaster.getOwner()).to.equal(ownerAddress);
+        expect(await gameMaster.owner()).to.equal(ownerAddress);
     });
     it("Should be in status 'created' and no players", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();

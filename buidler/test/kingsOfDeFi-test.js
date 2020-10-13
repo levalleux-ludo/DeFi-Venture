@@ -43,7 +43,7 @@ describe("KingsOfDeFi", function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const kingsOfDeFi = await createKingsOfDeFi();
         const ownerAddress = await owner.getAddress();
-        expect(await kingsOfDeFi.getOwner()).to.equal(ownerAddress);
+        expect(await kingsOfDeFi.owner()).to.equal(ownerAddress);
     });
     it("Should be in status 'created' and no players", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();

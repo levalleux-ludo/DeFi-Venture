@@ -26,8 +26,29 @@ function createNetworkConfig(network) {
         throw new Error("Please set your MNEMONIC in a .env file");
     }
 
-    if (!process.env.INFURA_API_KEY) {
-        throw new Error("Please set your INFURA_API_KEY");
+    let url;
+    if (network.startsWith('matic')) {
+        if (!process.env.MATICVIGIL_API_KEY) {
+            throw new Error("Please set your MATICVIGIL_API_KEY");
+        }
+        switch (network) {
+            case 'matic-mumbai':
+                {
+                    // url = `https://rpc-mumbai.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`;
+                    url = `https://rpc-mumbai.matic.today`;
+                    break;
+                }
+            default:
+                {
+                    url = `https://rpc-mainnet.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`
+                    break;
+                }
+        }
+    } else {
+        if (!process.env.INFURA_API_KEY) {
+            throw new Error("Please set your INFURA_API_KEY");
+        }
+        url = network ? `https://${network}.infura.io/v3/${process.env.INFURA_API_KEY}` : undefined;
     }
 
     return {
@@ -37,7 +58,7 @@ function createNetworkConfig(network) {
             mnemonic: process.env.MNEMONIC,
             path: "m/44'/60'/0'/0",
         },
-        url: network ? `https://${network}.infura.io/v3/${process.env.INFURA_API_KEY}` : undefined,
+        url: url,
     };
 }
 
