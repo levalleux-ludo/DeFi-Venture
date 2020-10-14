@@ -35,6 +35,7 @@ import { ContractGameMasterComponent } from './_components/contract-game-master/
 import { PlayersTableComponent } from './_components/players-table/players-table.component';
 import { ContractUsdcComponent } from './_components/contract-usdc/contract-usdc.component';
 import { EventsLogComponent } from './_components/events-log/events-log.component';
+import { TestCanvasComponent } from './_components/test-canvas/test-canvas.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -56,7 +57,8 @@ export function enableWeb3Provider(provider) {
     ContractGameMasterComponent,
     PlayersTableComponent,
     ContractUsdcComponent,
-    EventsLogComponent
+    EventsLogComponent,
+    TestCanvasComponent
   ],
   imports: [
     BrowserModule,
