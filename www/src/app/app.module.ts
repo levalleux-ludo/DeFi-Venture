@@ -45,6 +45,7 @@ import { GamesListComponent } from './_components/games-list/games-list.componen
 import { BlockchainLinkComponent } from './_components/blockchain-link/blockchain-link.component';
 import { DicesComponent } from './_components/dices/dices.component';
 import { DiceComponent } from './_components/dice/dice.component';
+import { TestCanvasPageComponent } from './_components/test-canvas-page/test-canvas-page.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -74,7 +75,8 @@ export function enableWeb3Provider(provider) {
     GamesListComponent,
     BlockchainLinkComponent,
     DicesComponent,
-    DiceComponent
+    DiceComponent,
+    TestCanvasPageComponent
   ],
   imports: [
     BrowserModule,

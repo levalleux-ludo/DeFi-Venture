@@ -1,3 +1,5 @@
+import { TestCanvasPageComponent } from './_components/test-canvas-page/test-canvas-page.component';
+import { TestCanvasComponent } from './_components/test-canvas/test-canvas.component';
 import { GameConnectComponent } from './_components/game-connect/game-connect.component';
 import { GamesListComponent } from './_components/games-list/games-list.component';
 import { PoolAccessPageComponent } from './_components/pool-access-page/pool-access-page.component';
@@ -9,6 +11,7 @@ import { NotFoundComponent } from './_components/not-found/not-found.component';
 
 
 const routes: Routes = [
+  {path: 'test-canvas', component: TestCanvasPageComponent, runGuardsAndResolvers: 'always'},
   {path: 'pool', component: PoolAccessPageComponent, runGuardsAndResolvers: 'always'},
   {path: 'games', component: GamesListComponent, runGuardsAndResolvers: 'always'},
   {path: 'game/:id', component: GameConnectComponent, runGuardsAndResolvers: 'always'},

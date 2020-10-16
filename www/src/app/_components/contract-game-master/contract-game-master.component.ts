@@ -170,15 +170,9 @@ export class ContractGameMasterComponent implements OnInit {
   }
 
   moveBoard(nbBlocks: number) {
-    let nbSteps = 6 * nbBlocks;
-    const interval = setInterval(() => {
-      if (--nbSteps <= 0) {
-        clearInterval(interval);
-      }
-      this.ngZone.run(() => {
-        this.board.animate();
-      });
-    }, 250);
+    const angle = this.board.currentAngle;
+    const newAngle = angle + (2 * Math.PI * nbBlocks / 12);
+    this.board.setTargetAngle(newAngle, 1);
   }
 
   public get canRegister(): boolean {
