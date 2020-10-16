@@ -1,7 +1,7 @@
 <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
     <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center start" class="game-connect">
         <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
-            <div fxFlex>
+            <!-- <div fxFlex>
                 <h3>Please enter contract address:</h3>
             </div>
             <div class="example-container">
@@ -9,23 +9,28 @@
                     <mat-label>Input</mat-label>
                     <input matInput [value]="address" (change)="setAddress($event.target.value)">
                 </mat-form-field>
-            </div>
-            <div *ngIf="isAttached">
-                <div>Owner: {{owner}}</div>
+            </div> -->
+            <div>
+                <!-- <div>Owner: {{owner}}</div> -->
                 <div>nbPlayers: {{nbPlayers}}</div>
                 <div>Status: {{status}}</div>
                 <div>Next Player: {{nextPlayer}}</div>
                 <app-players-table [players]="players" [nextPlayer]="nextPlayer"></app-players-table>
             </div>
-
-        </div>
-        <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
-            <button mat-raised-button color="primary" [disabled]="!canRegister" (click)="register()">Register</button>
-            <button mat-raised-button color="primary" (click)="start()" [disabled]="!canStart">Start Game</button>
-            <button mat-raised-button color="primary" (click)="play()" [disabled]="!canPlay">Play</button>
         </div>
     </div>
     <div>
+        <app-test-canvas #board></app-test-canvas>
+    </div>
+    <div style="position: relative; top: 300px;">
+        <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
+            <!-- <button mat-raised-button color="primary" [disabled]="!canRegister" (click)="register()">Register</button> -->
+            <button mat-raised-button color="primary" (click)="start()" [disabled]="!canStart">Start Game</button>
+            <button mat-raised-button color="primary" (click)="play()" [disabled]="!canPlay">Play</button>
+            <app-dices #dices style="width:250px;"></app-dices>
+        </div>
+    </div>
+    <div style="position: relative; top: 900px;">
         <app-events-log [events]="events"></app-events-log>
     </div>
 </div>

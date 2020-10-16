@@ -7,7 +7,8 @@
         "test": "buidler test",
         "deploy:ganache": "buidler run scripts/deploy_contracts.js --network ganache",
         "deploy:mocks": "buidler run scripts/deploy_mocks.js --network ganache",
-        "deploy:goerli": "buidler run scripts/deploy_contracts.js --network goerli"
+        "deploy:goerli": "buidler run scripts/deploy_contracts.js --network goerli",
+        "deploy:mumbai": "buidler run scripts/deploy_contracts.js --network mumbai"
     },
     "author": "",
     "license": "ISC",

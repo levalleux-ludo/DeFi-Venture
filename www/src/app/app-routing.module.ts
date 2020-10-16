@@ -1,3 +1,7 @@
+import { GameConnectComponent } from './_components/game-connect/game-connect.component';
+import { GamesListComponent } from './_components/games-list/games-list.component';
+import { PoolAccessPageComponent } from './_components/pool-access-page/pool-access-page.component';
+import { PortisL1PageComponent } from './_components/portis-l1-page/portis-l1-page.component';
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { DashboardComponent } from './_components/dashboard/dashboard.component';
@@ -5,7 +9,11 @@ import { NotFoundComponent } from './_components/not-found/not-found.component';
 
 
 const routes: Routes = [
+  {path: 'pool', component: PoolAccessPageComponent, runGuardsAndResolvers: 'always'},
+  {path: 'games', component: GamesListComponent, runGuardsAndResolvers: 'always'},
+  {path: 'game/:id', component: GameConnectComponent, runGuardsAndResolvers: 'always'},
   {path: 'dashboard', component: DashboardComponent, runGuardsAndResolvers: 'always'},
+  {path: 'portis1', component: PortisL1PageComponent},
   { path: '404', component: NotFoundComponent},
   // { path: '', pathMatch: 'full' },
   { path: '**', redirectTo: '/404', pathMatch: 'full'}

@@ -2,7 +2,8 @@
     <button mat-icon-button class="example-icon" aria-label="Example icon-button with menu icon">
     <mat-icon>menu</mat-icon>
   </button>
-    <span>My App</span>
+    <!-- <span>DeFi-PoLy</span> -->
+    <img src="assets/logo_toolbar.png" height="30">
     <span class="example-spacer"></span>
     <button mat-icon-button class="toolbar-button favorite-icon" aria-label="Example icon-button with heart icon" [matMenuTriggerFor]="menuEth">
     <mat-icon svgIcon="ethereum-eth-logo"></mat-icon>
@@ -16,6 +17,10 @@
         <button mat-menu-item>Remove</button> -->
         </div>
     </mat-menu>
+    <div class="toolbar-button favorite-icon">
+        <img src="assets/blockchain.png" height="24" style="top: 4px; position:relative;">
+        <span>{{network?.name}}</span>
+    </div>
     <button mat-icon-button class="toolbar-button favorite-icon" aria-label="Example icon-button with share icon">
     <mat-icon>account_circle</mat-icon>
     <span>{{username}}</span>

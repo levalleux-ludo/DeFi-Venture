@@ -1,0 +1,38 @@
+table {
+    border-collapse: collapse;
+    //   width: 100%;
+}
+
+.table1>tr>td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    vertical-align: center;
+}
+
+.text-with-button {
+    bottom: 25px;
+    position: relative;
+}
+
+.trademark {
+    bottom: 40px;
+    position: relative;
+}
+
+.shift-left {
+    position: relative;
+    left: 50px;
+}
+
+.eth-address {
+    width: 350px;
+}
+
+.warning-label {
+    font-weight: bolder;
+    background-color: darkred;
+    color: yellowgreen;
+    font-size: large;
+    text-align: center;
+}

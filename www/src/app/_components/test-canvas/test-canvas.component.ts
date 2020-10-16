@@ -26,6 +26,12 @@ export class TestCanvasComponent implements OnInit {
     'assets/blocks/block_bakery.png',
     'assets/blocks/block_BoilerRoom.png',
     'assets/blocks/block_chance.png',
+    'assets/blocks/block_CitizenChain.png',
+    'assets/blocks/block_12DoozerArmy.png',
+    'assets/blocks/block_AntForceOne.png',
+    'assets/blocks/block_bakery.png',
+    'assets/blocks/block_BoilerRoom.png',
+    'assets/blocks/block_chance.png',
     'assets/blocks/block_CitizenChain.png'
   ];
   avatars = [
@@ -34,28 +40,49 @@ export class TestCanvasComponent implements OnInit {
     'assets/avatars/crypto-chip.png',
     'assets/avatars/diamond.png',
     'assets/avatars/nobody.png',
-    'assets/avatars/rocket.png'
+    'assets/avatars/rocket.png',
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined
   ];
   blocks_geometry = [];
   nbSteps = 0;
   private ctx: CanvasRenderingContext2D;
+  zoom = 2;
+  loaded_images = [];
+  loaded_avatars = [];
 
   constructor() { }
 
   ngOnInit(): void {
     this.ctx = this.canvas.nativeElement.getContext('2d');
     this.init_geometry();
+    this.load_images();
     this.drawImages(this.nbSteps);
+  }
+
+  load_images() {
+    for (let i = 0; i < this.block_imgs.length; i++) {
+      const img = new Image();
+      img.src = this.block_imgs[i];
+      this.loaded_images.push(img);
+      const avatar = new Image();
+      avatar.src = this.avatars[i];
+      this.loaded_avatars.push(avatar);
+    }
   }
 
 
   init_geometry() {
     const origin = {
       x: 400, // middle
-      y: 50 // top
+      y: 50 * this.zoom // top
     };
     const increment = -Utils.Deg2Rad(30); // turn by this angle at each block
-    const radius = 175;
+    const radius = 175 * this.zoom;
     for (let i = 0; i < this.block_imgs.length; i++) {
       for (let g = 0; g < 6; g++) {
         const offsetX = radius * Math.sin((6*i + g) * increment/6);
@@ -72,7 +99,7 @@ export class TestCanvasComponent implements OnInit {
   drawImages(nbSteps: number) {
     this.ctx.clearRect(0,0,this.ctx.canvas.width, this.ctx.canvas.height);
     for (let i = 0; i < this.block_imgs.length; i++) {
-      const g = 6*i + (nbSteps % this.blocks_geometry.length);
+      const g = (6*i + nbSteps) % this.blocks_geometry.length;
       const geom = this.blocks_geometry[g];
       console.log('draw index', i, 'g', g);
       this.drawImage(i, geom.x, geom.y, geom.angle);
@@ -82,9 +109,11 @@ export class TestCanvasComponent implements OnInit {
   drawImage(index: number, posX: number, posY: number, angle_rad: number) {
     // create a new image
     const img = new Image();
+    // const img = this.loaded_images[index];
     // declare a function to call once the image has loaded
     img.onload = () => {
-      console.log('start draw image', index, posX, posY);
+    // if (img.complete) {
+      // console.log('start draw image', index, posX, posY);
       // Save the current context
       this.ctx.save();
       // Translate to the center point of our image
@@ -92,16 +121,18 @@ export class TestCanvasComponent implements OnInit {
       this.ctx.rotate(-angle_rad);
       this.ctx.translate(-posX, -posY);
       // this.ctx.rotate(+angle_rad);
-      this.ctx.drawImage(img, posX - 50, posY - 35, 105, 70);
+      this.ctx.drawImage(img, posX - (50 * this.zoom), posY - (35 * this.zoom), 105*this.zoom, 70*this.zoom);
       this.ctx.restore();
-      console.log('end draw image', index);
-    };
+      // console.log('end draw image', index);
+    }
     // now set the image's src
     img.src = this.block_imgs[index];
     const avatar = new Image();
+    // const avatar = this.loaded_avatars[index];
     // declare a function to call once the image has loaded
     avatar.onload = () => {
-      console.log('start draw image', index, posX, posY);
+    // if (avatar.complete) {
+      // console.log('start draw image', index, posX, posY);
       // Save the current context
       this.ctx.save();
       // Translate to the center point of our image
@@ -111,13 +142,13 @@ export class TestCanvasComponent implements OnInit {
       // this.ctx.rotate(+angle_rad);
       this.ctx.drawImage(avatar, posX - 18, posY - 35 - 18, 36, 36);
       this.ctx.restore();
-      console.log('end draw image', index);
-    };
+      // console.log('end draw image', index);
+    }
     // now set the image's src
     avatar.src = this.avatars[index];
   }
 
-  animate(): void {
+  public animate(): void {
     this.nbSteps ++;
     this.drawImages(this.nbSteps);
     // this.ctx.fillStyle = 'red';

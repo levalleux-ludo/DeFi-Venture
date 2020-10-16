@@ -2,9 +2,41 @@
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+export interface INetwork {
+  name: string;
+  portisId: string;
+  chainId: number;
+  nodeUrl: string;
+  gasPrice: string;
+  gasLimit: number;
+  explorer: string;
+}
+
+export interface IContracts {
+  gameFactory: string;
+  greeter: string;
+}
+
 export const environment = {
   production: false,
-  network: '1'
+  networks: {
+    l1: { name: 'L1 (Goerli)', portisId: 'goerli', chainId: 5, nodeUrl: `https://goerli.infura.io/v3/833d4fef573b4c429e7f283dac2ba507`,
+     gasPrice: '100000000', gasLimit: 400000, explorer: 'https://goerli.etherscan.io/'  },
+    l2: { name: 'L2 (Mumbai)', portisId: 'maticMumbai', chainId: 80001, nodeUrl: 'https://rpc-mumbai.matic.today',
+     gasPrice: '1000000000', gasLimit: 4000000, explorer: 'https://mumbai-explorer.matic.today/' }
+  },
+  contracts: {
+    5: { // goerli
+      gameFactory: '0xe1b3Fa15d00d011F4572Ca92C708EB475DA6b00E',
+      greeter: '0x98897Bad75F2Fc3D172F3c52FDb87f69580f01Fa',
+      gasRelay: 'tbd'
+    },
+    80001: { // mumbai
+      gameFactory: '0xb4Fb9798de10A6F8048D41C51150efbf2a223CD4',
+      greeter: '0x200E5295fEC37B4410E6688a94de22C9d4C6DDbb',
+      gasRelay: 'tbd'
+    }
+  }
 };
 
 /*

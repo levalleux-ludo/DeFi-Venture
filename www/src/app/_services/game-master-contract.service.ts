@@ -1,3 +1,5 @@
+import { GameMaster } from './../_models/contracts/GameMaster';
+import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { SessionStorageService, StorageKeys } from './session-storage.service';
 import { Injectable } from '@angular/core';
@@ -26,9 +28,10 @@ export class GameMasterContractService {
 
   constructor(
     private ethService: EthereumService,
-    private sessionStorageService: SessionStorageService
+    private sessionStorageService: SessionStorageService,
+    private portisL1Service: PortisL1Service
   ) {
-    this.setAddress(sessionStorageService.restore(StorageKeys.contracts.gameMaster));
+    // this.setAddress(sessionStorageService.restore(StorageKeys.contracts.gameMaster));
    }
 
   public get address() {
@@ -50,7 +53,7 @@ export class GameMasterContractService {
   public async setAddress(address: string) {
     this._address = address;
     if ((this._address !== undefined) && (this._address !== null) && (this._address !== '')) {
-      await (new Contract(address, GameMasterJSON.abi, this.ethService.currentAccountValue?.signer)).deployed().then(contract => {
+        await (new Contract(address, GameMasterJSON.abi, this.portisL1Service?.signer())).deployed().then(contract => {
         this._contract = contract;
         this.subscribeToEvents();
       }).catch(e => {
@@ -61,6 +64,7 @@ export class GameMasterContractService {
       this._contract = undefined;
     }
     this.sessionStorageService.storeLocal(StorageKeys.contracts.gameMaster, this._address);
+    this.isReady = true;
     this.readySubject.next();
   }
 
@@ -93,6 +97,9 @@ export class GameMasterContractService {
     this._eventsSubject.next(event);
   }
 
+  getContract(game: string) {
+    return new GameMaster(game, this.portisL1Service.signer());
+  }
 
 
 

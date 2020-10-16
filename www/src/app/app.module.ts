@@ -3,6 +3,7 @@ import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { HttpClientModule } from "@angular/common/http";
 
 import { FlexLayoutModule } from '@angular/flex-layout';
+import {FormsModule} from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -36,10 +37,18 @@ import { PlayersTableComponent } from './_components/players-table/players-table
 import { ContractUsdcComponent } from './_components/contract-usdc/contract-usdc.component';
 import { EventsLogComponent } from './_components/events-log/events-log.component';
 import { TestCanvasComponent } from './_components/test-canvas/test-canvas.component';
+import { PortisL1PageComponent } from './_components/portis-l1-page/portis-l1-page.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { GameFactoryComponent } from './_components/game-factory/game-factory.component';
+import { PoolAccessPageComponent } from './_components/pool-access-page/pool-access-page.component';
+import { GamesListComponent } from './_components/games-list/games-list.component';
+import { BlockchainLinkComponent } from './_components/blockchain-link/blockchain-link.component';
+import { DicesComponent } from './_components/dices/dices.component';
+import { DiceComponent } from './_components/dice/dice.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
-    provider.enable();  // Ask the user to enable MetaMask at load time.
+    // provider.enable();  // Ask the user to enable MetaMask at load time.
   };
 }
 
@@ -58,7 +67,14 @@ export function enableWeb3Provider(provider) {
     PlayersTableComponent,
     ContractUsdcComponent,
     EventsLogComponent,
-    TestCanvasComponent
+    TestCanvasComponent,
+    PortisL1PageComponent,
+    GameFactoryComponent,
+    PoolAccessPageComponent,
+    GamesListComponent,
+    BlockchainLinkComponent,
+    DicesComponent,
+    DiceComponent
   ],
   imports: [
     BrowserModule,
@@ -79,7 +95,9 @@ export function enableWeb3Provider(provider) {
     MatInputModule,
     MatSelectModule,
     FlexLayoutModule,
-    HttpClientModule
+    HttpClientModule,
+    MatFormFieldModule,
+    FormsModule
   ],
   providers: [
     {

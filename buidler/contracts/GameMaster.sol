@@ -34,4 +34,11 @@ contract GameMaster is GameScheduler {
             token.reset();
         }
     }
+
+    // TODO: get random value https://ethereum.stackexchange.com/questions/60684/i-want-get-random-number-between-100-999-as-follows
+    //TODO: function rollDices -> emit RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, byte optionsMask)
+    // TODO: function play(byte option) --> check option is valid for player.newPosition, then perform chosen option
+    // TODO: bytes32 private gameboard: 1 byte per board space, define its type
+    // TODO: bytes32 private options: 1 byte per board space, define the available options per space ????
+
 }

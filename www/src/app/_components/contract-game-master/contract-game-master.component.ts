@@ -1,6 +1,9 @@
+import { TestCanvasComponent } from './../test-canvas/test-canvas.component';
+import { DicesComponent } from './../dices/dices.component';
+import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { ConnectionService } from './../../_services/connection.service';
 import { GameMasterContractService, GAME_STATUS } from './../../_services/game-master-contract.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, NgZone } from '@angular/core';
 
 
 @Component({
@@ -10,6 +13,16 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ContractGameMasterComponent implements OnInit {
 
+  // @Input()
+  // set gameMaster(value: string) {
+  //   if (value) {
+  //     this.gameMasterContractService.setAddress(value).then(() => {
+  //       this.updateContract();
+  //     }).catch(e => {
+  //       console.error(e);
+  //     });
+  //   }
+  // }
   address = '';
   owner: string;
   status: string;
@@ -22,13 +35,20 @@ export class ContractGameMasterComponent implements OnInit {
   players = [];
   events = [];
 
+  @ViewChild('dices', {static: false})
+  dices: DicesComponent;
+  @ViewChild('board', {static: false})
+  board: TestCanvasComponent;
+
   constructor(
     private gameMasterContractService: GameMasterContractService,
-    private connectionService: ConnectionService
+    private connectionService: ConnectionService,
+    private portisL1Service: PortisL1Service,
+    private ngZone: NgZone
   ) { }
 
   ngOnInit(): void {
-    this.address = this.gameMasterContractService.address;
+    // this.address = this.gameMasterContractService.address;
     this.gameMasterContractService.ready.then(() => {
       this.gameMasterContractService.onEvent.subscribe((event: any) => {
         this.events.push({log: event.type + event.value});
@@ -36,10 +56,13 @@ export class ContractGameMasterComponent implements OnInit {
       });
       this.updateContract();
     });
-    this.connectionService.connected.subscribe((connectionData) => {
-      this.currentAccount = connectionData.address;
-      this.currentUsername = connectionData.username;
-    });
+    this.portisL1Service.onConnect.subscribe(() => {
+      this.currentAccount = this.portisL1Service.accounts[0];
+    })
+    // this.connectionService.connected.subscribe((connectionData) => {
+    //   this.currentAccount = connectionData.address;
+    //   this.currentUsername = connectionData.username;
+    // });
   }
 
   public setAddress(address: string) {
@@ -55,14 +78,18 @@ export class ContractGameMasterComponent implements OnInit {
     }
   }
 
+  public setAccount(account: string) {
+    this.currentAccount = account;
+  }
+
   private updateContract() {
     if (this.gameMasterContractService.contract) {
       this.isAttached = true;
-      this.gameMasterContractService.contract.getOwner().then((owner) => {
-        this.owner = owner;
-      }).catch(e => {
-        console.error(e);
-      });
+      // this.gameMasterContractService.contract.getOwner().then((owner) => {
+      //   this.owner = owner;
+      // }).catch(e => {
+      //   console.error(e);
+      // });
       this.gameMasterContractService.contract.getStatus().then((status) => {
         if ((status >= 0) && (status < GAME_STATUS.length)) {
           this.status = GAME_STATUS[status];
@@ -129,9 +156,29 @@ export class ContractGameMasterComponent implements OnInit {
   play() {
     this.gameMasterContractService.contract.play().then(() => {
       console.log('play called');
-    }).catch((e) => {
+      const dice1 = Math.floor( 1 + Math.random() * 6);
+      const dice2 = Math.floor( 1 + Math.random() * 6);
+      console.log('dices', dice1, dice2);
+      this.dices.dicePOWValue = dice1;
+      this.dices.dicePOSValue = dice2;
+      setTimeout(() => {
+        this.moveBoard(dice1 + dice2);
+      }, 100);
+      }).catch((e) => {
       console.error(e);
     });
+  }
+
+  moveBoard(nbBlocks: number) {
+    let nbSteps = 6 * nbBlocks;
+    const interval = setInterval(() => {
+      if (--nbSteps <= 0) {
+        clearInterval(interval);
+      }
+      this.ngZone.run(() => {
+        this.board.animate();
+      });
+    }, 250);
   }
 
   public get canRegister(): boolean {

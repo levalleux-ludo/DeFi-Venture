@@ -1,0 +1,113 @@
+<section class="mat-typography">
+    <h1>Game Pool Access</h1>
+    <p>Get access to the games by staking a small amount of USDC</p>
+    <h2>Blockchain Connection</h2>
+    <table class="shift-left">
+        <tr>
+            <div class="">
+                <div *ngIf="!isConnected">
+                    <span class="text-with-button">
+  <button [disabled]="isConnected || isConnecting" (click)="ConnectL1()">Connect Blockchain</button> with
+</span>
+                    <img src="assets/portis/portis_logo.svg" height="60">
+                    <span class="trademark">
+  &reg;
+</span>
+                </div>
+            </div>
+        </tr>
+    </table>
+    <table *ngIf="isConnected" class="table1">
+        <tr>
+            <td></td>
+            <td>
+                <table>
+                    <tr>
+                        <td>You're now connected to':</td>
+                        <td>{{network.name}}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+
+                <span class="text-with-button">
+                <button [disabled]="isLoggingOut" (click)="Logout()">Logout</button> from
+              </span>
+                <img src="assets/portis/portis_logo.svg" height="60">
+                <span class="trademark">
+                &reg;
+              </span>
+            </td>
+        </tr>
+        <tr>
+            <td><img src="assets/ethereum/ethereum-eth-logo.svg" height="30"></td>
+            <td>
+                <table>
+                    <tr>
+                        <td>Your ETH account:</td>
+                        <td class="eth-address">
+                            <app-blockchain-link [network]="network" [link]="address"></app-blockchain-link>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Your ETH balance:</td>
+                        <td>{{balanceETH.toString()}}</td>
+                    </tr>
+                </table>
+            </td>
+            <td></td>
+        </tr>
+        <!-- <tr>
+        <td><img src="assets/ethereum/ethereum-eth-logo.svg" height="30"></td>
+
+        <td></td>
+    </tr> -->
+        <tr>
+            <td><img src="assets/USDCoin/SVG/USD Coin_icon small.svg" height="30"></td>
+            <td>
+                <table>
+                    <tr>
+                        <td>Your USDC balance:</td>
+                        <td>{{balanceUSDC.toString()}}</td>
+                    </tr>
+
+                </table>
+                <p *ngIf="notInPool() && notEnoughUSDC()" class="warning-label">You need to purchase at least 10 USDC tokens !</p>
+            </td>
+            <td>
+                <span class="text-with-button">
+          <button [disabled]="isBuyingUSDC" (click)="buyUSDC()">Buy USDC</button> with
+        </span>
+                <img src="assets/USDCoin/SVG/USD Coin_OnDark_Horizontal lockup.svg" height="60">
+                <span class="trademark">
+          &reg;
+        </span>
+            </td>
+        </tr>
+        <tr>
+            <td><img src="assets/pooltogether-brand-assets/mark/pooltogether-mark--purple-gradient.svg" height="30"></td>
+            <td>
+                <table>
+                    <tr>
+                        <td>Pool tickets:</td>
+                        <td>{{balancePOOL.toString()}}</td>
+                    </tr>
+                </table>
+                <p *ngIf="notInPool()" class="warning-label">You need to contribute to the POOL !</p>
+            </td>
+            <td>
+                <span class="text-with-button">
+          <button [disabled]="!notInPool() || notEnoughUSDC() || isStaking" (click)="stakeInPool()">Stake in Pool</button> with
+        </span>
+                <img src="assets/pooltogether-brand-assets/wordmark/pooltogether-wordmark--purple-gradient.svg" height="60">
+                <span class="trademark">
+          &reg;
+        </span>
+            </td>
+        </tr>
+    </table>
+    <div *ngIf="!notInPool()">
+        <p>You're now allowed to play !</p>
+        <button routerLink="/games">Enter Games</button>
+    </div>
+</section>

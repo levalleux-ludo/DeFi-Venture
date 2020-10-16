@@ -16,11 +16,16 @@ async function main() {
     // await greeter.deployed();
     // console.log("Greeter deployed to:", greeter.address);
 
-    const GameMaster = await ethers.getContractFactory("GameMaster");
-    const gameMaster = await GameMaster.deploy();
-    await gameMaster.deployed();
-    console.log("GameMaster deployed to:", gameMaster.address);
+    const GameFactory = await ethers.getContractFactory("GameFactory");
+    const gameFactory = await GameFactory.deploy();
+    await gameFactory.deployed();
+    console.log("gameFactory deployed to:", gameFactory.address);
 
+
+    const Greeter = await ethers.getContractFactory("Greeter");
+    const greeter = await Greeter.deploy('Contract deployed on ' + bre.network.name);
+    await greeter.deployed();
+    console.log("greeter deployed to:", greeter.address);
 
 }
 

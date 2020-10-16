@@ -92,6 +92,14 @@ module.exports = {
             ...createNetworkConfig("ropsten"),
             chainId: 3,
         },
+        matic: {
+            ...createNetworkConfig("matic"),
+            chainId: 137,
+        },
+        mumbai: {
+            ...createNetworkConfig("matic-mumbai"),
+            chainId: 80001,
+        }
     },
     // This is a sample solc configuration that specifies which version of solc to use
     solc: {

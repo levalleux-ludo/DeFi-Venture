@@ -1,0 +1,22 @@
+<p>{{text}}</p>
+<h4>Basic mat-select with initial value</h4>
+
+<mat-form-field appearance="fill">
+    <mat-label>Blockchain Network</mat-label>
+    <mat-select [(value)]="selectedNetwork">
+        <mat-option [value]="option" *ngFor="let option of networks">{{ option.name }}</mat-option>
+    </mat-select>
+</mat-form-field>
+<p>You selected: {{selectedNetwork?.name}}</p>
+<button [disabled]="!selectedNetwork" (click)="changeNetwork()">Connect</button>
+<p>Greeter: {{greeter}}</p>
+<p>Account: {{account}}</p>
+<button [disabled]="!greeter" (click)="callGreeter()">Call greeter</button>
+<p>Greeter message: {{greeter_message}}</p>
+<mat-form-field appearance="fill">
+    <mat-label>Input</mat-label>
+    <input #greeterInput matInput [value]="greeter_message">
+</mat-form-field>
+<button [disabled]="greeterInput.value==greeter_message " (click)="changeGreeter(greeterInput.value) ">Set Greeter</button>
+<app-game-factory></app-game-factory>
+<button [disabled]="!account" (click)="logout()">Logout</button>

@@ -1,3 +1,4 @@
+import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { TokenWatcherService } from './../../_services/token-watcher.service';
 import { EthereumService } from './../../_services/ethereum.service';
 import { ConnectionService } from './../../_services/connection.service';
@@ -5,6 +6,7 @@ import { Component, OnInit } from '@angular/core';
 import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
 import { ethers } from 'ethers';
+import { Utils } from 'src/app/_utils/utils';
 
 @Component({
   selector: 'app-toolbar',
@@ -17,29 +19,33 @@ export class ToolbarComponent implements OnInit {
   username: string;
   balanceEth: string;
   balanceUSDc: string;
+  network;
   constructor(
     private connectionService: ConnectionService,
     private matIconRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
     private ethService: EthereumService,
-    private tokenWatcherService: TokenWatcherService
+    private tokenWatcherService: TokenWatcherService,
+    private portisService: PortisL1Service
   ) {
     this.matIconRegistry.addSvgIcon(
       `ethereum-eth-logo`,
-      this.domSanitizer.bypassSecurityTrustResourceUrl("../assets/ethereum-eth-logo.svg")
+      this.domSanitizer.bypassSecurityTrustResourceUrl("../assets/ethereum/ethereum-eth-logo.svg")
     );
   }
 
   ngOnInit(): void {
-    this.connectionService.connected.subscribe((connectionData) => {
-      this.ethAccount = connectionData?.address;
-      this.username = connectionData?.username;
-      this.ethService.currentAccount.subscribe((accountData) => {
-        this.balanceEth = ethers.utils.formatUnits(this.ethService.currentAccountValue?.balance, 'ether');
-        this.tokenWatcherService.balanceOf('usdc', accountData.address).subscribe((usdc_bn) => {
-          this.balanceUSDc = usdc_bn?.toString();
-        });
-      });
+    // this.connectionService.connected.subscribe((connectionData) => {
+    //   this.ethAccount = connectionData?.address;
+    //   this.username = connectionData?.username;
+    //   this.ethService.currentAccount.subscribe((accountData) => {
+    //     if (accountData) {
+    //       this.balanceEth = ethers.utils.formatUnits(this.ethService.currentAccountValue.balance, 'ether');
+    //       this.tokenWatcherService.balanceOf('usdc', accountData.address).subscribe((usdc_bn) => {
+    //         this.balanceUSDc = usdc_bn?.toString();
+    //       });
+    //     }
+    //   });
 
       // if (this.ethService.currentAccountValue) {
 
@@ -55,7 +61,21 @@ export class ToolbarComponent implements OnInit {
       //   this.balanceEth = '';
       //   this.balanceUSDc = '';
       // }
-    });
+    // });
+    this.portisService.onConnect.subscribe((network) => {
+      this.network = network;
+      if (this.portisService.accounts && (this.portisService.accounts.length > 0)) {
+        this.ethAccount = this.portisService.accounts[0];
+      } else {
+        this.ethAccount = undefined;
+      }
+      if (this.network) {
+        this.portisService.getL1BalanceETH(this.ethAccount).then((balanceETH) => {
+          this.balanceEth = Utils.getBalanceAsNumber(balanceETH, Utils.ETH_decimals, 0.00001).toString();
+        }).catch(e => console.error(e));
+      }
+
+    })
   }
 
 }

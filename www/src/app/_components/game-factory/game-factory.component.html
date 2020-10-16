@@ -1,0 +1,26 @@
+<p>Game Factory:
+    <app-blockchain-link [network]="network" [link]="gameFactory"></app-blockchain-link>
+</p>
+<h1>Games: {{games.length}}</h1>
+<table>
+    <tr>
+        <th></th>
+        <th>Status</th>
+        <th>Nb Players</th>
+        <th></th>
+        <th>Game Master</th>
+    </tr>
+    <tr *ngFor="let game of games; let i = index;">
+        <td>{{i+1}}</td>
+        <td>{{game.status}}</td>
+        <td>{{game.nbPlayers}}</td>
+        <td>
+            <button *ngIf="!game.isRegistered" [disabled]="(game.status != eGameStatus.CREATED)" (click)="register(game.gameMaster)">Register</button>
+            <button *ngIf="game.isRegistered" routerLink="/game/{{game.gameMaster}}">Join</button>
+        </td>
+        <td>
+            <app-blockchain-link [network]="network" [link]="game.gameMaster"></app-blockchain-link>
+        </td>
+    </tr>
+</table>
+<button [disabled]="!gameFactory " (click)="createGame()">Create Game</button>
