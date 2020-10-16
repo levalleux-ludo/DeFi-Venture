@@ -73,53 +73,53 @@ export class Provider extends providers.Web3Provider {
 })
 export class EthereumService {
 
-  private _currentAccountSubject = new BehaviorSubject<EthAccountData>(null);
-  private web3Provider;
+  // private _currentAccountSubject = new BehaviorSubject<EthAccountData>(null);
+  // private web3Provider;
 
-  constructor(
-    @Inject(WEB3PROVIDER) web3Provider
-  ) {
-    web3Provider.on('chainChanged', this.onChainChanged);
-    web3Provider.on('networkChanged', this.onNetworkChanged);
-    web3Provider.on('accountsChanged', this.onAccountsChanged);
-    this.web3Provider = new providers.Web3Provider(web3Provider);
+  // constructor(
+  //   @Inject(WEB3PROVIDER) web3Provider
+  // ) {
+  //   web3Provider.on('chainChanged', this.onChainChanged);
+  //   web3Provider.on('networkChanged', this.onNetworkChanged);
+  //   web3Provider.on('accountsChanged', this.onAccountsChanged);
+  //   this.web3Provider = new providers.Web3Provider(web3Provider);
 
-    this.checkCurrentAccount();
-  }
+  //   this.checkCurrentAccount();
+  // }
 
-  private onChainChanged = (chainId: any) => {
-    console.log("ETH EVENT: chainChanged", chainId);
-    this.reloadCurrentPage();
-  }
-  private onNetworkChanged = (networkId: any) => {
-    console.log("ETH EVENT: networkChanged", networkId);
-    this.reloadCurrentPage();
-  }
-  private onAccountsChanged = (accounts: any) => {
-    console.log("ETH event accounts:", accounts);
-    this.checkCurrentAccount();
-  }
-  private reloadCurrentPage() {
-    (window as any).location.reload();
-  }
+  // private onChainChanged = (chainId: any) => {
+  //   console.log("ETH EVENT: chainChanged", chainId);
+  //   this.reloadCurrentPage();
+  // }
+  // private onNetworkChanged = (networkId: any) => {
+  //   console.log("ETH EVENT: networkChanged", networkId);
+  //   this.reloadCurrentPage();
+  // }
+  // private onAccountsChanged = (accounts: any) => {
+  //   console.log("ETH event accounts:", accounts);
+  //   this.checkCurrentAccount();
+  // }
+  // private reloadCurrentPage() {
+  //   (window as any).location.reload();
+  // }
 
-  private async checkCurrentAccount() {
-    console.log('get currentAccount()');
-    const signer = this.web3Provider.getSigner();
-    console.log('Signer', signer);
-    const address = await signer.getAddress();
-    console.log('address', address);
-    const balance = await signer.getBalance();
-    this._currentAccountSubject.next({address, balance, signer});
-  }
+  // private async checkCurrentAccount() {
+  //   console.log('get currentAccount()');
+  //   const signer = this.web3Provider.getSigner();
+  //   console.log('Signer', signer);
+  //   const address = await signer.getAddress();
+  //   console.log('address', address);
+  //   const balance = await signer.getBalance();
+  //   this._currentAccountSubject.next({address, balance, signer});
+  // }
 
-  public get currentAccount(): Observable<EthAccountData> {
-    return this._currentAccountSubject.asObservable();
-  }
+  // public get currentAccount(): Observable<EthAccountData> {
+  //   return this._currentAccountSubject.asObservable();
+  // }
 
-  public get currentAccountValue(): EthAccountData | undefined {
-    return this._currentAccountSubject.value;
-  }
+  // public get currentAccountValue(): EthAccountData | undefined {
+  //   return this._currentAccountSubject.value;
+  // }
 
 }
 

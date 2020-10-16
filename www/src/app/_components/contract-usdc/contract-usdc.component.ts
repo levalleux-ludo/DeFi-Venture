@@ -21,37 +21,37 @@ export class ContractUsdcComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.address = this.uSDCContractServiceService.address;
-    this.updateContract(this.ethService.currentAccountValue?.address);
-    this.ethService.currentAccount.subscribe((accountData) => {
-      this.updateContract(accountData.address);
-      this.tokenWatcherService.balanceOf('usdc', accountData.address).subscribe((balance) => {
-        this.balanceUSDc = balance?.toString();
-      });
-    });
+    // this.address = this.uSDCContractServiceService.address;
+    // this.updateContract(this.ethService.currentAccountValue?.address);
+    // this.ethService.currentAccount.subscribe((accountData) => {
+    //   this.updateContract(accountData.address);
+    //   this.tokenWatcherService.balanceOf('usdc', accountData.address).subscribe((balance) => {
+    //     this.balanceUSDc = balance?.toString();
+    //   });
+    // });
   }
 
-  public setAddress(address: string) {
-    this.address = address;
-    try {
-      this.uSDCContractServiceService.setAddress(address).then(() => {
-        this.updateContract(this.ethService.currentAccountValue.address);
-      }).catch(e => {
-        console.error(e);
-      })
-    } catch(e) {
-      console.error(e);
-    }
-  }
+  // public setAddress(address: string) {
+  //   this.address = address;
+  //   try {
+  //     this.uSDCContractServiceService.setAddress(address).then(() => {
+  //       this.updateContract(this.ethService.currentAccountValue.address);
+  //     }).catch(e => {
+  //       console.error(e);
+  //     })
+  //   } catch(e) {
+  //     console.error(e);
+  //   }
+  // }
 
-  private updateContract(currentAccount: string) {
-    // if (currentAccount) {
-    //   this.tokenWatcherService.getBalance('usdc', currentAccount)
-    //   .then(((usdc_bn) => {
-    //     this.balanceUSDc = usdc_bn?.toString();
-    //     console.log('card update balanceUSDc', usdc_bn?.toString());
-    //   }));
-    // }
-  }
+  // private updateContract(currentAccount: string) {
+  //   // if (currentAccount) {
+  //   //   this.tokenWatcherService.getBalance('usdc', currentAccount)
+  //   //   .then(((usdc_bn) => {
+  //   //     this.balanceUSDc = usdc_bn?.toString();
+  //   //     console.log('card update balanceUSDc', usdc_bn?.toString());
+  //   //   }));
+  //   // }
+  // }
 
 }

@@ -4,14 +4,18 @@
         <th>Username</th>
         <th>ETH account</th>
         <th>Position</th>
+        <th>Avatar</th>
+        <th>Balance</th>
     </tr>
-    <tr *ngFor="let player of players">
-        <td *ngIf="nextPlayer == player.address; else emptyCell">NEXT--></td>
+    <tr *ngFor="let player of _playersMap.values()">
+        <td *ngIf="_nextPlayer == player.address; else emptyCell">NEXT--></td>
         <ng-template #emptyCell>
             <td></td>
         </ng-template>
         <td>{{player.username}}</td>
         <td>{{player.address}}</td>
         <td>{{player.position}}</td>
+        <td>{{player.avatar}}</td>
+        <td>{{player.balance}}</td>
     </tr>
 </table>

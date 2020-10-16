@@ -81,34 +81,33 @@ export class PortisL1Service {
     return this.connectSubject.asObservable();
   }
 
-  private initEthers(network: INetwork) {
+  private async initEthers(network: INetwork) {
     // this.portis.provider.isMetaMask = true; // https://github.com/portis-project/web-sdk/issues/8
     this.ethersProvider = new ethers.providers.Web3Provider(
       this.portis.provider,
       network
     );
-    this.ethersProvider.getNetwork().then(async (ethersNetwork) => {
-      console.log('ETHERS network', ethersNetwork);
-      // Get the current suggested gas price (in wei)...
-      const gasPrice = await this.ethersProvider.getGasPrice();
-      // { BigNumber: "46000000000" }
+    const ethersNetwork = await this.ethersProvider.getNetwork();
+    console.log('ETHERS network', ethersNetwork);
+    // Get the current suggested gas price (in wei)...
+    const gasPrice = await this.ethersProvider.getGasPrice();
+    // { BigNumber: "46000000000" }
 
-      // ...often this gas price is easier to understand or
-      // display to the user in gwei (giga-wei, or 1e9 wei)
-      console.log('ETHERS gas price', ethers.utils.formatUnits(gasPrice, 'gwei'));
+    // ...often this gas price is easier to understand or
+    // display to the user in gwei (giga-wei, or 1e9 wei)
+    console.log('ETHERS gas price', ethers.utils.formatUnits(gasPrice, 'gwei'));
 
-      this.ethersSigner = this.ethersProvider.getSigner();
-      this._account = await this.ethersSigner.getAddress();
-      console.log('ETHERS signer', this.ethersSigner.getAddress());
-    });
+    this.ethersSigner = this.ethersProvider.getSigner();
+    this._account = await this.ethersSigner.getAddress();
+    console.log('ETHERS signer', this.ethersSigner.getAddress());
   }
 
   public async connect(network: INetwork) {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       if (!this.portis) {
         this.portis = new Portis(PORTIS_API_KEY, network as any);
         this.web3 = new Web3(this.portis.provider);
-        this.initEthers(network);
+        await this.initEthers(network);
       } else {
         if (this._network === network) {
           resolve();
@@ -116,7 +115,7 @@ export class PortisL1Service {
         }
         this.reset();
         this.portis.changeNetwork(network as any);
-        this.initEthers(network);
+        await this.initEthers(network);
       }
       this._network = network;
       this.web3.eth.getAccounts((error, accounts) => {

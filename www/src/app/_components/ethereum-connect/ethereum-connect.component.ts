@@ -16,10 +16,10 @@ export class EthereumConnectComponent implements OnInit {
   constructor(private ethService: EthereumService) { }
 
   ngOnInit(): void {
-    this.ethService.currentAccount.subscribe((currentAccount) => {
-      this.address = currentAccount?.address;
-      this.balance = currentAccount ? ethers.utils.formatUnits(currentAccount?.balance, 'ether') : '';
-    });
+    // this.ethService.currentAccount.subscribe((currentAccount) => {
+    //   this.address = currentAccount?.address;
+    //   this.balance = currentAccount ? ethers.utils.formatUnits(currentAccount?.balance, 'ether') : '';
+    // });
   }
 
   logout() {

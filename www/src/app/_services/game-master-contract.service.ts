@@ -14,6 +14,35 @@ export const GAME_STATUS = [
 ];
 
 import GameMasterJSON from '../../../../buidler/artifacts/GameMaster.json';
+import { throwToolbarMixedModesError } from '@angular/material/toolbar';
+
+export enum eEvent {
+  Status,
+  Players,
+  Positions,
+  NextPlayer
+}
+
+export enum eAvatar {
+  Nobody,
+  Camel,
+  Microchip,
+  Diamond,
+  Rocket
+}
+
+export interface IPlayer {
+  address: string;
+  username: string;
+  avatar: eAvatar;
+}
+export interface IGameData {
+  status: string;
+  players: IPlayer[];
+  playersPosition: Map<string, number>;
+  nextPlayer: string;
+  tokenAddress: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +54,7 @@ export class GameMasterContractService {
   private readySubject = new Subject<void>();
   private _events = [];
   private _eventsSubject = new Subject();
+  private _onUpdate = new BehaviorSubject<IGameData>(undefined);
 
   constructor(
     private ethService: EthereumService,
@@ -50,12 +80,21 @@ export class GameMasterContractService {
     });
   }
 
+  public get onUpdate(): Observable<IGameData> {
+    return this._onUpdate.asObservable();
+  }
+
+  public get gameData(): IGameData {
+    return this._onUpdate.value;
+  }
+
   public async setAddress(address: string) {
     this._address = address;
     if ((this._address !== undefined) && (this._address !== null) && (this._address !== '')) {
-        await (new Contract(address, GameMasterJSON.abi, this.portisL1Service?.signer())).deployed().then(contract => {
+        await (new Contract(address, GameMasterJSON.abi, this.portisL1Service?.signer())).deployed().then(async (contract) => {
         this._contract = contract;
         this.subscribeToEvents();
+        await this.refreshData();
       }).catch(e => {
         console.error(e);
         this._contract = undefined;
@@ -80,6 +119,69 @@ export class GameMasterContractService {
     return this._eventsSubject.asObservable();
   }
 
+  private async refreshData() {
+    let gameData = this.gameData;
+    const status = await this._contract.getStatus();
+    const nbPlayers = await this._contract.getNbPlayers();
+    const nextPlayer = await this._contract.getNextPlayer();
+    const tokenAddress = await this._contract.getToken();
+    let isChanged = false;
+    if (!gameData) {
+      const players = await this.getPlayers(nbPlayers);
+      gameData = {
+        status: GAME_STATUS[status],
+        players,
+        playersPosition: await this.refreshPositions(players),
+        nextPlayer,
+        tokenAddress
+      };
+      isChanged = true;
+    } else {
+      if (status !== gameData.status) {
+        gameData.status = GAME_STATUS[status];
+        isChanged = true;
+      }
+      if (nbPlayers !== gameData.players.length) {
+        const players = await this.getPlayers(nbPlayers);
+        gameData.players = players;
+        await this.refreshPositions(players, gameData.playersPosition);
+        isChanged = true;
+      }
+      if (nextPlayer !== gameData.nextPlayer) {
+        gameData.nextPlayer = nextPlayer;
+        isChanged = true;
+      }
+    }
+    if (isChanged) {
+      this._onUpdate.next(gameData);
+    }
+  }
+
+  private async refreshPositions(players: IPlayer[], positions = new Map<string, number>()): Promise<Map<string, number>> {
+    for (const player of players) {
+      await new Promise(resolve => {
+        setTimeout(() => {
+          positions.set(player.address, 0);
+          resolve();
+        }, 250);
+      });
+    }
+    return positions;
+  }
+
+  private async getPlayers(nbPlayers: number): Promise<IPlayer[]> {
+    const players = [];
+    for (let i = 0; i < nbPlayers; i++) {
+      const playerAddress = await this._contract.getPlayerAtIndex(i);
+      players.push({
+        address: playerAddress,
+        username: '???',
+        avatar: eAvatar.Nobody
+      });
+    }
+    return players;
+  }
+
   private subscribeToEvents() {
     this._contract.on('StatusChanged', (newStatus) => {
       this.recordEvent({ type: 'StatusChanged', value: newStatus });
@@ -95,6 +197,7 @@ export class GameMasterContractService {
   private recordEvent(event: any) {
     this._events.push(event);
     this._eventsSubject.next(event);
+    this.refreshData();
   }
 
   getContract(game: string) {

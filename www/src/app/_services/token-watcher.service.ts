@@ -39,16 +39,16 @@ export class TokenWatcherService {
     private ethService: EthereumService
   ) {
     // this.contractsAddresses.set('usdc', addresses.goerli.usdc);
-    this.initialized = new Observable(observer => {
-      ethService.currentAccount.subscribe((accountData) => {
-        if (accountData) {
-          this.signer = accountData.signer;
-          this.isInitialized = true;
-          observer.next(true);
-        }
-      });
-    });
-    setInterval(() => this.updateBalances(), 2000);
+    // this.initialized = new Observable(observer => {
+    //   ethService.currentAccount.subscribe((accountData) => {
+    //     if (accountData) {
+    //       this.signer = accountData.signer;
+    //       this.isInitialized = true;
+    //       observer.next(true);
+    //     }
+    //   });
+    // });
+    // setInterval(() => this.updateBalances(), 2000);
   }
 
   public setContractAddress(token: string, address: string) {

@@ -21,14 +21,14 @@ export class ConnectionService {
     private ethService: EthereumService,
     private gameService: GameService
     ) {
-    ethService.currentAccount.subscribe((currentAccount) => {
-      this.currentAccount = currentAccount;
-      this.updateConnectionStatus();
-    });
-    gameService.getUsername().subscribe((username) => {
-      this.username = username;
-      this.updateConnectionStatus();
-    });
+    // ethService.currentAccount.subscribe((currentAccount) => {
+    //   this.currentAccount = currentAccount;
+    //   this.updateConnectionStatus();
+    // });
+    // gameService.getUsername().subscribe((username) => {
+    //   this.username = username;
+    //   this.updateConnectionStatus();
+    // });
   }
 
   public get connected(): Observable<ConnectionData> {

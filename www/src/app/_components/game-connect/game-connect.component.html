@@ -1,5 +1,24 @@
-<div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
-    <div fxFlex *ngIf=" (username == undefined) || (username == '')">
+<mat-sidenav-container class="sidenav-container">
+    <mat-sidenav #drawer class="sidenav" [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
+        <!-- <mat-sidenav #drawer class="sidenav" fixedInViewport [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false"> -->
+        <mat-nav-list>
+            <a mat-list-item>DeFi Services</a>
+            <a mat-list-item>Marketplace</a>
+        </mat-nav-list>
+        <mat-toolbar>My Portfolio</mat-toolbar>
+        <div>
+            <h1>Cash</h1>
+            <div>Balance: {{balanceOf()}}</div>
+            <h1>Debt</h1>
+            <h1>Assets</h1>
+
+        </div>
+
+    </mat-sidenav>
+    <mat-sidenav-content style="height: auto;">
+
+        <div #content fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="sidenav-content">
+            <!-- <div fxFlex *ngIf=" (username == undefined) || (username == '')">
         <h3>Please enter a username:</h3>
     </div>
     <div class="example-container">
@@ -7,11 +26,52 @@
             <mat-label>Input</mat-label>
             <input matInput [value]="username" (change)="setUsername($event.target.value)">
         </mat-form-field>
-    </div>
-    <app-blockchain-link [network]="network" [link]="gameMaster"></app-blockchain-link>
-    <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center start" class="game-connect">
-        <!-- <app-players-tree></app-players-tree> -->
-        <app-contract-game-master></app-contract-game-master>
+    </div> -->
+            <app-blockchain-link [network]="network" [link]="gameMaster"></app-blockchain-link>
+            <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center start" class="game-connect">
+                <!-- <app-players-tree></app-players-tree> -->
+                <mat-spinner *ngIf="gameData == undefined"></mat-spinner>
+                <div *ngIf="gameData != undefined">
+                    <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
+                        <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center start" class="game-connect">
+                            <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
+                                <!-- <div fxFlex>
+                        <h3>Please enter contract address:</h3>
+                    </div>
+                    <div class="example-container">
+                        <mat-form-field appearance="fill">
+                            <mat-label>Input</mat-label>
+                            <input matInput [value]="address" (change)="setAddress($event.target.value)">
+                        </mat-form-field>
+                    </div> -->
+                                <div>
+                                    <!-- <div>Owner: {{owner}}</div> -->
+                                    <div>nbPlayers: {{gameData.players.length}}</div>
+                                    <div>Status: {{gameData.status}}</div>
+                                    <app-players-table #players [gameData]="gameData" [tokenData]="tokenData"></app-players-table>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <app-test-canvas #board [width]="board_width" [height]="board_height" class="board-canvas"></app-test-canvas>
+                        </div>
+                        <div style="position: relative; top: 300px;">
+                            <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
+                                <!-- <button mat-raised-button color="primary" [disabled]="!canRegister" (click)="register()">Register</button> -->
+                                <button *ngIf="canStart" mat-raised-button color="primary" (click)="start()">Start Game</button>
+                                <button mat-raised-button *ngIf="gameData.status == 'STARTED'" color="primary" (click)="play()" [disabled]="!canPlay">Play</button>
+                                <div>Next Player: {{gameData?.nextPlayer}}</div>
+                                <app-dices #dices style="width:250px;"></app-dices>
+                            </div>
+                        </div>
+                        <div style="position: relative; top: 900px;">
+                            <app-events-log [events]="events"></app-events-log>
+                        </div>
+                    </div>
+                </div>
+                <!-- <app-contract-game-master ></app-contract-game-master> -->
 
-    </div>
-</div>
+            </div>
+        </div>
+    </mat-sidenav-content>
+</mat-sidenav-container>

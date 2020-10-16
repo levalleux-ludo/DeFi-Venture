@@ -1,4 +1,4 @@
-import { ElementRef, NgZone, ViewChild } from '@angular/core';
+import { ElementRef, Input, NgZone, ViewChild } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { Utils } from 'src/app/_utils/utils';
 
@@ -21,6 +21,27 @@ export class TestCanvasComponent implements OnInit {
 
   @ViewChild('canvas', { static: true })
   canvas: ElementRef<HTMLCanvasElement>;
+
+  @Input()
+  set width(value: number) {
+    this.canvas.nativeElement.width = value;
+    this._zoom = value / (32 * this.block_imgs.length);
+    this.origin = {
+      x: value / 2, // middle
+      y: 50 // top
+    };
+    if (this.ctx) {
+      this.draw(this._currentAngle);
+    }
+  }
+
+  @Input()
+  set height(value: number) {
+    this.canvas.nativeElement.height = value;
+    if (this.ctx) {
+      this.draw(this._currentAngle);
+    }
+  }
 
   block_imgs = [
     'assets/blocks/block_12DoozerArmy.png',
@@ -92,6 +113,10 @@ export class TestCanvasComponent implements OnInit {
 
   public get currentAngle() {
     return this._currentAngle;
+  }
+
+  public get nbBlocks() {
+    return this.block_imgs.length;
   }
 
   public async setTargetAngle(value: number, velocity: number) {

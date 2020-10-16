@@ -56,4 +56,8 @@ export class TestCanvasPageComponent implements OnInit, AfterContentInit {
     this.canvas.zoom = zoom;
   }
 
+  changeCanvasSize() {
+    this.canvas.width = 250;
+  }
+
 }
