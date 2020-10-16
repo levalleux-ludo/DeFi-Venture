@@ -5,19 +5,20 @@ import "./IGameStatus.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract GameScheduler is IGameStatus, Ownable {
-    uint8 constant NB_MAX_PLAYERS = 8;
     uint8 status = CREATED;
     uint8 nbPlayers = 0;
     uint8 nextPlayerIdx = 0;
     address nextPlayer;
     mapping(address => bool) players;
-    address[NB_MAX_PLAYERS] playersSet;
+    address[] playersSet;
+    uint8 nbMaxPlayers;
     
     event StatusChanged(uint8 newStatus);
     event PlayerRegistered(address newPlayer, uint8 nbPlayers);
-    event PlayPerformed(address player);
     
-    constructor() public Ownable() {
+    constructor(uint8 _nbMaxPlayers) public Ownable() {
+        nbMaxPlayers = _nbMaxPlayers;
+        playersSet = new address[](_nbMaxPlayers);
     }
 
     function getStatus() view public returns (uint8) {
@@ -59,14 +60,6 @@ contract GameScheduler is IGameStatus, Ownable {
         setStatus(STARTED);
     }
 
-    function play() public {
-        require(status == STARTED, "INVALID_GAME_STATE");
-        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
-        performOption();
-        chooseNextPlayer();
-        emit PlayPerformed(msg.sender);
-    }
-
     function end() virtual public {
         require((status == STARTED) || (status == FROZEN), "INVALID_GAME_STATE");
         // TODO: which requirements to authorize someone to stop the current game ???
@@ -77,10 +70,6 @@ contract GameScheduler is IGameStatus, Ownable {
     function setStatus(uint8 newStatus) internal {
         status = newStatus;
         emit StatusChanged(status);
-    }
-
-    function performOption() internal {
-
     }
 
     function chooseNextPlayer() internal {

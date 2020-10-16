@@ -8,7 +8,20 @@ import "./GameToken.sol";
 contract GameMaster is GameScheduler {
     GameToken private token;
     address private tokenAddress;
-    uint256 constant public initialAmount = 1000 * 10**18; // 1 LOUIS
+    uint256 initialAmount;
+    address currentPlayer;
+    uint256 nonce;
+    uint8 nbPositions;
+    byte currentOptions;
+    mapping(address => uint8) private positions;
+
+    event RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, byte options);
+    event PlayPerformed(address player, byte option);
+
+    constructor (uint8 nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount) public GameScheduler(nbMaxPlayers) {
+        nbPositions = _nbPositions;
+        initialAmount = _initialAmount;
+    }
     
     function setToken(address _token) public onlyOwner {
         tokenAddress = _token;
@@ -17,6 +30,22 @@ contract GameMaster is GameScheduler {
 
     function getToken() public view returns (address) {
         return tokenAddress;
+    }
+
+    function getCurrentPlayer() public view returns (address) {
+        return currentPlayer;
+    }
+
+    function getCurrentOptions() public view returns (byte) {
+        return currentOptions;
+    }
+
+    function getNbPositions() public view returns (uint8) {
+        return nbPositions;
+    }
+
+    function getPositionOf(address player) public view returns (uint8) {
+        return positions[player];
     }
 
     function start() public override {
@@ -33,6 +62,39 @@ contract GameMaster is GameScheduler {
         if (tokenAddress != address(0)) {
             token.reset();
         }
+    }
+
+    function rollDices() public returns (uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, byte options) {
+        require(status == STARTED, "INVALID_GAME_STATE");
+        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
+        require(currentPlayer == address(0), "NOT_AUTHORIZED");
+        currentPlayer = msg.sender;
+        uint random = random();
+        uint8 oldPosition = positions[msg.sender];
+        dice1 = 1 + uint8(random % 6);
+        dice2 = 1 + uint8(random % 7 % 6);
+        cardId = uint8(random % 47 % 32);
+        newPosition = (oldPosition + dice1 + dice2) % nbPositions;
+        positions[msg.sender] = newPosition;
+        options = 0;
+        emit RolledDices(msg.sender, dice1, dice2, cardId, newPosition, options);
+    }
+
+    function random() internal returns (uint) {
+        uint _random = uint(keccak256(abi.encodePacked(now, msg.sender, nonce)));
+        nonce++;
+        return _random;
+    }
+
+    function play(byte option) public {
+        require(status == STARTED, "INVALID_GAME_STATE");
+        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
+        require(msg.sender == currentPlayer, "NOT_AUTHORIZED");
+        currentPlayer = address(0);
+        // TODO: check option is allowed 
+        // TODO: perform option
+        chooseNextPlayer();
+        emit PlayPerformed(msg.sender, option);
     }
 
     // TODO: get random value https://ethereum.stackexchange.com/questions/60684/i-want-get-random-number-between-100-999-as-follows

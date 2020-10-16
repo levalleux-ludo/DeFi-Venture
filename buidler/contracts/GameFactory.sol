@@ -10,14 +10,22 @@ import "./IGameStatus.sol";
 contract GameFactory is IGameStatus {
     // Add the library methods
     using EnumerableSet for EnumerableSet.AddressSet;
-
+    uint8 nbMaxPlayers;
+    uint256 initialAmount;
+    uint8 nbPositions;
     EnumerableSet.AddressSet private gamesSet;
+    constructor (uint8 _nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount) public {
+        nbMaxPlayers = _nbMaxPlayers;
+        nbPositions = _nbPositions;
+        initialAmount = _initialAmount;
+    }
+
     /**
     - factory to create new game contracts
-   */
+       */
     function create() public returns (address) {
         GameToken gameToken = new GameToken();
-        GameMaster gameMaster = new GameMaster();
+        GameMaster gameMaster = new GameMaster(nbMaxPlayers, nbPositions, initialAmount);
         gameMaster.setToken(address(gameToken));
         gameToken.transferOwnership(address(gameMaster));
 

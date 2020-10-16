@@ -1,6 +1,10 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 
+const NB_MAX_PLAYERS = 8;
+const INITIAL_BALANCE = 1000;
+const NB_POSITIONS = 32;
+
 const STATUS = {
     created: 0,
     started: 1,
@@ -47,7 +51,11 @@ describe("GameFactory", function() {
         GameFactoryFactory = await ethers.getContractFactory("GameFactory");
         GameMasterFactory = await ethers.getContractFactory("GameMaster");
         GameTokenFactory = await ethers.getContractFactory("GameToken");
-        gameFactory = await GameFactoryFactory.deploy();
+        gameFactory = await GameFactoryFactory.deploy(
+            NB_MAX_PLAYERS,
+            NB_POSITIONS,
+            ethers.BigNumber.from(INITIAL_BALANCE)
+        );
         await gameFactory.deployed();
     })
     it("No game created yet", async function() {
@@ -91,8 +99,8 @@ describe("GameFactory", function() {
         await startGame(gameMaster);
         const addr1Address = addr1.getAddress();
         const balance1 = await token.balanceOf(addr1Address);
-        expect(balance1.toString()).to.equal(BigNumber.from(10).pow(18).mul(1000).toString());
-        expect((await token.totalSupply()).toString()).to.equal(BigNumber.from(10).pow(18).mul(1000).mul(2).toString());
+        expect(balance1.toString()).to.equal(BigNumber.from(INITIAL_BALANCE).toString());
+        expect((await token.totalSupply()).toString()).to.equal(BigNumber.from(INITIAL_BALANCE).mul(2).toString());
     });
     it('End the game shall reset the balances', async function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
@@ -105,7 +113,7 @@ describe("GameFactory", function() {
         expect(await gameMaster.getStatus()).to.equal(STATUS.started);
         const addr1Address = addr1.getAddress();
         const balance1 = await token.balanceOf(addr1Address);
-        expect(balance1.toString()).to.equal(BigNumber.from(10).pow(18).mul(1000).toString());
+        expect(balance1.toString()).to.equal(BigNumber.from(INITIAL_BALANCE).toString());
         await gameMaster.end();
         const balance1after = await token.balanceOf(addr1Address);
         expect(balance1after.toNumber()).to.equal(0);
