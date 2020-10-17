@@ -15,6 +15,7 @@ export const GAME_STATUS = [
 
 import GameMasterJSON from '../../../../buidler/artifacts/GameMaster.json';
 import { throwToolbarMixedModesError } from '@angular/material/toolbar';
+import { AbstractContractService } from './AbstractContractService';
 
 export enum eEvent {
   Status,
@@ -36,104 +37,76 @@ export interface IPlayer {
   username: string;
   avatar: eAvatar;
 }
+
+export enum eSpaceType {
+    GENESIS= 0,
+    QUARANTINE= 1,
+    LIQUIDATION= 2,
+    CHANCE= 3,
+    ASSET_CLASS_1= 4,
+    ASSET_CLASS_2= 5,
+    ASSET_CLASS_3= 6,
+    ASSET_CLASS_4= 7
+}
+
+type SpaceTypeStrings = keyof typeof eSpaceType;
+
+export enum eChanceType {
+  PAY= 0,
+  RECEIVE= 1,
+  MOVE_N_SPACES_FWD= 2,
+  MOVE_N_SPACES_BCK= 3,
+  GOTO_SPACE= 4,
+  IMMUNITY= 5,
+  PAY_PER_ASSET= 6,
+  RECEIVE_PER_ASSET= 7
+}
+
+type ChanceTypeStrings = keyof typeof eChanceType;
+
+export interface ISpace {
+  type: eSpaceType;
+  assetId: number;
+}
 export interface IGameData {
   status: string;
   players: IPlayer[];
   playersPosition: Map<string, number>;
   nextPlayer: string;
   tokenAddress: string;
+  playground: ISpace[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class GameMasterContractService {
-  private _address: string;
-  private _contract: Contract;
-  private isReady = false;
-  private readySubject = new Subject<void>();
-  private _events = [];
-  private _eventsSubject = new Subject();
-  private _onUpdate = new BehaviorSubject<IGameData>(undefined);
+export class GameMasterContractService extends AbstractContractService<IGameData> {
 
   constructor(
-    private ethService: EthereumService,
-    private sessionStorageService: SessionStorageService,
-    private portisL1Service: PortisL1Service
+    protected sessionStorageService: SessionStorageService,
+    protected portisL1Service: PortisL1Service
   ) {
-    // this.setAddress(sessionStorageService.restore(StorageKeys.contracts.gameMaster));
+    super(GameMasterJSON, portisL1Service);
    }
 
-  public get address() {
-    return this._address;
-  }
-
-  public get ready(): Promise<void> {
-    return new Promise((resolve) => {
-      if (this.isReady) {
-        resolve();
-      } else {
-        this.readySubject.subscribe(() => {
-          resolve();
-        });
-      }
-    });
-  }
-
-  public get onUpdate(): Observable<IGameData> {
-    return this._onUpdate.asObservable();
-  }
-
-  public get gameData(): IGameData {
-    return this._onUpdate.value;
-  }
-
-  public async setAddress(address: string) {
-    this._address = address;
-    if ((this._address !== undefined) && (this._address !== null) && (this._address !== '')) {
-        await (new Contract(address, GameMasterJSON.abi, this.portisL1Service?.signer())).deployed().then(async (contract) => {
-        this._contract = contract;
-        this.subscribeToEvents();
-        await this.refreshData();
-      }).catch(e => {
-        console.error(e);
-        this._contract = undefined;
-      });
-    } else {
-      this._contract = undefined;
-    }
-    this.sessionStorageService.storeLocal(StorageKeys.contracts.gameMaster, this._address);
-    this.isReady = true;
-    this.readySubject.next();
-  }
-
-  public get contract(): Contract {
-    return this._contract;
-  }
-
-  public get events(): any[] {
-    return this._events;
-  }
-
-  public get onEvent(): Observable<any> {
-    return this._eventsSubject.asObservable();
-  }
-
-  private async refreshData() {
-    let gameData = this.gameData;
+   protected async refreshData() {
+    let gameData = this.data;
     const status = await this._contract.getStatus();
     const nbPlayers = await this._contract.getNbPlayers();
     const nextPlayer = await this._contract.getNextPlayer();
-    const tokenAddress = await this._contract.getToken();
     let isChanged = false;
     if (!gameData) {
       const players = await this.getPlayers(nbPlayers);
+      const tokenAddress = await this._contract.getToken();
+      const nbSpaces = await this._contract.getNbPositions();
+      const playground = await this._contract.getPlayground();
       gameData = {
         status: GAME_STATUS[status],
         players,
         playersPosition: await this.refreshPositions(players),
         nextPlayer,
-        tokenAddress
+        tokenAddress,
+        playground: this.buildPlayground(nbSpaces, playground)
       };
       isChanged = true;
     } else {
@@ -182,7 +155,7 @@ export class GameMasterContractService {
     return players;
   }
 
-  private subscribeToEvents() {
+  protected subscribeToEvents() {
     this._contract.on('StatusChanged', (newStatus) => {
       this.recordEvent({ type: 'StatusChanged', value: newStatus });
     });
@@ -194,16 +167,26 @@ export class GameMasterContractService {
     });
   }
 
-  private recordEvent(event: any) {
-    this._events.push(event);
-    this._eventsSubject.next(event);
-    this.refreshData();
-  }
-
   getContract(game: string) {
     return new GameMaster(game, this.portisL1Service.signer());
   }
 
-
+  protected buildPlayground(nbSpaces: number, playground: string): ISpace[] {
+    const spaces = [];
+    for (let spaceId = 0; spaceId < nbSpaces; spaceId++) {
+      const idxStart = playground.length - 2 * (spaceId);
+      const spaceCode = parseInt(playground.slice(idxStart - 2, idxStart), 16);
+      // tslint:disable-next-line: no-bitwise
+      const type = spaceCode & 0x7;
+      // tslint:disable-next-line: no-bitwise
+      const assetId = spaceCode >> 3;
+      spaces.push({
+        type,
+        assetId
+      });
+      console.log('Space', spaceId, eSpaceType[type], assetId);
+    }
+    return spaces;
+  }
 
 }

@@ -1,6 +1,9 @@
+import { eSpaceType } from './../../_services/game-master-contract.service';
 import { ElementRef, Input, NgZone, ViewChild } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
+import { ISpace } from 'src/app/_services/game-master-contract.service';
 import { Utils } from 'src/app/_utils/utils';
+import startups from '../../../assets/startups.json';
 
 export class Square {
   constructor(
@@ -43,31 +46,31 @@ export class TestCanvasComponent implements OnInit {
     }
   }
 
-  block_imgs = [
-    'assets/blocks/block_12DoozerArmy.png',
-    'assets/blocks/block_AntForceOne.png',
-    'assets/blocks/block_bakery.png',
-    'assets/blocks/block_BoilerRoom.png',
-    'assets/blocks/block_chance.png',
-    'assets/blocks/block_CitizenChain.png',
-    'assets/blocks/block_12DoozerArmy.png',
-    'assets/blocks/block_AntForceOne.png',
-    // 'assets/blocks/block_bakery.png',
-    // 'assets/blocks/block_BoilerRoom.png',
-    // 'assets/blocks/block_chance.png',
-    // 'assets/blocks/block_12DoozerArmy.png',
-    // 'assets/blocks/block_AntForceOne.png',
-    'assets/blocks/block_bakery.png',
-    'assets/blocks/block_BoilerRoom.png',
-    'assets/blocks/block_chance.png',
-    'assets/blocks/block_CitizenChain.png',
-    'assets/blocks/block_12DoozerArmy.png',
-    'assets/blocks/block_AntForceOne.png',
-    'assets/blocks/block_bakery.png',
-    'assets/blocks/block_BoilerRoom.png',
-    'assets/blocks/block_chance.png',
-    'assets/blocks/block_CitizenChain.png'
-  ];
+  @Input()
+  set playground(value: ISpace[]) {
+    this.block_imgs = [];
+    for (const space of value) {
+      let image;
+      if (space.type < eSpaceType.ASSET_CLASS_1) {
+        const type = eSpaceType[space.type];
+        image = this.images[type];
+      } else {
+        const startup = startups.startups[space.assetId];
+        image = startup.image;
+      }
+      this.block_imgs.push(`assets/blocks/block_${image}`);
+    }
+    this.draw(this._currentAngle);
+  }
+
+  images = {
+    CHANCE: 'chance.png',
+    GENESIS: 'genesis.png',
+    QUARANTINE: 'Covid.png',
+    LIQUIDATION: 'Quarantine.png'
+  };
+
+  block_imgs = [];
   avatars = [
     'assets/avatars/camel.png',
     'assets/avatars/crypto-chip.png',

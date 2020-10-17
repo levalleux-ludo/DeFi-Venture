@@ -38,6 +38,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   position = 0;
   tokenDecimals: number;
   balances: Map<string, BigNumber>;
+  playground;
 
   @ViewChild('dices', {static: false})
   dices: DicesComponent;
@@ -113,8 +114,13 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   refreshGameData(gameData: IGameData) {
-    this.gameData = gameData;
-    this.gameData.players.forEach(player => this.tokenContractService.observeAccount(player.address));
+    if (gameData) {
+      this.gameData = gameData;
+      this.gameData.players.forEach(player => this.tokenContractService.observeAccount(player.address));
+      if (!this.playground) {
+        this.playground = gameData.playground;
+      }
+    }
     // if (this.players !== undefined) {
     //   this.gameData.playersPosition.forEach((position, player) => {
     //     this.players.setPlayerPosition(player, position);

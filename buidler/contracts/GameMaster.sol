@@ -66,6 +66,20 @@ contract GameMaster is GameScheduler {
         return playground;
     }
 
+    function getSpaceDetails(uint8 spaceId) public view returns (uint8 spaceType, uint8 assetId) {
+        require(spaceId < nbPositions, "INVALID_ARGUMENT");
+        uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
+        spaceType = spaceCode & 0x7;
+        assetId = spaceCode >> 3;
+    }
+
+    function getChanceDetails(uint8 chanceId) public view returns (uint8 chanceType, uint8 chanceParam) {
+        require(chanceId < chances.length, "INVALID_ARGUMENT");
+        uint8 chanceCode = uint8(chances[31 - chanceId]);// Important storage reverse (end-endian)
+        chanceType = chanceCode & 0x7;
+        chanceParam = chanceCode >> 3;
+    }
+
     function start() public override {
         super.start();
         for (uint i = 0; i < nbPlayers; i++) {
@@ -121,4 +135,15 @@ contract GameMaster is GameScheduler {
     // TODO: bytes32 private gameboard: 1 byte per board space, define its type
     // TODO: bytes32 private options: 1 byte per board space, define the available options per space ????
 
+    function bytesToUint8(bytes memory _bytes, uint256 _start) internal pure returns (uint8) {
+        require(_start + 1 >= _start, "toUint8_overflow");
+        require(_bytes.length >= _start + 1 , "toUint8_outOfBounds");
+        uint8 tempUint;
+
+        assembly {
+            tempUint := mload(add(add(_bytes, 0x1), _start))
+        }
+
+        return tempUint;
+    }
 }

@@ -12,18 +12,23 @@ export class PlayersTableComponent implements OnInit {
 
   @Input()
   public set gameData(gameData: IGameData) {
-    gameData.playersPosition.forEach((position, player) => {
-      this.setPlayerPosition(player, position);
-    });
+    if (gameData) {
+      gameData.playersPosition.forEach((position, player) => {
+        this.setPlayerPosition(player, position);
+      });
+    }
   }
   @Input()
   public set tokenData(tokenData: ITokenData) {
-    tokenData.balances.forEach((balance, player) => {
-      this.setPlayerBalance(player, balance.toString());
-    });
+    if (tokenData) {
+      tokenData.balances.forEach((balance, player) => {
+        this.setPlayerBalance(player, balance.toString());
+      });
+    }
   }
   _nextPlayer = undefined;
   _playersMap = new Map<string, {username: string, address: string, position: number, balance: string, avatar: number}>();
+  _players = [];
   constructor() { }
 
   ngOnInit(): void { }
@@ -55,6 +60,7 @@ export class PlayersTableComponent implements OnInit {
   protected checkInMap(player: string) {
     if (!this._playersMap.has(player)) {
       this._playersMap.set(player, {username: '', address: player, position: 0, balance: '?', avatar: -1});
+      this._players.push(player);
     }
 
   }

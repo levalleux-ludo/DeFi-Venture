@@ -39,7 +39,7 @@ export abstract class AbstractContractService<T> {
     return this._onUpdate.asObservable();
   }
 
-  public get tokenData(): T {
+  public get data(): T {
     return this._onUpdate.value;
   }
 
