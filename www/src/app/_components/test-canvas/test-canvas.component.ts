@@ -60,7 +60,9 @@ export class TestCanvasComponent implements OnInit {
       }
       this.block_imgs.push(`assets/blocks/block_${image}`);
     }
-    this.draw(this._currentAngle);
+    if (this.ctx) {
+      this.draw(this._currentAngle);
+    }
   }
 
   images = {
@@ -147,6 +149,10 @@ export class TestCanvasComponent implements OnInit {
       newTab.push(player);
     }
   }
+
+  public lockAvatar() {}
+
+  public unlockAvatar() {}
 
   private async load_images() {
     const promises = [];

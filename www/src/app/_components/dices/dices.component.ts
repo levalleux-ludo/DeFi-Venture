@@ -29,9 +29,26 @@ export class DicesComponent implements OnInit {
   @Input()
   dicePOSValue = Math.floor(1 + 6 * Math.random());
 
+  _animation;
+
   constructor() { }
 
   ngOnInit(): void {
+  }
+
+  public animate() {
+    this._animation = setInterval(() => {
+      this.dicePOWValue = Math.floor(1 + 6 * Math.random());
+      this.dicePOSValue = Math.floor(1 + 6 * Math.random());
+    }, 300);
+  }
+
+  public stopAnimation(dice1, dice2) {
+    if (this._animation) {
+      clearInterval(this._animation);
+      this.dicePOWValue = dice1;
+      this.dicePOSValue = dice2;
+    }
   }
 
 }

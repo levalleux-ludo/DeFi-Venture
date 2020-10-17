@@ -57,11 +57,27 @@
                         </div>
                         <div style="position: relative; top: 300px;">
                             <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
-                                <!-- <button mat-raised-button color="primary" [disabled]="!canRegister" (click)="register()">Register</button> -->
-                                <button *ngIf="canStart" mat-raised-button color="primary" (click)="start()">Start Game</button>
-                                <button mat-raised-button *ngIf="gameData.status == 'STARTED'" color="primary" (click)="play()" [disabled]="!canPlay">Play</button>
-                                <div>Next Player: {{gameData?.nextPlayer}}</div>
-                                <app-dices #dices style="width:250px;"></app-dices>
+                                <div *ngIf="gameData.status == 'STARTED'">
+                                    <div>Next Player: {{gameData?.nextPlayer}}</div>
+                                    <div *ngIf="isNextPlayer">
+                                        <app-dices #dices style="width:250px;"></app-dices>
+                                        <div *ngIf="!isCurrentPlayer">
+                                            It's your turn, please roll the dices
+                                            <button mat-raised-button color="primary" [disabled]="!canPlay" (click)="play()">Play</button>
+                                        </div>
+                                        <div *ngIf="isCurrentPlayer">
+                                            Please choose your option and validate
+                                            <button mat-raised-button color="primary" [disabled]="!canValidate" (click)="validate()">Validate</button>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="!isNextPlayer">
+                                        Current player: {{gameData.nextPlayer}}
+                                    </div>
+                                </div>
+                                <div *ngIf="gameData.status == 'CREATED'">
+                                    Game is not started yet. Wait for players registering (2 minimum), then you can start
+                                    <button mat-raised-button color="primary" [disabled]="!canStart" (click)="start()">Start Game</button>
+                                </div>
                             </div>
                         </div>
                         <div style="position: relative; top: 900px;">

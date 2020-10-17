@@ -140,11 +140,27 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public get canStart(): boolean {
-    return ((this.gameData) && (this.gameData.status === GAME_STATUS[0]) && (this.gameData.nbPlayers >= 2));
+    return ((this.gameData) && (this.gameData.status === GAME_STATUS[0]) && (this.gameData.players.length >= 2));
   }
 
   public get canPlay(): boolean {
-    return ((this.gameData.status === GAME_STATUS[1]) && (this.gameData.nextPlayer === this.currentAccount));
+    return ((this.gameData.status === GAME_STATUS[1])
+    && (this.gameData.nextPlayer === this.currentAccount)
+    && (this.gameData.currentPlayer !== this.currentAccount));
+  }
+
+  public get canValidate(): boolean {
+    return ((this.gameData.status === GAME_STATUS[1])
+    && (this.gameData.nextPlayer === this.currentAccount)
+    && (this.gameData.currentPlayer === this.currentAccount));
+  }
+
+  public get isNextPlayer() {
+    return this.gameData.nextPlayer === this.currentAccount;
+  }
+
+  public get isCurrentPlayer() {
+    return this.gameData.currentPlayer === this.currentAccount;
   }
 
   start() {
@@ -156,21 +172,25 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   play() {
-    this.gameMasterContractService.contract.play().then(() => {
-      console.log('play called');
-      const dice1 = Math.floor( 1 + Math.random() * 6);
-      const dice2 = Math.floor( 1 + Math.random() * 6);
-      console.log('dices', dice1, dice2);
-      this.dices.dicePOWValue = dice1;
-      this.dices.dicePOSValue = dice2;
+    // animate dices
+    this.dices.animate();
+    this.gameMasterContractService.rollDices().then(({dice1, dice2, newPosition}) => {
+      console.log('RolledDices', dice1, dice2, newPosition);
+      this.dices.stopAnimation(dice1, dice2);
+      this.board.lockAvatar();
       const nbBlocks = this.board.nbBlocks;
       let offset = dice1 + dice2;
-      this.position = (this.position + dice1 + dice2) % nbBlocks;
+      this.position = newPosition;
       const targetAngle = this.position * 2 * Math.PI / nbBlocks;
-      this.board.setTargetAngle(targetAngle, offset/nbBlocks);
-      }).catch((e) => {
-      console.error(e);
-    });
+      this.board.setTargetAngle(targetAngle, offset/nbBlocks).then(() => {
+        this.board.unlockAvatar();
+      })
+    })
+  }
+
+  validate() {
+    this.gameMasterContractService.play(0).then(() => {
+    })
   }
 
   balanceOf(address?: string): string {
