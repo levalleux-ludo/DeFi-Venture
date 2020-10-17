@@ -1,8 +1,10 @@
 const { expect } = require("chai");
+const { getSpaces, getChances } = require("../db/playground");
+
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 1000;
 const NB_POSITIONS = 32;
-
+const NB_CHANCES = 32;
 
 const STATUS = {
     created: 0,
@@ -30,7 +32,9 @@ async function createGameMaster() {
     const gameMaster = await GameMaster.deploy(
         NB_MAX_PLAYERS,
         NB_POSITIONS,
-        ethers.BigNumber.from(INITIAL_BALANCE)
+        ethers.BigNumber.from(INITIAL_BALANCE),
+        getSpaces(NB_POSITIONS),
+        getChances(NB_CHANCES, NB_POSITIONS)
     );
     await gameMaster.deployed();
     return gameMaster;

@@ -14,10 +14,15 @@ contract GameFactory is IGameStatus {
     uint256 initialAmount;
     uint8 nbPositions;
     EnumerableSet.AddressSet private gamesSet;
-    constructor (uint8 _nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount) public {
+    bytes32 private playground;
+    bytes32 private chances;
+
+    constructor (uint8 _nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount, bytes32 _playground, bytes32 _chances ) public {
         nbMaxPlayers = _nbMaxPlayers;
         nbPositions = _nbPositions;
         initialAmount = _initialAmount;
+        playground = _playground;
+        chances = _chances;
     }
 
     /**
@@ -25,7 +30,7 @@ contract GameFactory is IGameStatus {
        */
     function create() public returns (address) {
         GameToken gameToken = new GameToken();
-        GameMaster gameMaster = new GameMaster(nbMaxPlayers, nbPositions, initialAmount);
+        GameMaster gameMaster = new GameMaster(nbMaxPlayers, nbPositions, initialAmount, playground, chances);
         gameMaster.setToken(address(gameToken));
         gameToken.transferOwnership(address(gameMaster));
 

@@ -1,9 +1,11 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
+const { getSpaces, getChances } = require("../db/playground");
 
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 32;
+const NB_POSITIONS = 24;
+const NB_CHANCES = 32;
 
 const STATUS = {
     created: 0,
@@ -51,10 +53,14 @@ describe("GameFactory", function() {
         GameFactoryFactory = await ethers.getContractFactory("GameFactory");
         GameMasterFactory = await ethers.getContractFactory("GameMaster");
         GameTokenFactory = await ethers.getContractFactory("GameToken");
+        const spaces = getSpaces(NB_POSITIONS);
+        const chances = getChances(NB_CHANCES, NB_POSITIONS);
         gameFactory = await GameFactoryFactory.deploy(
             NB_MAX_PLAYERS,
             NB_POSITIONS,
-            ethers.BigNumber.from(INITIAL_BALANCE)
+            ethers.BigNumber.from(INITIAL_BALANCE),
+            spaces,
+            chances
         );
         await gameFactory.deployed();
     })

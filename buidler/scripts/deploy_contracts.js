@@ -3,6 +3,12 @@
 // When running the script with `buidler run <script>` you'll find the Buidler
 // Runtime Environment's members available in the global scope.
 const bre = require("@nomiclabs/buidler");
+const { getSpaces, getChances } = require("../db/playground");
+
+const NB_MAX_PLAYERS = 8;
+const INITIAL_BALANCE = 1000;
+const NB_POSITIONS = 24;
+const NB_CHANCES = 32;
 
 async function main() {
     // Buidler always runs the compile task when running scripts through it. 
@@ -17,7 +23,13 @@ async function main() {
     // console.log("Greeter deployed to:", greeter.address);
 
     const GameFactory = await ethers.getContractFactory("GameFactory");
-    const gameFactory = await GameFactory.deploy();
+    const gameFactory = await GameFactory.deploy(
+        NB_MAX_PLAYERS,
+        NB_POSITIONS,
+        ethers.BigNumber.from(INITIAL_BALANCE),
+        getSpaces(NB_POSITIONS),
+        getChances(NB_CHANCES, NB_POSITIONS)
+    );
     await gameFactory.deployed();
     console.log("gameFactory deployed to:", gameFactory.address);
 

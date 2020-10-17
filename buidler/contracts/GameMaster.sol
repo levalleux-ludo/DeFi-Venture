@@ -14,13 +14,23 @@ contract GameMaster is GameScheduler {
     uint8 nbPositions;
     byte currentOptions;
     mapping(address => uint8) private positions;
+    bytes32 private playground;
+    bytes32 private chances;
 
     event RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, byte options);
     event PlayPerformed(address player, byte option);
 
-    constructor (uint8 nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount) public GameScheduler(nbMaxPlayers) {
+    constructor (
+        uint8 nbMaxPlayers,
+        uint8 _nbPositions,
+        uint256 _initialAmount,
+        bytes32 _playground,
+        bytes32 _chances
+        ) public GameScheduler(nbMaxPlayers) {
         nbPositions = _nbPositions;
         initialAmount = _initialAmount;
+        playground = _playground;
+        chances = _chances;
     }
     
     function setToken(address _token) public onlyOwner {
@@ -46,6 +56,14 @@ contract GameMaster is GameScheduler {
 
     function getPositionOf(address player) public view returns (uint8) {
         return positions[player];
+    }
+
+    function getChances() public view returns (bytes32) {
+        return chances;
+    }
+
+    function getPlayground() public view returns (bytes32) {
+        return playground;
     }
 
     function start() public override {
