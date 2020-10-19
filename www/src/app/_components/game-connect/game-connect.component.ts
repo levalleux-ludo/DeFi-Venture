@@ -4,14 +4,14 @@ import { GameTokenContractService, ITokenData } from './../../_services/game-tok
 import { GameMasterContractService, GAME_STATUS, IGameData } from './../../_services/game-master-contract.service';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { GameService } from './../../_services/game.service';
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, ViewChildren, QueryList } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { DicesComponent } from '../dices/dices.component';
 import { TestCanvasComponent } from '../test-canvas/test-canvas.component';
 import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
 import { fromEvent, Observable, Subscription } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import { first, map, shareReplay } from 'rxjs/operators';
 import { element } from 'protractor';
 import { BigNumber } from 'ethers';
 
@@ -31,8 +31,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   username: string = '';
   gameMaster;
   network;
-  gameData;
-  tokenData;
+  gameData: IGameData;
+  tokenData: ITokenData;
   currentAccount;
   events = [];
   position = 0;
@@ -42,11 +42,13 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild('dices', {static: false})
   dices: DicesComponent;
+  @ViewChildren('board')
+  private Boards: QueryList<TestCanvasComponent>;
   @ViewChild('board', {static: false})
   board: TestCanvasComponent;
   @ViewChild('content', {static: true})
   content: ElementRef;
-  @ViewChild('players', {static: true})
+  @ViewChild('players', {static: false})
   players: PlayersTableComponent;
   resizeObservable$: Observable<Event>;
   clickObservable$: Observable<Event>;
@@ -120,23 +122,32 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       if (!this.playground) {
         this.playground = gameData.playground;
       }
+      const newPosition = this.gameData.playersPosition.get(this.currentAccount);
+      if (this.position !== newPosition) {
+        console.log('refresh position during refreshGameData', newPosition);
+        this.refreshPosition(newPosition);
+      }
     }
-    // if (this.players !== undefined) {
-    //   this.gameData.playersPosition.forEach((position, player) => {
-    //     this.players.setPlayerPosition(player, position);
-    //   });
-    // }
+    if (this.players !== undefined) {
+      this.gameData.playersPosition.forEach((position, player) => {
+        this.players.setPlayerPosition(player, position);
+      });
+    }
   }
 
   refreshTokenData(tokenData: ITokenData) {
     this.tokenData = tokenData;
+    console.log('refreshTokenData', 'tokenData');
+    this.tokenData.balances.forEach((value, key) => {
+      console.log(key, value.toString());
+    })
     this.balances = tokenData.balances;
     this.tokenDecimals = tokenData.decimals;
-    // if (this.players !== undefined) {
-    //   tokenData.balances.forEach((balance, player) => {
-    //     this.players.setPlayerBalance(player, balance.toString());
-    //   });
-    // }
+    if (this.players !== undefined) {
+      tokenData.balances.forEach((balance, player) => {
+        this.players.setPlayerBalance(player, balance.toString());
+      });
+    }
   }
 
   public get canStart(): boolean {
@@ -177,14 +188,29 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     this.gameMasterContractService.rollDices().then(({dice1, dice2, newPosition}) => {
       console.log('RolledDices', dice1, dice2, newPosition);
       this.dices.stopAnimation(dice1, dice2);
-      this.board.lockAvatar();
-      const nbBlocks = this.board.nbBlocks;
-      let offset = dice1 + dice2;
+      console.log('refresh position after rolling dices', newPosition);
+      this.refreshPosition(newPosition);
+    })
+  }
+
+  refreshPosition(newPosition: number) {
+    if (!(this.board)) {
+      // Wait for the board to be added in DOM (nbIf directive)
+      this.Boards.changes.pipe(first()) // subscribe only on the first update, auto clear subscription after
+      .subscribe((boards: QueryList<TestCanvasComponent>) => {
+        this.refreshPosition(newPosition);
+      });
+      return;
+    }
+    this.board.lockAvatar();
+    const oldPosition = this.position;
+    const nbBlocks = this.board.nbBlocks;
+    let offset = (oldPosition <= newPosition) ? newPosition - oldPosition : (newPosition + nbBlocks) - oldPosition;
+    const revPosition = nbBlocks - newPosition % nbBlocks;
+    const targetAngle = revPosition * 2 * Math.PI / nbBlocks;
+    this.board.setTargetAngle(targetAngle, offset/nbBlocks).then(() => {
+      this.board.unlockAvatar();
       this.position = newPosition;
-      const targetAngle = this.position * 2 * Math.PI / nbBlocks;
-      this.board.setTargetAngle(targetAngle, offset/nbBlocks).then(() => {
-        this.board.unlockAvatar();
-      })
     })
   }
 

@@ -1,0 +1,18 @@
+<p>space-details works!</p>
+<img src='{{image}}'>
+<div>{{name}}</div>
+<div>{{detail}}</div>
+<div *ngIf="options.includes(getOptionValue('CHANCE'))">
+    This the chance you've got: {{cardId}}
+</div>
+<div *ngIf="options.includes(getOptionValue('QUARANTINE'))">
+    Bad luck, you're now stuck in Quarantine
+</div>
+<div *ngIf="options.includes(getOptionValue('BUY_ASSET'))">
+    <h4> Take the opportunity to found the startup '{{name}}' <br> Founding capital: {{price}}</h4>
+    <mat-radio-group aria-label="Select an option">
+        <mat-radio-button value="{{'STARTUP_FOUND'}}" [(ngModel)]="selectedOption">Yes, great idea !</mat-radio-button>
+        <mat-radio-button value="{{'NOTHING'}}" [(ngModel)]="selectedOption">Sorry, not interested</mat-radio-button>
+    </mat-radio-group>
+</div>
+<div></div>

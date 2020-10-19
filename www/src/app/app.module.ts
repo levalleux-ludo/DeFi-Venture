@@ -23,6 +23,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatRadioModule} from '@angular/material/radio';
 
 import { NavigationComponent } from './_components/navigation/navigation.component';
 import { DashboardComponent } from './_components/dashboard/dashboard.component';
@@ -47,6 +48,7 @@ import { BlockchainLinkComponent } from './_components/blockchain-link/blockchai
 import { DicesComponent } from './_components/dices/dices.component';
 import { DiceComponent } from './_components/dice/dice.component';
 import { TestCanvasPageComponent } from './_components/test-canvas-page/test-canvas-page.component';
+import { SpaceDetailsComponent } from './_components/space-details/space-details.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -77,7 +79,8 @@ export function enableWeb3Provider(provider) {
     BlockchainLinkComponent,
     DicesComponent,
     DiceComponent,
-    TestCanvasPageComponent
+    TestCanvasPageComponent,
+    SpaceDetailsComponent
   ],
   imports: [
     BrowserModule,
@@ -101,7 +104,8 @@ export function enableWeb3Provider(provider) {
     HttpClientModule,
     MatFormFieldModule,
     FormsModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatRadioModule
   ],
   providers: [
     {

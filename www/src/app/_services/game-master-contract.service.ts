@@ -16,6 +16,7 @@ export const GAME_STATUS = [
 import GameMasterJSON from '../../../../buidler/artifacts/GameMaster.json';
 import { throwToolbarMixedModesError } from '@angular/material/toolbar';
 import { AbstractContractService } from './AbstractContractService';
+import { ConnectedPositionStrategy } from '@angular/cdk/overlay';
 
 export enum eEvent {
   Status,
@@ -30,6 +31,14 @@ export enum eAvatar {
   Microchip,
   Diamond,
   Rocket
+}
+
+export enum eOption {
+  NOTHING,
+  BUY_ASSET,
+  PAY_BILL,
+  CHANCE,
+  QUARANTINE
 }
 
 export interface IPlayer {
@@ -136,7 +145,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       gameData = {
         status: GAME_STATUS[status],
         players,
-        playersPosition: await this.refreshPositions(players),
+        playersPosition: (await this.refreshPositions(players)).positions,
         nextPlayer,
         currentPlayer,
         currentOptions,
@@ -154,6 +163,9 @@ export class GameMasterContractService extends AbstractContractService<IGameData
         gameData.players = players;
         await this.refreshPositions(players, gameData.playersPosition);
         isChanged = true;
+      } else {
+        isChanged
+         = (await this.refreshPositions(gameData.players, gameData.playersPosition)).isChanged;
       }
       if (nextPlayer !== gameData.nextPlayer) {
         gameData.nextPlayer = nextPlayer;
@@ -173,16 +185,20 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     }
   }
 
-  private async refreshPositions(players: IPlayer[], positions = new Map<string, number>()): Promise<Map<string, number>> {
-    for (const player of players) {
-      await new Promise(resolve => {
-        setTimeout(() => {
-          positions.set(player.address, 0);
-          resolve();
-        }, 250);
-      });
+  private async refreshPositions(players: IPlayer[], positions?: Map<string, number>):
+   Promise<{positions: Map<string, number>, isChanged: boolean}> {
+    let isChanged = false;
+    if (!positions) {
+      positions = new Map<string, number>();
     }
-    return positions;
+    for (const player of players) {
+      const position = await this._contract.getPositionOf(player.address);
+      if (!positions.has(player.address) || (positions.get(player.address) !== position)) {
+        isChanged = true;
+        positions.set(player.address, position);
+      }
+    }
+    return {positions, isChanged};
   }
 
   private async getPlayers(nbPlayers: number): Promise<IPlayer[]> {

@@ -49,6 +49,7 @@ export abstract class AbstractContractService<T> {
         await (new Contract(address, this.contractJSON.abi, this.portisL1Service?.signer())).deployed().then(async (contract) => {
         this._contract = contract;
         this.subscribeToEvents();
+        this.isReady = true;
         await this.refreshData();
       }).catch(e => {
         console.error(e);

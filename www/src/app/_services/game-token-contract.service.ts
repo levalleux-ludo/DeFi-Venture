@@ -33,6 +33,7 @@ export class GameTokenContractService extends AbstractContractService<ITokenData
       balance = await this._contract.balanceOf(address);
       this.balances.set(address, balance);
     }
+    console.log('observeAccount', address, 'isReady', this.isReady, 'balance', balance.toString());
     return balance;
   }
 
@@ -46,6 +47,7 @@ export class GameTokenContractService extends AbstractContractService<ITokenData
   }
 
   protected async refreshData() {
+    console.log("token contract refreshData");
     const decimals = await this._contract.decimals();
     const totalSupply = await this._contract.totalSupply();
     for (const address of this.balances.keys()) {

@@ -66,6 +66,7 @@
                                             <button mat-raised-button color="primary" [disabled]="!canPlay" (click)="play()">Play</button>
                                         </div>
                                         <div *ngIf="isCurrentPlayer">
+                                            <app-space-details [spaceId]="position" [playground]="playground"></app-space-details>
                                             Please choose your option and validate
                                             <button mat-raised-button color="primary" [disabled]="!canValidate" (click)="validate()">Validate</button>
                                         </div>

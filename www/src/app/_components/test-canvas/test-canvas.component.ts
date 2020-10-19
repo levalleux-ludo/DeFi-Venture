@@ -125,12 +125,14 @@ export class TestCanvasComponent implements OnInit {
   }
 
   public async setTargetAngle(value: number, velocity: number) {
-    this._increment_deg = this.block_imgs.length * velocity * 2 / 5 + 3 / 5;
+    this._increment_deg = - (this.block_imgs.length * velocity * 2 / 5 + 3 / 5);
     return new Promise((resolve, reject) => {
       if (this._animateEnd !== undefined) {
         reject(); // animation already in progress
         return;
       }
+      console.log('old targetAngle', Utils.Rad2Deg( this._targetAngle));
+      console.log('new targetAngle', Utils.Rad2Deg(value));
       this._targetAngle = value;
       if (this._currentAngle !== this._targetAngle) {
         this._animateEnd = resolve;
@@ -195,6 +197,10 @@ export class TestCanvasComponent implements OnInit {
       this.ctx.rotate(-angle_rad);
       this.ctx.translate(-posX, -posY);
       this.ctx.drawImage(img, posX - (50 * this.zoom), posY - (30 * this.zoom), 105*this.zoom, 70*this.zoom);
+      this.ctx.font = '48px serif';
+      this.ctx.textAlign = 'center';
+      this.ctx.fillStyle = 'orange';
+      this.ctx.fillText(index.toString(), posX - (0 * this.zoom), posY + (60 * this.zoom));
       const avatars = this.avatarsPosition.get(index);
       for (let i = 0; i < avatars.length; i++) {
         const avatar = avatars[i];
@@ -212,7 +218,10 @@ export class TestCanvasComponent implements OnInit {
     if (this._currentAngle >= 2 * Math.PI) {
       this._currentAngle = 0;
     }
-    if (Math.abs(this._currentAngle - this._targetAngle) < increment) {
+    if (this._currentAngle <= 0) {
+      this._currentAngle = 2 * Math.PI;
+    }
+    if (Math.abs(this._currentAngle - this._targetAngle) < Math.abs(increment)) {
       this._currentAngle = this._targetAngle;
     }
     // draw
