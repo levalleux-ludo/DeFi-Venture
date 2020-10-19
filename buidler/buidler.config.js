@@ -72,6 +72,11 @@ module.exports = {
     networks: {
         buidlerevm: {
             chainId: 31337,
+            // https://github.com/nomiclabs/buidler/issues/660
+            // gas: 12000000,
+            // blockGasLimit: 0x1fffffffffffff,
+            // allowUnlimitedContractSize: true,
+            // timeout: 1800000
         },
         ganache: {
             url: "http://127.0.0.1:7545",
@@ -95,10 +100,14 @@ module.exports = {
         matic: {
             ...createNetworkConfig("matic"),
             chainId: 137,
+            // allowUnlimitedContractSize: true,
         },
         mumbai: {
             ...createNetworkConfig("matic-mumbai"),
             chainId: 80001,
+            // gas: 12000000,
+            // blockGasLimit: 0x1fffffffffffff,
+            // allowUnlimitedContractSize: true,
         }
     },
     // This is a sample solc configuration that specifies which version of solc to use

@@ -3,9 +3,12 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@nomiclabs/buidler/console.sol";
 import { GameMaster } from './GameMaster.sol';
-import { GameToken } from './GameToken.sol';
+// import { GameToken } from './GameToken.sol';
+// import { GameAssets } from './GameAssets.sol';
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./IGameStatus.sol";
+
+import { IContractFactory } from "./IContractFactory.sol";
 
 contract GameFactory is IGameStatus {
     // Add the library methods
@@ -25,18 +28,31 @@ contract GameFactory is IGameStatus {
         chances = _chances;
     }
 
+    // TODO: inverse arguments contractor() et create() : les factories sont statiques alors que les parametres de jeu peuvent varier
+    
     /**
     - factory to create new game contracts
        */
-    function create() public returns (address) {
-        GameToken gameToken = new GameToken();
+    function create(address tokenFactory, address assetsFactory) public returns (address) {
+
+        // GameToken gameToken = new GameToken();
+        // GameAssets gameAssets = new GameAssets();
         GameMaster gameMaster = new GameMaster(nbMaxPlayers, nbPositions, initialAmount, playground, chances);
-        gameMaster.setToken(address(gameToken));
-        gameToken.transferOwnership(address(gameMaster));
+        address tokenAddress = IContractFactory(tokenFactory).create(address(gameMaster));
+        gameMaster.setToken(tokenAddress);
+        address assetsAddress = IContractFactory(assetsFactory).create(address(gameMaster));
+        gameMaster.setAssets(assetsAddress);
+        // gameToken.transferOwnership(address(gameMaster));
+        // gameAssets.transferOwnership(address(gameMaster));
 
         // store gameMaster address in createdGameSet
         gamesSet.add(address(gameMaster));
         return address(gameMaster);
+    }
+
+    function assignContracts(address gameMaster, address token, address assets) public {
+        GameMaster(gameMaster).setToken(token);
+        GameMaster(gameMaster).setAssets(assets);
     }
 
     function cleanEndedGames() public {

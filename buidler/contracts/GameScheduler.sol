@@ -42,7 +42,7 @@ contract GameScheduler is IGameStatus, Ownable {
         return playersSet[index];
     }
 
-    function register() public payable {
+    function register() public virtual payable {
         require(status == CREATED, "INVALID_GAME_STATE");
         require(!isPlayerRegistered(msg.sender), "PLAYER_ALREADY_REGISTERED");
         if (nbPlayers == 0) {
@@ -75,6 +75,7 @@ contract GameScheduler is IGameStatus, Ownable {
     function chooseNextPlayer() internal {
         nextPlayerIdx = (nextPlayerIdx + 1) % nbPlayers;
         nextPlayer = playersSet[nextPlayerIdx];
+        // TODO: if player in quarantine, step over (and remove from quarantine for next time)
     }
 
 }

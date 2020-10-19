@@ -22,17 +22,26 @@ async function main() {
     // await greeter.deployed();
     // console.log("Greeter deployed to:", greeter.address);
 
-    const GameFactory = await ethers.getContractFactory("GameFactory");
-    const gameFactory = await GameFactory.deploy(
+    const GameFactoryFactory = await ethers.getContractFactory("GameFactory");
+    const TokenFactoryFactory = await ethers.getContractFactory("TokenFactory");
+    const AssetsFactoryFactory = await ethers.getContractFactory("AssetsFactory");
+
+    const spaces = getSpaces(NB_POSITIONS);
+    const chances = getChances(NB_CHANCES, NB_POSITIONS);
+
+    tokenFactory = await TokenFactoryFactory.deploy();
+    assetsFactory = await AssetsFactoryFactory.deploy();
+    await tokenFactory.deployed();
+    await assetsFactory.deployed();
+    gameFactory = await GameFactoryFactory.deploy(
         NB_MAX_PLAYERS,
         NB_POSITIONS,
         ethers.BigNumber.from(INITIAL_BALANCE),
-        getSpaces(NB_POSITIONS),
-        getChances(NB_CHANCES, NB_POSITIONS)
+        spaces,
+        chances
     );
     await gameFactory.deployed();
     console.log("gameFactory deployed to:", gameFactory.address);
-
 
     const Greeter = await ethers.getContractFactory("Greeter");
     const greeter = await Greeter.deploy('Contract deployed on ' + bre.network.name);

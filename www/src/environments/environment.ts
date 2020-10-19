@@ -32,7 +32,7 @@ export const environment = {
       gasRelay: 'tbd'
     },
     80001: { // mumbai
-      gameFactory: '0xEfA361fD7cE0B1b409d23F119Fe6BA9e8c9328AF',
+      gameFactory: '0xe8FF7C12477130D63F2D516308F3134eb9489bB9',
       greeter: '0x83a4BcdD650f67b7DbC92346B20e97fef660Ee20',
       gasRelay: 'tbd'
     }

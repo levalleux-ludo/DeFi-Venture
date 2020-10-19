@@ -5,20 +5,26 @@ import "@nomiclabs/buidler/console.sol";
 
 import "./GameScheduler.sol";
 import "./GameToken.sol";
+import "./GameAssets.sol";
 contract GameMaster is GameScheduler {
+    uint256 constant public MAX_UINT256 = 2**256 - 1;
+
     GameToken private token;
     address private tokenAddress;
+    GameAssets private assets;
+    address private assetsAddress;
     uint256 initialAmount;
     address currentPlayer;
-    uint256 nonce;
+    uint256 internal nonce;
     uint8 nbPositions;
-    byte currentOptions;
-    mapping(address => uint8) private positions;
+    uint8 internal currentOptions;
+    uint8 internal currentCardId;
+    mapping(address => uint8) internal positions;
     bytes32 private playground;
     bytes32 private chances;
 
-    event RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, byte options);
-    event PlayPerformed(address player, byte option);
+    event RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
+    event PlayPerformed(address player, uint8 option, uint8 cardId, uint8 newPosition);
 
     constructor (
         uint8 nbMaxPlayers,
@@ -38,15 +44,24 @@ contract GameMaster is GameScheduler {
         token = GameToken(_token);
     }
 
+    function setAssets(address _assets) public onlyOwner {
+        assetsAddress = _assets;
+        assets = GameAssets(_assets);
+    }
+
     function getToken() public view returns (address) {
         return tokenAddress;
+    }
+
+    function getAssets() public view returns (address) {
+        return assetsAddress;
     }
 
     function getCurrentPlayer() public view returns (address) {
         return currentPlayer;
     }
 
-    function getCurrentOptions() public view returns (byte) {
+    function getCurrentOptions() public view returns (uint8) {
         return currentOptions;
     }
 
@@ -66,11 +81,18 @@ contract GameMaster is GameScheduler {
         return playground;
     }
 
-    function getSpaceDetails(uint8 spaceId) public view returns (uint8 spaceType, uint8 assetId) {
+     function getSpaceDetails(uint8 spaceId) public view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice) {
         require(spaceId < nbPositions, "INVALID_ARGUMENT");
         uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
         spaceType = spaceCode & 0x7;
         assetId = spaceCode >> 3;
+        if ((spaceType >= 4) && (spaceType < 8)) {
+            // spaceType: 4 <=> ASSET_CLASS_1, price = 50
+            // .. 
+            // spaceType: 7 <=> ASSET_CLASS_4, price = 200
+            uint8 assetClass = spaceType - 3;
+            assetPrice = 50 * assetClass;
+        }
     }
 
     function getChanceDetails(uint8 chanceId) public view returns (uint8 chanceType, uint8 chanceParam) {
@@ -96,7 +118,14 @@ contract GameMaster is GameScheduler {
         }
     }
 
-    function rollDices() public returns (uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, byte options) {
+    function register() public override payable {
+        if (tokenAddress != address(0)) {
+            require(token.allowance(msg.sender, address(this)) == MAX_UINT256, "SENDER_MUST_APPROVE_GAME_MASTER");
+        }
+        super.register();
+    }
+
+    function rollDices() public returns (uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options) {
         require(status == STARTED, "INVALID_GAME_STATE");
         require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
         require(currentPlayer == address(0), "NOT_AUTHORIZED");
@@ -108,8 +137,24 @@ contract GameMaster is GameScheduler {
         cardId = uint8(random % 47 % 32);
         newPosition = (oldPosition + dice1 + dice2) % nbPositions;
         positions[msg.sender] = newPosition;
-        options = 0;
+        options = getOptionsAt(msg.sender, newPosition);
+        currentOptions = options;
+        currentCardId = cardId;
         emit RolledDices(msg.sender, dice1, dice2, cardId, newPosition, options);
+    }
+
+    function play(uint8 option) public {
+        require(status == STARTED, "INVALID_GAME_STATE");
+        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
+        require(msg.sender == currentPlayer, "NOT_AUTHORIZED");
+        require((option & currentOptions) != 0, "OPTION_NOT_ALLOWED");
+        require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
+        performOption(positions[msg.sender], option);
+        chooseNextPlayer();
+        emit PlayPerformed(msg.sender, option, currentCardId, positions[msg.sender]);
+        currentPlayer = address(0);
+        currentOptions = 0;
+        currentCardId = 0;
     }
 
     function random() internal returns (uint) {
@@ -117,23 +162,6 @@ contract GameMaster is GameScheduler {
         nonce++;
         return _random;
     }
-
-    function play(byte option) public {
-        require(status == STARTED, "INVALID_GAME_STATE");
-        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
-        require(msg.sender == currentPlayer, "NOT_AUTHORIZED");
-        currentPlayer = address(0);
-        // TODO: check option is allowed 
-        // TODO: perform option
-        chooseNextPlayer();
-        emit PlayPerformed(msg.sender, option);
-    }
-
-    // TODO: get random value https://ethereum.stackexchange.com/questions/60684/i-want-get-random-number-between-100-999-as-follows
-    //TODO: function rollDices -> emit RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, byte optionsMask)
-    // TODO: function play(byte option) --> check option is valid for player.newPosition, then perform chosen option
-    // TODO: bytes32 private gameboard: 1 byte per board space, define its type
-    // TODO: bytes32 private options: 1 byte per board space, define the available options per space ????
 
     function bytesToUint8(bytes memory _bytes, uint256 _start) internal pure returns (uint8) {
         require(_start + 1 >= _start, "toUint8_overflow");
@@ -145,5 +173,64 @@ contract GameMaster is GameScheduler {
         }
 
         return tempUint;
+    }
+
+    function getOptionsAt(address player, uint8 position) public view returns (uint8 options) {
+        (uint8 spaceType, uint8 assetId, uint256 assetPrice) = getSpaceDetails(position);
+        require(spaceType < 8, "SPACE_TYPE_INVALID");
+        options = 0;
+        if (
+            (spaceType == 0) // GENESIS
+            || (spaceType == 2 )// LIQUIDATION
+        ) {
+            options = 1; // 1 = NOTHING
+        } else if (spaceType == 1) { // QUARANTINE
+            options = 16; // 16 = QUARANTINE
+        } else if (spaceType == 3) { // CHANCE
+            options = 8; // 8 = CHANCE
+        } else { // ASSETS
+            // TODO: If assets owned by another player set options = 4 // 4 = PAY_BILL
+            // else if asset owned by current player set options = 1 // 1 = NOTHING
+            // else
+            options = 1 + 2; // 2 = BUY_ASSET
+        }
+    }
+
+    function performOption(uint8 position, uint8 option) internal {
+        (uint8 spaceType, uint8 assetId, uint256 assetPrice) = getSpaceDetails(position);
+        console.log("getSpaceDetails");
+        console.log("position");
+        console.log(position);
+        console.log("assetPrice");
+        console.logUint(assetPrice);
+        if ((option & 1) != 0) { // NOTHING
+
+        } else if ((option & 2) != 0) { // BUY_ASSET
+            if((tokenAddress != address(0)) && assetsAddress != address(0)) {
+                console.log("perform BUY_ASSET");
+                console.log("this");
+                console.logAddress(address(this));
+                console.log("sender");
+                console.logAddress(msg.sender);
+                console.logUint(token.allowance(msg.sender, address(this)));
+                token.burnFrom(msg.sender, assetPrice);
+                assets.safeMint(msg.sender, assetId);
+            }
+            // position -> assetId
+            // assetId -> price
+            // token.burn(msg.sender, price)
+            // asset.mint(msg.sender, assetId)
+        } else if ((option & 4) != 0) { // PAY_BILL
+            // position -> assetId
+            // assetId -> product_cost
+            // assetId -> owner
+            // token.transferFrom(msg.sender, owner, amount)
+        } else if ((option & 8) != 0) { // CHANCE
+            // TODO: perform chance for currentCardId (delegated to ChanceContrat ?)
+            // cardId -> chanceType (Pay|Receive|Move_N ...), chanceParam
+            // chanceType -> contract
+        } else if ((option & 16) != 0) { // QUARANTINE
+            // TODO: set player in Quarantine
+        }
     }
 }

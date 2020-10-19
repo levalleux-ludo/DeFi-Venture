@@ -28,17 +28,29 @@ function revertMessage(error) {
     return 'VM Exception while processing transaction: revert ' + error;
 }
 
-var GameFactoryFactory;
 var gameFactory;
+var tokenFactory;
+var assetsFactory;
 var GameMasterFactory;
 var GameTokenFactory;
+var GameAssetsFactory;
 var owner;
 var addr1;
 var addr2;
 
 
 async function registerPlayers(gameMaster, players) {
+    let tokenContract;
+    const token = await gameMaster.getToken();
+    if (token !== 0) {
+        tokenContract = await GameTokenFactory.attach(token);
+        await tokenContract.deployed();
+    }
     for (let player of players) {
+        const token = await gameMaster.getToken();
+        if (tokenContract) {
+            await tokenContract.connect(player).approveMax(gameMaster.address);
+        }
         await gameMaster.connect(player).register();
     }
 }
@@ -48,13 +60,21 @@ async function startGame(gameMaster) {
 }
 
 describe("GameFactory", function() {
-    before('', async() => {
+    before('before tests', async() => {
         [owner, addr1, addr2] = await ethers.getSigners();
-        GameFactoryFactory = await ethers.getContractFactory("GameFactory");
+        const GameFactoryFactory = await ethers.getContractFactory("GameFactory");
+        const TokenFactoryFactory = await ethers.getContractFactory("TokenFactory");
+        const AssetsFactoryFactory = await ethers.getContractFactory("AssetsFactory");
         GameMasterFactory = await ethers.getContractFactory("GameMaster");
         GameTokenFactory = await ethers.getContractFactory("GameToken");
+        GameAssetsFactory = await ethers.getContractFactory("GameAssets");
         const spaces = getSpaces(NB_POSITIONS);
         const chances = getChances(NB_CHANCES, NB_POSITIONS);
+
+        tokenFactory = await TokenFactoryFactory.deploy();
+        assetsFactory = await AssetsFactoryFactory.deploy();
+        await tokenFactory.deployed();
+        await assetsFactory.deployed();
         gameFactory = await GameFactoryFactory.deploy(
             NB_MAX_PLAYERS,
             NB_POSITIONS,
@@ -70,7 +90,7 @@ describe("GameFactory", function() {
         expect(nbGames.toNumber()).to.equal(0);
     });
     it('Should create one game', async function() {
-        await gameFactory.create();
+        await gameFactory.create(tokenFactory.address, assetsFactory.address);
         const nbGames = await gameFactory.nbGames();
         console.log('nbGames', nbGames, nbGames.toString());
         expect(nbGames.toNumber()).to.equal(1);
@@ -92,6 +112,19 @@ describe("GameFactory", function() {
         const balance1 = await token.balanceOf(addr1Address);
         expect(balance1.toNumber()).to.equal(0);
         expect((await token.totalSupply()).toNumber()).to.equal(0);
+    });
+    it('Game Master Should have assets contract', async function() {
+        const gameMasterAddress = await gameFactory.getGameAt(0);
+        const gameMaster = GameMasterFactory.attach(gameMasterAddress);
+        await gameMaster.deployed();
+        const assetsAddr = await gameMaster.getAssets();
+        expect(assetsAddr).to.not.equal(0);
+        const assets = GameAssetsFactory.attach(assetsAddr);
+        await assets.deployed();
+        const addr1Address = addr1.getAddress();
+        const balance1 = await assets.balanceOf(addr1Address);
+        expect(balance1.toNumber()).to.equal(0);
+        expect((await assets.totalSupply()).toNumber()).to.equal(0);
     });
     it('Registered users should have tokens when game starts', async function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);

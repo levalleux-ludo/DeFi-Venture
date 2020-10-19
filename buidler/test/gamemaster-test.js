@@ -31,7 +31,7 @@ function revertMessage(error) {
 }
 
 async function createGameMaster() {
-    const GameMaster = await ethers.getContractFactory("GameMaster");
+    const GameMaster = await ethers.getContractFactory("GameMasterForTest");
     const gameMaster = await GameMaster.deploy(
         NB_MAX_PLAYERS,
         NB_POSITIONS,
@@ -60,7 +60,8 @@ async function playTurn(gameMaster, signer) {
         let filter = gameMaster.filters.RolledDices(signer.address);
         gameMaster.once(filter, async(player, dice1, dice2, cardId, newPosition, options) => {
             console.log('RolledDices', player, dice1, dice2, cardId, newPosition, options);
-            await gameMaster.connect(signer).play(0);
+            await gameMaster.setOptions(255);
+            await gameMaster.connect(signer).play(1);
             resolve([dice1, dice2]);
         });
         await gameMaster.connect(signer).rollDices();
@@ -135,7 +136,8 @@ describe("GameMaster", function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
-        await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("INVALID_GAME_STATE"));
+        await gameMaster.setOptions(255);
+        await expect(gameMaster.connect(addr1).play(1)).to.be.revertedWith(revertMessage("INVALID_GAME_STATE"));
     });
     it("Should not allow to rollDices if not registered", async function() {
         const [owner, addr1, addr2, addr3] = await ethers.getSigners();
@@ -149,7 +151,8 @@ describe("GameMaster", function() {
         const gameMaster = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
-        await expect(gameMaster.connect(addr3).play(0)).to.be.revertedWith(revertMessage("NOT_AUTHORIZED"));
+        await gameMaster.setOptions(255);
+        await expect(gameMaster.connect(addr3).play(1)).to.be.revertedWith(revertMessage("NOT_AUTHORIZED"));
     });
     it("Should not allow to rollDices if not nextPlayer", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
@@ -163,7 +166,8 @@ describe("GameMaster", function() {
         const gameMaster = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
-        await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("NOT_AUTHORIZED"));
+        await gameMaster.setOptions(255);
+        await expect(gameMaster.connect(addr1).play(1)).to.be.revertedWith(revertMessage("NOT_AUTHORIZED"));
     });
     it("Should allow to rollDices the nextPlayer", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
@@ -188,7 +192,10 @@ describe("GameMaster", function() {
         await startGame(gameMaster);
         const addr1Address = await addr1.getAddress();
         await gameMaster.connect(addr1).rollDices();
-        await expect(gameMaster.connect(addr1).play(0)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, '0x00');
+        await gameMaster.setOptions(255);
+        await gameMaster.setCardId(12);
+        const position = await gameMaster.getPositionOf(addr1Address);
+        await expect(gameMaster.connect(addr1).play(1)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, 1, 12, position);
         const addr2Address = await addr2.getAddress();
         expect(await gameMaster.getNextPlayer()).to.equal(addr2Address, "next player shall be changed");
     });
@@ -416,17 +423,94 @@ describe('GameMaster Playground', () => {
         const playground = await gameMaster.getPlayground();
         let spaceDetails;
         spaceDetails = await gameMaster.getSpaceDetails(1);
-        expect(spaceDetails[0]).to.equal(6);
-        expect(spaceDetails[1]).to.equal(0);
+        expect(spaceDetails[0]).to.equal(6); // ASSET_CLASS_3
+        expect(spaceDetails[1]).to.equal(0); // assetId
         spaceDetails = await gameMaster.getSpaceDetails(2);
-        expect(spaceDetails[0]).to.equal(3);
+        expect(spaceDetails[0]).to.equal(3); // CHANCE
         expect(spaceDetails[1]).to.equal(0);
         spaceDetails = await gameMaster.getSpaceDetails(3);
-        expect(spaceDetails[0]).to.equal(7);
-        expect(spaceDetails[1]).to.equal(1);
+        expect(spaceDetails[0]).to.equal(7); // ASSET_CLASS_4
+        expect(spaceDetails[1]).to.equal(1); // assetId
         spaceDetails = await gameMaster.getSpaceDetails(4);
-        expect(spaceDetails[0]).to.equal(7);
-        expect(spaceDetails[1]).to.equal(2);
+        expect(spaceDetails[0]).to.equal(7); // ASSET_CLASS_4
+        expect(spaceDetails[1]).to.equal(2); // assetId
+    })
+})
+
+describe('Game play options', () => {
+    before('before', async() => {
+        [owner, addr1, addr2] = await ethers.getSigners();
+        gameMaster = await createGameMaster();
+        await registerPlayers(gameMaster, [addr1, addr2]);
+        await startGame(gameMaster);
+        addr1Address = await addr1.getAddress();
+        addr2Address = await addr2.getAddress();
+    });
+    it('check options at beginning', async() => {
+        let options;
+        options = await gameMaster.getOptionsAt(addr1Address, 0); // GENESIS
+        expect(options).to.equal(1, 'options at Genesis should be NOTHING'); // NOTHING
+        options = await gameMaster.getOptionsAt(addr1Address, 1); // ASSET
+        expect(options).to.equal(1 + 2, 'options at Asset should be NOTHING|BUY_ASSET'); // NOTHING|BUY_ASSET
+        options = await gameMaster.getOptionsAt(addr1Address, 2); // CHANCE
+        expect(options).to.equal(8, 'options at Chance should be CHANCE'); // CHANCE
+    });
+    it('play at GENESIS', async() => {
+        await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
+        expect(await gameMaster.getCurrentPlayer()).to.equal(addr1Address, "current player shall be changed");
+        await gameMaster.setPlayerPosition(addr1Address, 0); // GENESIS
+        await gameMaster.setOptions(1);
+        await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(2)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(4)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(8)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(16)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(0xFF & ~1)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await gameMaster.setCardId(12);
+        const position = await gameMaster.getPositionOf(addr1Address);
+        await expect(gameMaster.connect(addr1).play(1)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, 1, 12, position);
+    })
+    it('play NOTHING at ASSET 0', async() => {
+        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        expect(await gameMaster.getCurrentPlayer()).to.equal(addr2Address, "current player shall be changed");
+        await gameMaster.setPlayerPosition(addr2Address, 1); // ASSET id 0
+        await gameMaster.setOptions(3);
+        await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(4)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(8)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(16)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(0xFF & ~3)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await gameMaster.setCardId(12);
+        const position = await gameMaster.getPositionOf(addr2Address);
+        await expect(gameMaster.connect(addr2).play(1)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr2Address, 1, 12, position);
+    })
+    it('play BUY_ASSET at ASSET 1', async() => {
+        await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
+        expect(await gameMaster.getCurrentPlayer()).to.equal(addr1Address, "current player shall be changed");
+        await gameMaster.setPlayerPosition(addr1Address, 3); // ASSET id 1
+        await gameMaster.setOptions(3);
+        await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(4)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(8)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(16)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr1).play(0xFF & ~3)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await gameMaster.setCardId(12);
+        const position = await gameMaster.getPositionOf(addr1Address);
+        await expect(gameMaster.connect(addr1).play(2)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, 2, 12, position);
+    })
+    it('play CHANCE', async() => {
+        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        expect(await gameMaster.getCurrentPlayer()).to.equal(addr2Address, "current player shall be changed");
+        await gameMaster.setPlayerPosition(addr2Address, 2); // CHANCE
+        await gameMaster.setOptions(8);
+        await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(2)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(4)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(16)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(0xFF & ~8)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await gameMaster.setCardId(12);
+        const position = await gameMaster.getPositionOf(addr2Address);
+        await expect(gameMaster.connect(addr2).play(8)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr2Address, 8, 12, position);
     })
 })
 
