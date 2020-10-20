@@ -34,12 +34,12 @@ export enum eAvatar {
 }
 
 export enum eOption {
-  INVALID, // 0 not allowed
-  NOTHING, // 1
-  BUY_ASSET, // 2
-  PAY_BILL, // 4
-  CHANCE, // 8
-  QUARANTINE // 16
+  INVALID = 0, // 0 not allowed
+  NOTHING = 1, // 1
+  BUY_ASSET = 2, // 2
+  PAY_BILL = 4, // 4
+  CHANCE = 8, // 8
+  QUARANTINE = 16 // 16
 }
 
 export interface IPlayer {
@@ -77,6 +77,9 @@ type ChanceTypeStrings = keyof typeof eChanceType;
 export interface ISpace {
   type: eSpaceType;
   assetId: number;
+  assetPrice: number;
+  productPrice: number;
+  owner: string;
 }
 export interface IGameData {
   status: string;
@@ -85,7 +88,9 @@ export interface IGameData {
   nextPlayer: string;
   currentPlayer: string;
   currentOptions: number;
+  chanceCardId: number;
   tokenAddress: string;
+  assetsAddress: string;
   playground: ISpace[];
 }
 
@@ -110,22 +115,31 @@ export class GameMasterContractService extends AbstractContractService<IGameData
         console.log('rollDices event', player, dice1, dice2, newPosition);
         if (player !== this.portisL1Service.accounts[0]) {
           console.error('Unexpected RolledDices event from another player', player);
+          reject(`Unexpected RolledDices event from another player ${player}`);
         } else {
           resolve({dice1, dice2, newPosition});
         }
       };
-      this._contract.rollDices().then(() => {
+      this._contract.rollDices().then((response) => {
+        response.wait().then(() => {
+          console.log('rollDices succeed');
+        }).catch(e => reject(e));
         console.log('rollDices called');
+      }).catch((e) => {
+        reject(e);
       });
      });
    }
   public play(option: number) {
     return new Promise((resolve, reject) => {
-      this._contract.play(option).then(() => {
+      this._contract.play(option).then((response) => {
+      response.wait().then(() => {
+        console.log('play succeed');
+        resolve();
+      }).catch(e => reject(e));
       console.log('play called');
-      resolve();
-    }).catch((e) => {
-      console.error(e);
+  }).catch((e) => {
+      reject(e);
     });
   });
 }
@@ -137,12 +151,14 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     const nextPlayer = await this._contract.getNextPlayer();
     const currentPlayer = await this._contract.getCurrentPlayer();
     const currentOptions = await this._contract.getCurrentOptions();
+    const chanceCardId = await this._contract.getCurrentCardId();
     let isChanged = false;
     if (!gameData) {
       const players = await this.getPlayers(nbPlayers);
       const tokenAddress = await this._contract.getToken();
+      const assetsAddress = await this._contract.getAssets();
       const nbSpaces = await this._contract.getNbPositions();
-      const playground = await this._contract.getPlayground();
+      const playground = await this.buildPlayground(nbSpaces);
       gameData = {
         status: GAME_STATUS[status],
         players,
@@ -150,8 +166,10 @@ export class GameMasterContractService extends AbstractContractService<IGameData
         nextPlayer,
         currentPlayer,
         currentOptions,
+        chanceCardId,
         tokenAddress,
-        playground: this.buildPlayground(nbSpaces, playground)
+        assetsAddress,
+        playground
       };
       isChanged = true;
     } else {
@@ -178,6 +196,10 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       }
       if (currentOptions !== gameData.currentOptions) {
         gameData.currentOptions = currentOptions;
+        isChanged = true;
+      }
+      if (chanceCardId !== gameData.chanceCardId) {
+        gameData.chanceCardId = chanceCardId;
         isChanged = true;
       }
     }
@@ -222,8 +244,8 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     this._contract.on('PlayerRegistered', (newPlayer) => {
       this.recordEvent({ type: 'PlayerRegistered', value: newPlayer });
     });
-    this._contract.on('PlayPerformed', (player) => {
-      this.recordEvent({ type: 'PlayPerformed', value: player });
+    this._contract.on('PlayPerformed', (player, option, cardId, newPosition) => {
+      this.recordEvent({ type: 'PlayPerformed', value: {player, option, newPosition} });
     });
     this._contract.on('RolledDices', (player, dice1, dice2, cardId, newPosition, options) => {
       if (this.onRolledDices) {
@@ -238,20 +260,21 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     return new GameMaster(game, this.portisL1Service.signer());
   }
 
-  protected buildPlayground(nbSpaces: number, playground: string): ISpace[] {
+  protected async buildPlayground(nbSpaces: number): Promise<ISpace[]> {
     const spaces = [];
     for (let spaceId = 0; spaceId < nbSpaces; spaceId++) {
-      const idxStart = playground.length - 2 * (spaceId);
-      const spaceCode = parseInt(playground.slice(idxStart - 2, idxStart), 16);
-      // tslint:disable-next-line: no-bitwise
-      const type = spaceCode & 0x7;
-      // tslint:disable-next-line: no-bitwise
-      const assetId = spaceCode >> 3;
+      const spaceDetails = await this._contract.getSpaceDetails(spaceId);
+      const type = spaceDetails[0];
+      const assetId = spaceDetails[1];
+      const assetPrice = spaceDetails[2].toNumber();
+      const productPrice = spaceDetails[3].toNumber();
       spaces.push({
         type,
-        assetId
+        assetId,
+        assetPrice,
+        productPrice
       });
-      console.log('Space', spaceId, eSpaceType[type], assetId);
+      console.log('Space', spaceId, eSpaceType[type], assetId, assetPrice);
     }
     return spaces;
   }

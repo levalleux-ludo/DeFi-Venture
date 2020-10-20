@@ -451,7 +451,7 @@ describe('Game play options', () => {
         options = await gameMaster.getOptionsAt(addr1Address, 0); // GENESIS
         expect(options).to.equal(1, 'options at Genesis should be NOTHING'); // NOTHING
         options = await gameMaster.getOptionsAt(addr1Address, 1); // ASSET
-        expect(options).to.equal(1 + 2, 'options at Asset should be NOTHING|BUY_ASSET'); // NOTHING|BUY_ASSET
+        expect(options).to.equal(1, 'options at Asset should be NOTHING'); // NOTHING (only because token is not set in gameMAster contract)
         options = await gameMaster.getOptionsAt(addr1Address, 2); // CHANCE
         expect(options).to.equal(8, 'options at Chance should be CHANCE'); // CHANCE
     });

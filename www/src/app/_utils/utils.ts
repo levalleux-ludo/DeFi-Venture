@@ -1,5 +1,6 @@
 import { BigNumber } from 'ethers';
 export class Utils {
+  public static ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
   public static USDC_decimals = BigNumber.from(10).pow(6);
   public static ETH_decimals = BigNumber.from(10).pow(18);
   public static MATIC_decimals = BigNumber.from(10).pow(18);

@@ -1,6 +1,5 @@
 <mat-sidenav-container class="sidenav-container">
-    <mat-sidenav #drawer class="sidenav" [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
-        <!-- <mat-sidenav #drawer class="sidenav" fixedInViewport [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false"> -->
+    <!-- <mat-sidenav #drawer class="sidenav" [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
         <mat-nav-list>
             <a mat-list-item>DeFi Services</a>
             <a mat-list-item>Marketplace</a>
@@ -14,7 +13,7 @@
 
         </div>
 
-    </mat-sidenav>
+    </mat-sidenav> -->
     <mat-sidenav-content style="height: auto;">
 
         <div #content fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="sidenav-content">
@@ -27,7 +26,10 @@
             <input matInput [value]="username" (change)="setUsername($event.target.value)">
         </mat-form-field>
     </div> -->
-            <app-blockchain-link [network]="network" [link]="gameMaster"></app-blockchain-link>
+            <div class="mat-headline">Game Contract:
+                <app-blockchain-link [network]="network" [link]="gameMaster"></app-blockchain-link>
+            </div>
+
             <div fxLayout="row" fxLayoutWrap fxLayoutAlign="center start" class="game-connect">
                 <!-- <app-players-tree></app-players-tree> -->
                 <mat-spinner *ngIf="gameData == undefined"></mat-spinner>
@@ -44,12 +46,11 @@
                             <input matInput [value]="address" (change)="setAddress($event.target.value)">
                         </mat-form-field>
                     </div> -->
-                                <div>
-                                    <!-- <div>Owner: {{owner}}</div> -->
+                                <!-- <div>
                                     <div>nbPlayers: {{gameData.players.length}}</div>
                                     <div>Status: {{gameData.status}}</div>
                                     <app-players-table #players [gameData]="gameData" [tokenData]="tokenData"></app-players-table>
-                                </div>
+                                </div> -->
                             </div>
                         </div>
                         <div>
@@ -58,37 +59,42 @@
                         <div style="position: relative; top: 300px;">
                             <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="inner-content">
                                 <div *ngIf="gameData.status == 'STARTED'">
-                                    <div>Next Player: {{gameData?.nextPlayer}}</div>
+                                    <!-- <div>Next Player: {{gameData?.nextPlayer}}</div> -->
                                     <div *ngIf="isNextPlayer">
-                                        <app-dices #dices style="width:250px;"></app-dices>
-                                        <div *ngIf="!isCurrentPlayer">
-                                            It's your turn, please roll the dices
-                                            <button mat-raised-button color="primary" [disabled]="!canPlay" (click)="play()">Play</button>
+                                        <div fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center">
+                                            <div class="dices-block">
+                                                <div *ngIf="!isCurrentPlayer" class="mat-headline">
+                                                    It's your turn, please roll the dices
+                                                    <app-dices #dices style="width:250px;"></app-dices>
+                                                    <button mat-raised-button color="primary" [disabled]="!canPlay" (click)="play()">Play</button>
+                                                </div>
+                                            </div>
+                                            <div *ngIf="isCurrentPlayer">
+                                                <app-space-details [spaceId]="position" [owner]="owner" [playground]="playground" [canValidate]="canValidate" [options]="gameData.currentOptions" [chanceCardId]="gameData.chanceCardId" (onValidate)="validate($event)"></app-space-details>
+                                            </div>
                                         </div>
-                                        <div *ngIf="isCurrentPlayer">
-                                            <app-space-details [spaceId]="position" [playground]="playground"></app-space-details>
-                                            Please choose your option and validate
-                                            <button mat-raised-button color="primary" [disabled]="!canValidate" (click)="validate()">Validate</button>
-                                        </div>
-                                    </div>
-                                    <div *ngIf="!isNextPlayer">
-                                        Current player: {{gameData.nextPlayer}}
                                     </div>
                                 </div>
-                                <div *ngIf="gameData.status == 'CREATED'">
-                                    Game is not started yet. Wait for players registering (2 minimum), then you can start
-                                    <button mat-raised-button color="primary" [disabled]="!canStart" (click)="start()">Start Game</button>
+                                <div *ngIf="!isNextPlayer" class="mat-headline">
+                                    {{gameData.nextPlayer}} is currently playing
                                 </div>
                             </div>
-                        </div>
-                        <div style="position: relative; top: 900px;">
-                            <app-events-log [events]="events"></app-events-log>
+                            <div *ngIf="gameData.status == 'CREATED'">
+                                Game is not started yet. Wait for players registering (2 minimum), then you can start
+                                <button mat-raised-button color="primary" [disabled]="!canStart" (click)="start()">Start Game</button>
+                            </div>
                         </div>
                     </div>
+                    <div class="my-assets">
+                        <app-my-assets [assetIds]="assets" [playground]="playground"></app-my-assets>
+                    </div>
+                    <div style="position: relative; top: 900px;">
+                        <app-events-log [events]="events"></app-events-log>
+                    </div>
                 </div>
-                <!-- <app-contract-game-master ></app-contract-game-master> -->
-
             </div>
+            <!-- <app-contract-game-master ></app-contract-game-master> -->
+
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>

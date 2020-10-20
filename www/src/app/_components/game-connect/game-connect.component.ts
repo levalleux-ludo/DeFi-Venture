@@ -1,7 +1,8 @@
+import { AssetsContractService, IAssetsData } from './../../_services/assets-contract.service';
 import { PlayersTableComponent } from './../players-table/players-table.component';
 import { Utils } from './../../_utils/utils';
 import { GameTokenContractService, ITokenData } from './../../_services/game-token-contract.service';
-import { GameMasterContractService, GAME_STATUS, IGameData } from './../../_services/game-master-contract.service';
+import { GameMasterContractService, GAME_STATUS, IGameData, eSpaceType } from './../../_services/game-master-contract.service';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { GameService } from './../../_services/game.service';
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, ViewChildren, QueryList } from '@angular/core';
@@ -14,6 +15,7 @@ import { fromEvent, Observable, Subscription } from 'rxjs';
 import { first, map, shareReplay } from 'rxjs/operators';
 import { element } from 'protractor';
 import { BigNumber } from 'ethers';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-game-connect',
@@ -36,9 +38,14 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   currentAccount;
   events = [];
   position = 0;
+  owner;
+  assets;
   tokenDecimals: number;
   balances: Map<string, BigNumber>;
   playground;
+  isValidating = false;
+  isPlaying = false;
+  isStarting = false;
 
   @ViewChild('dices', {static: false})
   dices: DicesComponent;
@@ -63,6 +70,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     private portisService: PortisL1Service,
     private gameMasterContractService: GameMasterContractService,
     private tokenContractService: GameTokenContractService,
+    private assetsContractService: AssetsContractService,
+    private snackBar: MatSnackBar
   ) { }
   ngAfterViewInit(): void {
     this.board_width = this.content.nativeElement.clientWidth;
@@ -88,13 +97,35 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     ).then(() => {
       this.network = this.portisService.network;
       this.gameMasterContractService.setAddress(this.gameMaster).then(() => {
+        this.gameMasterContractService.onEvent.subscribe((event) => {
+          const message = this.event2message('gameMaster', event);
+          this.events.push({log: message});
+          this.showInfo(message);
+        });
+        const tokenAddress = this.gameMasterContractService.data.tokenAddress;
+        this.tokenContractService.setAddress(tokenAddress).then(() => {
+          this.tokenContractService.onEvent.subscribe((event) => {
+            const message = this.event2message('token', event);
+            this.events.push({log: message});
+            this.showInfo(message);
+          })
+          this.tokenContractService.onUpdate.subscribe((tokenData) => {
+            this.refreshTokenData(tokenData);
+          });
+        });
+        const assetsAddress = this.gameMasterContractService.data.assetsAddress;
+        this.assetsContractService.setAddress(assetsAddress).then(() => {
+          this.assetsContractService.onEvent.subscribe((event) => {
+            const message = this.event2message('assets', event);
+            this.events.push({log: message});
+            this.showInfo(message);
+          })
+        });
+        this.assetsContractService.onUpdate.subscribe((assetsData) => {
+          this.refreshAssetsData(assetsData);
+        });
         this.gameMasterContractService.onUpdate.subscribe((gameData) => {
           this.refreshGameData(gameData);
-          this.tokenContractService.setAddress(gameData.tokenAddress).then(() => {
-            this.tokenContractService.onUpdate.subscribe((tokenData) => {
-              this.refreshTokenData(tokenData);
-            });
-          });
         });
       });
     }).catch(e => console.error(e));
@@ -119,7 +150,10 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   refreshGameData(gameData: IGameData) {
     if (gameData) {
       this.gameData = gameData;
-      this.gameData.players.forEach(player => this.tokenContractService.observeAccount(player.address));
+      this.gameData.players.forEach(player => {
+        this.tokenContractService.observeAccount(player.address);
+        this.assetsContractService.observeAccount(player.address);
+      });
       if (!this.playground) {
         this.playground = gameData.playground;
       }
@@ -138,7 +172,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
 
   refreshTokenData(tokenData: ITokenData) {
     this.tokenData = tokenData;
-    console.log('refreshTokenData', 'tokenData');
+    console.log('refreshTokenData', tokenData);
     this.tokenData.balances.forEach((value, key) => {
       console.log(key, value.toString());
     })
@@ -151,18 +185,30 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  refreshAssetsData(assetsData: IAssetsData) {
+    console.log('refreshAssetsData', assetsData);
+    if (assetsData) {
+      this.assets = assetsData.portfolios.get(this.currentAccount);
+      console.log(this.currentAccount, this.assets);
+    } else {
+      this.assets = [];
+    }
+  }
+
   public get canStart(): boolean {
-    return ((this.gameData) && (this.gameData.status === GAME_STATUS[0]) && (this.gameData.players.length >= 2));
+    return ((this.gameData) && (!this.isStarting) && (this.gameData.status === GAME_STATUS[0]) && (this.gameData.players.length >= 2));
   }
 
   public get canPlay(): boolean {
     return ((this.gameData.status === GAME_STATUS[1])
+    && (!this.isPlaying)
     && (this.gameData.nextPlayer === this.currentAccount)
     && (this.gameData.currentPlayer !== this.currentAccount));
   }
 
   public get canValidate(): boolean {
     return ((this.gameData.status === GAME_STATUS[1])
+    && (!this.isValidating)
     && (this.gameData.nextPlayer === this.currentAccount)
     && (this.gameData.currentPlayer === this.currentAccount));
   }
@@ -176,22 +222,32 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   start() {
+    this.isStarting = true;
     this.gameMasterContractService.contract.start().then(() => {
       console.log('start called');
     }).catch((e) => {
       console.error(e);
+    }).finally(() => {
+      this.isStarting = false;
     });
   }
 
   play() {
     // animate dices
+    this.isPlaying = true;
     this.dices.animate();
     this.gameMasterContractService.rollDices().then(({dice1, dice2, newPosition}) => {
       console.log('RolledDices', dice1, dice2, newPosition);
       this.dices.stopAnimation(dice1, dice2);
       console.log('refresh position after rolling dices', newPosition);
       this.refreshPosition(newPosition);
-    })
+    }).catch((e) => {
+      console.error(e);
+      this.dices.stopAnimation(1, 2);
+      this.showError('Action Failed!');
+    }).finally(() => {
+      this.isPlaying = false;
+    });
   }
 
   refreshPosition(newPosition: number) {
@@ -212,11 +268,25 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     this.board.setTargetAngle(targetAngle, offset/nbBlocks).then(() => {
       this.board.unlockAvatar();
       this.position = newPosition;
+      const space = this.playground[newPosition];
+      if ((space.type >= eSpaceType.ASSET_CLASS_1) && (space.type <= eSpaceType.ASSET_CLASS_4)) {
+        this.assetsContractService.ready.then(() => {
+          this.assetsContractService.getOwner(space.assetId).then((owner) => {
+            this.owner = owner;
+          })
+        })
+      }
     })
   }
 
-  validate() {
-    this.gameMasterContractService.play(0).then(() => {
+  validate(selectedOption) {
+    this.isValidating = true;
+    this.gameMasterContractService.play(selectedOption).then(() => {
+    }).catch((e) => {
+      console.error(e);
+      this.showError('Action Failed!');
+    }).finally(() => {
+      this.isValidating = false;
     })
   }
 
@@ -229,6 +299,120 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       return balance.toString();
     }
     return '?';
+  }
+
+  async getOwnerOf(position: number): Promise<string> {
+    await this.assetsContractService.ready;
+    return this.assetsContractService.getOwner(position);
+  }
+
+  showSuccess(message: string) {
+    if (!message || (message === '')) {
+      return;
+    }
+    this.snackBar.open(message, '', {
+      duration: 5000,
+      panelClass: ['snack-success'],
+    });
+
+  }
+
+  showInfo(message: string) {
+    if (!message || (message === '')) {
+      return;
+    }
+    this.snackBar.open(message, '', {
+      duration: 5000,
+      panelClass: ['snack-info'],
+    });
+
+  }
+
+  showError(message: string) {
+    if (!message || (message === '')) {
+      return;
+    }
+    this.snackBar.open(message, '', {
+      duration: 10000,
+      panelClass: ['snack-error'],
+    });
+
+  }
+
+  event2message(contract: string, event: any): string {
+    switch (contract) {
+      case 'gameMaster': {
+        switch(event.type) {
+          case 'StatusChanged': {
+            return `Game status has changed to ${event.value.newStatus}`;
+            break;
+          }
+          case 'PlayerRegistered': {
+            return `Player ${event.value.newPlayer} has registered to the game`;
+            break;
+          }
+          case 'PlayPerformed': {
+            return `Player ${event.value.player} has played with option ${event.value.option}`;
+            break;
+          }
+          case 'RolledDices': {
+            return `Player ${event.value.player} has rolled the dices, got ${event.value.dice1}+${event.value.dice2} and moved to block ${event.value.newPosition}`;
+            break;
+          }
+          default: {
+            return '';
+          }
+        }
+        break;
+      }
+      case 'token': {
+        switch(event.type) {
+          case 'Transfer': {
+            if (event.value.from === Utils.ADDRESS_ZERO) {
+              return `Player ${event.value.to} has received ${event.value.value.toString()} tokens`;
+            } else if (event.value.to === Utils.ADDRESS_ZERO) {
+              return `Player ${event.value.from} has spent ${event.value.value.toString()} tokens`;
+            } else {
+              return `Player ${event.value.from} has transferred ${event.value.value.toString()} tokens to account ${event.value.to}`;
+            }
+            break;
+          }
+          // case 'Approval': {
+          //   return `Player ${event.value.owner} has approved account ${event.value.spender} for amount ${event.value.value.toString()}`;
+          //   break;
+          // }
+          default: {
+            return '';
+          }
+        }
+        break;
+      }
+      case 'assets': {
+        switch(event.type) {
+          case 'Transfer': {
+            if (event.value.from === Utils.ADDRESS_ZERO) {
+              return `Player ${event.value.to} has received asset with id ${event.value.tokenId.toString()}`;
+            } else if (event.value.to === Utils.ADDRESS_ZERO) {
+              return `Player ${event.value.from} has released asset with id ${event.value.tokenId.toString()}`;
+            } else {
+              return `Player ${event.value.from} has transferred asset with id ${event.value.tokenId.toString()} to account ${event.value.to}`;
+            }
+            break;
+          }
+          // case 'Approval': {
+          //   return `Player ${event.value.owner} has approved account ${event.value.spender} for amount ${event.value.value.toString()}`;
+          //   break;
+          // }
+          default: {
+            return '';
+          }
+        }
+        break;
+      }
+
+      default:
+        return '';
+    }
   }
 
 }

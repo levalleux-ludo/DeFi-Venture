@@ -13,6 +13,10 @@ contract GameAssets is ERC721, Ownable {
     constructor() ERC721("Startups", "AST") public Ownable() {
     }
 
+    function exists(uint256 tokenId) public view returns (bool) {
+        return _exists(tokenId);
+    }
+
     /**
     * @dev Safely mints tokenId and transfers it to to.
     *

@@ -37,6 +37,10 @@ export class DicesComponent implements OnInit {
   }
 
   public animate() {
+    if (this._animation) {
+      console.error('dices animation is already active');
+      return;
+    }
     this._animation = setInterval(() => {
       this.dicePOWValue = Math.floor(1 + 6 * Math.random());
       this.dicePOSValue = Math.floor(1 + 6 * Math.random());
@@ -46,6 +50,7 @@ export class DicesComponent implements OnInit {
   public stopAnimation(dice1, dice2) {
     if (this._animation) {
       clearInterval(this._animation);
+      this._animation = undefined;
       this.dicePOWValue = dice1;
       this.dicePOSValue = dice2;
     }

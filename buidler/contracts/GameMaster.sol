@@ -65,6 +65,11 @@ contract GameMaster is GameScheduler {
         return currentOptions;
     }
 
+
+    function getCurrentCardId() public view returns (uint8) {
+        return currentCardId;
+    }
+
     function getNbPositions() public view returns (uint8) {
         return nbPositions;
     }
@@ -81,7 +86,7 @@ contract GameMaster is GameScheduler {
         return playground;
     }
 
-     function getSpaceDetails(uint8 spaceId) public view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice) {
+     function getSpaceDetails(uint8 spaceId) public view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
         require(spaceId < nbPositions, "INVALID_ARGUMENT");
         uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
         spaceType = spaceCode & 0x7;
@@ -92,6 +97,8 @@ contract GameMaster is GameScheduler {
             // spaceType: 7 <=> ASSET_CLASS_4, price = 200
             uint8 assetClass = spaceType - 3;
             assetPrice = 50 * assetClass;
+            productPrice = assetPrice / 4;
+            // TODO: get productPrice from InvestmentManager contract
         }
     }
 
@@ -176,7 +183,7 @@ contract GameMaster is GameScheduler {
     }
 
     function getOptionsAt(address player, uint8 position) public view returns (uint8 options) {
-        (uint8 spaceType, uint8 assetId, uint256 assetPrice) = getSpaceDetails(position);
+        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = getSpaceDetails(position);
         require(spaceType < 8, "SPACE_TYPE_INVALID");
         options = 0;
         if (
@@ -189,15 +196,25 @@ contract GameMaster is GameScheduler {
         } else if (spaceType == 3) { // CHANCE
             options = 8; // 8 = CHANCE
         } else { // ASSETS
-            // TODO: If assets owned by another player set options = 4 // 4 = PAY_BILL
-            // else if asset owned by current player set options = 1 // 1 = NOTHING
-            // else
-            options = 1 + 2; // 2 = BUY_ASSET
+            if (assetsAddress != address(0)) {
+                if (assets.exists(uint256(assetId))) {
+                    address owner = assets.ownerOf(uint256(assetId));
+                    if (owner != msg.sender) {
+                        options = 4; // 4 = PAY_BILL
+                    } else {
+                        options = 1; // 1 = NOTHING
+                    }
+                } else {
+                    options = 1 + 2; // 1 + 2 = NOTHING | BUY_ASSET
+                }
+            } else {
+                options = 1; // 1
+            }
         }
     }
 
     function performOption(uint8 position, uint8 option) internal {
-        (uint8 spaceType, uint8 assetId, uint256 assetPrice) = getSpaceDetails(position);
+        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = getSpaceDetails(position);
         console.log("getSpaceDetails");
         console.log("position");
         console.log(position);
@@ -216,15 +233,11 @@ contract GameMaster is GameScheduler {
                 token.burnFrom(msg.sender, assetPrice);
                 assets.safeMint(msg.sender, assetId);
             }
-            // position -> assetId
-            // assetId -> price
-            // token.burn(msg.sender, price)
-            // asset.mint(msg.sender, assetId)
         } else if ((option & 4) != 0) { // PAY_BILL
-            // position -> assetId
-            // assetId -> product_cost
-            // assetId -> owner
-            // token.transferFrom(msg.sender, owner, amount)
+            if((tokenAddress != address(0)) && assetsAddress != address(0)) {
+                address owner = assets.ownerOf(uint256(assetId));
+                token.transferFrom(msg.sender, owner, productPrice);
+            }
         } else if ((option & 8) != 0) { // CHANCE
             // TODO: perform chance for currentCardId (delegated to ChanceContrat ?)
             // cardId -> chanceType (Pay|Receive|Move_N ...), chanceParam

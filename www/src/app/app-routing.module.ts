@@ -1,3 +1,4 @@
+import { MyAssetsComponent } from './_components/my-assets/my-assets.component';
 import { TestCanvasPageComponent } from './_components/test-canvas-page/test-canvas-page.component';
 import { TestCanvasComponent } from './_components/test-canvas/test-canvas.component';
 import { GameConnectComponent } from './_components/game-connect/game-connect.component';
@@ -16,6 +17,7 @@ const routes: Routes = [
   {path: 'games', component: GamesListComponent, runGuardsAndResolvers: 'always'},
   {path: 'game/:id', component: GameConnectComponent, runGuardsAndResolvers: 'always'},
   {path: 'dashboard', component: DashboardComponent, runGuardsAndResolvers: 'always'},
+  {path: 'test/assets', component: MyAssetsComponent, runGuardsAndResolvers: 'always'},
   {path: 'portis1', component: PortisL1PageComponent},
   { path: '404', component: NotFoundComponent},
   // { path: '', pathMatch: 'full' },

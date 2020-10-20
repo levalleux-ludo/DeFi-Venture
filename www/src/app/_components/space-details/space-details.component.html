@@ -1,18 +1,22 @@
-<p>space-details works!</p>
 <img src='{{image}}'>
 <div>{{name}}</div>
 <div>{{detail}}</div>
-<div *ngIf="options.includes(getOptionValue('CHANCE'))">
-    This the chance you've got: {{cardId}}
+<div *ngIf="isOptionValid(getOptionValue('CHANCE'))">
+    This the chance you've got: {{chanceCardId}}
 </div>
-<div *ngIf="options.includes(getOptionValue('QUARANTINE'))">
+<div *ngIf="isOptionValid(getOptionValue('QUARANTINE'))">
     Bad luck, you're now stuck in Quarantine
 </div>
-<div *ngIf="options.includes(getOptionValue('BUY_ASSET'))">
+<div *ngIf="isOptionValid(getOptionValue('PAY_BILL'))">
+    This startup is owned by player {{owner}}. You must pay the bill: {{productPrice}};
+</div>
+<div *ngIf="isOptionValid(getOptionValue('BUY_ASSET'))">
     <h4> Take the opportunity to found the startup '{{name}}' <br> Founding capital: {{price}}</h4>
-    <mat-radio-group aria-label="Select an option">
-        <mat-radio-button value="{{'STARTUP_FOUND'}}" [(ngModel)]="selectedOption">Yes, great idea !</mat-radio-button>
-        <mat-radio-button value="{{'NOTHING'}}" [(ngModel)]="selectedOption">Sorry, not interested</mat-radio-button>
+    <mat-radio-group aria-label="Select an option" [(ngModel)]="selectedOption">
+        <mat-radio-button value="{{getOptionValue('BUY_ASSET')}}">Yes, great idea !</mat-radio-button>
+        <mat-radio-button value="{{getOptionValue('NOTHING')}}">Sorry, not interested</mat-radio-button>
     </mat-radio-group>
 </div>
+Please choose your option and validate canValidate={{canValidate}} selectedOption={{selectedOption}}
+<button mat-raised-button color="primary" [disabled]="!canValidate || (selectedOption == undefined)" (click)="validate()">Validate</button>
 <div></div>

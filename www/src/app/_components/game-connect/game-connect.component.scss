@@ -8,7 +8,7 @@
 }
 
 .sidenav {
-    width: 500px;
+    width: 180px;
 }
 
 .sidenav .mat-toolbar {
@@ -24,4 +24,25 @@
 .sidenav-content {
     height: calc(100vh - 64px);
     width: 100%;
+}
+
+.my-assets {
+    position: absolute;
+    bottom: 0;
+    left: 20%;
+    height: 500px;
+    width: 25%;
+    background-color: #424242;
+    border: solid;
+    border-color: #212121;
+    margin: 12px;
+    padding: 12px;
+    color: #EEEEEE;
+}
+
+.dices-block {
+    // position: absolute;
+    // top: -300px;
+    background-color: #404040;
+    padding: 24px;
 }

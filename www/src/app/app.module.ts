@@ -25,6 +25,7 @@ import {MatSelectModule} from '@angular/material/select';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatRadioModule} from '@angular/material/radio';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
+import {MatTableModule} from '@angular/material/table';
 
 import { NavigationComponent } from './_components/navigation/navigation.component';
 import { DashboardComponent } from './_components/dashboard/dashboard.component';
@@ -50,6 +51,7 @@ import { DicesComponent } from './_components/dices/dices.component';
 import { DiceComponent } from './_components/dice/dice.component';
 import { TestCanvasPageComponent } from './_components/test-canvas-page/test-canvas-page.component';
 import { SpaceDetailsComponent } from './_components/space-details/space-details.component';
+import { MyAssetsComponent } from './_components/my-assets/my-assets.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -81,7 +83,8 @@ export function enableWeb3Provider(provider) {
     DicesComponent,
     DiceComponent,
     TestCanvasPageComponent,
-    SpaceDetailsComponent
+    SpaceDetailsComponent,
+    MyAssetsComponent
   ],
   imports: [
     BrowserModule,
@@ -107,7 +110,8 @@ export function enableWeb3Provider(provider) {
     FormsModule,
     MatProgressSpinnerModule,
     MatRadioModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTableModule
   ],
   providers: [
     {
