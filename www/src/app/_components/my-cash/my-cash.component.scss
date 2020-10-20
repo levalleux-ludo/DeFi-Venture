@@ -1,0 +1,124 @@
+:host {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 180px;
+    background-color: #ad9826;
+    // z-index: 2000;
+}
+
+.cash-title {
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    background-color: inherit;
+    padding-right: 6px;
+    font-size: large;
+    // z-index: 9999;
+}
+
+@font-face {
+    font-family: digital7;
+    src: url('../../../assets/fonts/digital-7.ttf');
+}
+
+.cash-value {
+    font-size: xx-large;
+    font-family: digital7;
+    margin: 6px;
+    text-align: right;
+}
+
+.border {
+    border: solid;
+    // width: 100%;
+    padding: 6px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    margin-right: 6px;
+    margin-left: 6px;
+    // max-height: 600px;
+    height: 100%;
+}
+
+.assets-value {
+    font-size: xx-large;
+    font-family: digital7;
+    margin: 6px;
+    text-align: right;
+}
+
+.block-cash {
+    position: relative;
+    width: 100%;
+    background-color: darkgoldenrod;
+}
+
+.block-debt {
+    position: relative;
+    width: 100%;
+    background-color: darkred;
+}
+
+.block-assets {
+    position: relative;
+    width: 100%;
+    background-color: blue;
+}
+
+.block-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.assets-table {
+    font-family: 'Lucida Sans';
+    font-size: medium;
+    border-top: white;
+    height: 100%;
+}
+
+
+/* width */
+
+::-webkit-scrollbar {
+    width: 20px;
+}
+
+
+/* Track */
+
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 5px grey;
+    border-radius: 10px;
+}
+
+
+/* Handle */
+
+::-webkit-scrollbar-thumb {
+    background: red;
+    border-radius: 10px;
+}
+
+
+/* Handle on hover */
+
+::-webkit-scrollbar-thumb:hover {
+    background: #b30000;
+}
+
+td {
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.asset-cell {
+    cursor: pointer;
+}
+
+.asset-cell:hover {
+    background-color: white;
+    color: blue;
+}

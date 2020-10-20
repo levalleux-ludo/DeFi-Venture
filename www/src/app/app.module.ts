@@ -26,6 +26,7 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatRadioModule} from '@angular/material/radio';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatTableModule} from '@angular/material/table';
+import {MatTooltipModule} from '@angular/material/tooltip';
 
 import { NavigationComponent } from './_components/navigation/navigation.component';
 import { DashboardComponent } from './_components/dashboard/dashboard.component';
@@ -52,6 +53,11 @@ import { DiceComponent } from './_components/dice/dice.component';
 import { TestCanvasPageComponent } from './_components/test-canvas-page/test-canvas-page.component';
 import { SpaceDetailsComponent } from './_components/space-details/space-details.component';
 import { MyAssetsComponent } from './_components/my-assets/my-assets.component';
+import { MyCashComponent } from './_components/my-cash/my-cash.component';
+import { TestPageComponent } from './_components/test-page/test-page.component';
+import { OtherPlayersComponent } from './_components/other-players/other-players.component';
+import { MarketplaceComponent } from './_components/marketplace/marketplace.component';
+import { DefiServicesComponent } from './_components/defi-services/defi-services.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -84,7 +90,12 @@ export function enableWeb3Provider(provider) {
     DiceComponent,
     TestCanvasPageComponent,
     SpaceDetailsComponent,
-    MyAssetsComponent
+    MyAssetsComponent,
+    MyCashComponent,
+    TestPageComponent,
+    OtherPlayersComponent,
+    MarketplaceComponent,
+    DefiServicesComponent
   ],
   imports: [
     BrowserModule,
@@ -111,7 +122,8 @@ export function enableWeb3Provider(provider) {
     MatProgressSpinnerModule,
     MatRadioModule,
     MatSnackBarModule,
-    MatTableModule
+    MatTableModule,
+    MatTooltipModule
   ],
   providers: [
     {

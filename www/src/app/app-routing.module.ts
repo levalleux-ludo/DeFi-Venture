@@ -1,3 +1,5 @@
+import { TestPageComponent } from './_components/test-page/test-page.component';
+import { MyCashComponent } from './_components/my-cash/my-cash.component';
 import { MyAssetsComponent } from './_components/my-assets/my-assets.component';
 import { TestCanvasPageComponent } from './_components/test-canvas-page/test-canvas-page.component';
 import { TestCanvasComponent } from './_components/test-canvas/test-canvas.component';
@@ -18,6 +20,8 @@ const routes: Routes = [
   {path: 'game/:id', component: GameConnectComponent, runGuardsAndResolvers: 'always'},
   {path: 'dashboard', component: DashboardComponent, runGuardsAndResolvers: 'always'},
   {path: 'test/assets', component: MyAssetsComponent, runGuardsAndResolvers: 'always'},
+  {path: 'test/mycash', component: MyCashComponent, runGuardsAndResolvers: 'always'},
+  {path: 'test', component: TestPageComponent, runGuardsAndResolvers: 'always'},
   {path: 'portis1', component: PortisL1PageComponent},
   { path: '404', component: NotFoundComponent},
   // { path: '', pathMatch: 'full' },
@@ -29,3 +33,4 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
+

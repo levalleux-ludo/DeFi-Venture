@@ -3,12 +3,27 @@
     left: 0;
 }
 
+.marketplace {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+}
+
+.defi {
+    position: absolute;
+    right: 12px;
+    top: 182px;
+}
+
 .sidenav-container {
-    height: calc(100vh - 64px);
+    height: calc(100vh - 66px);
+    background-size: cover;
 }
 
 .sidenav {
-    width: 180px;
+    width: 200px;
+    border: none;
+    background: inherit;
 }
 
 .sidenav .mat-toolbar {
@@ -22,7 +37,7 @@
 }
 
 .sidenav-content {
-    height: calc(100vh - 64px);
+    height: calc(100vh - 66px);
     width: 100%;
 }
 
@@ -45,4 +60,18 @@
     // top: -300px;
     background-color: #404040;
     padding: 24px;
+}
+
+.game-contract {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: calc(20% - 12px);
+    z-index: 99;
+}
+
+.spinner {
+    position: absolute;
+    top: calc(50% - 250px);
+    left: calc(50% - 250px);
 }

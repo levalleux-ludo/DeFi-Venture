@@ -1,0 +1,15 @@
+<mat-sidenav-container class="sidenav-container">
+
+    <mat-sidenav-content style="height: auto;">
+
+        <app-marketplace class="marketplace"></app-marketplace>
+        <app-defi-services class="defi"></app-defi-services>
+
+        <div #content fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="sidenav-content">
+
+            <div>
+                <app-my-cash [assetIds]="[1,2,3,4,5,6]" [cash]="12345" [debt]="98765" [assetsValue]="4447"></app-my-cash>
+            </div>
+        </div>
+    </mat-sidenav-content>
+</mat-sidenav-container>

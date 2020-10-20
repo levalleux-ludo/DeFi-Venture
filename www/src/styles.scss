@@ -19,13 +19,16 @@
 $custom-typography: mat-typography-config( $font-family: 'Lucida Console');
 @include mat-core($custom-typography);
 html,
-body {
-    height: 100%;
+body,
+app-root {
+    min-height: 100% !important;
+    height: 100% !important;
 }
 
 body {
     margin: 0;
     // font-family: "Lucida Console", Monaco, monospace;
+    background-size: cover;
 }
 
 a {
@@ -42,4 +45,18 @@ a {
 
 .snack-error {
     background: #B00020;
+}
+
+.tooltip-large {
+    font-size: large;
+}
+
+.asset-menu-panel {
+    background-color: bisque;
+}
+
+.mat-toolbar,
+.mat-app-background,
+.mat-drawer-container {
+    background: inherit !important;
 }

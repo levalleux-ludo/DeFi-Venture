@@ -1,0 +1,46 @@
+<div fxLayout="column" fxLayoutAlign="start center" class="block-container">
+    <div class="block-cash">
+        <div class="cash-title">MY CASH</div>
+        <div class="border">
+            <div class="cash-value">{{cash}}</div>
+        </div>
+    </div>
+    <div class="block-debt">
+        <div class="cash-title">MY DEBT</div>
+        <div class="border">
+            <div class="cash-value">{{debt}}</div>
+        </div>
+    </div>
+    <div class="block-assets">
+        <div class="cash-title">MY ASSETS</div>
+        <div class="border">
+            <div class="assets-value">{{assetsValue}}
+            </div>
+            <div class="assets-table">
+                <table>
+                    <tr *ngFor="let asset of _assets">
+                        <td><img src="{{asset.image}}" height="24"></td>
+                        <td class="asset-cell" [matMenuTriggerFor]="menuEth" [matMenuTriggerData]="asset">{{asset.name}}</td>
+                        <td>{{asset.value}}</td>
+                    </tr>
+                </table>
+                <mat-menu #menuEth="matMenu" xPosition="before" class="asset-menu-panel">
+                    <ng-template matMenuContent let-detail="detail" let-assetPrice="assetPrice">
+                        <div>
+                            <div>
+                                <h2>Details</h2>
+                                <p>{{detail}}</p>
+                            </div>
+                            <div>
+                                <h2>Value</h2>
+                                <p>{{assetPrice}}</p>
+                            </div>
+                        </div>
+                        <button mat-raised-button>Invest</button>
+                        <button mat-raised-button>Sell</button>
+                    </ng-template>
+                </mat-menu>
+            </div>
+        </div>
+    </div>
+</div>
