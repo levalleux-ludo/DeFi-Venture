@@ -26,19 +26,14 @@ async function main() {
     const TokenFactoryFactory = await ethers.getContractFactory("TokenFactory");
     const AssetsFactoryFactory = await ethers.getContractFactory("AssetsFactory");
 
-    const spaces = getSpaces(NB_POSITIONS);
-    const chances = getChances(NB_CHANCES, NB_POSITIONS);
 
     tokenFactory = await TokenFactoryFactory.deploy();
     assetsFactory = await AssetsFactoryFactory.deploy();
     await tokenFactory.deployed();
     await assetsFactory.deployed();
     gameFactory = await GameFactoryFactory.deploy(
-        NB_MAX_PLAYERS,
-        NB_POSITIONS,
-        ethers.BigNumber.from(INITIAL_BALANCE),
-        spaces,
-        chances
+        tokenFactory.address,
+        assetsFactory.address
     );
     await gameFactory.deployed();
     console.log("gameFactory deployed to:", gameFactory.address);

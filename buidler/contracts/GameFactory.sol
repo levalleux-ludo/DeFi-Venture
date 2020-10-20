@@ -13,31 +13,26 @@ import { IContractFactory } from "./IContractFactory.sol";
 contract GameFactory is IGameStatus {
     // Add the library methods
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint8 nbMaxPlayers;
-    uint256 initialAmount;
-    uint8 nbPositions;
-    EnumerableSet.AddressSet private gamesSet;
-    bytes32 private playground;
-    bytes32 private chances;
 
-    constructor (uint8 _nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount, bytes32 _playground, bytes32 _chances ) public {
-        nbMaxPlayers = _nbMaxPlayers;
-        nbPositions = _nbPositions;
-        initialAmount = _initialAmount;
-        playground = _playground;
-        chances = _chances;
+    address tokenFactory;
+    address assetsFactory;
+    EnumerableSet.AddressSet private gamesSet;
+
+    event GameCreated(address gameMasterAddress, uint index);
+
+    constructor (address _tokenFactory, address _assetsFactory) public {
+        tokenFactory = _tokenFactory;
+        assetsFactory = _assetsFactory;
     }
 
-    // TODO: inverse arguments contractor() et create() : les factories sont statiques alors que les parametres de jeu peuvent varier
-    
     /**
     - factory to create new game contracts
        */
-    function create(address tokenFactory, address assetsFactory) public returns (address) {
+    function create(uint8 _nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount, bytes32 _playground, bytes32 _chances) public returns (address) {
 
         // GameToken gameToken = new GameToken();
         // GameAssets gameAssets = new GameAssets();
-        GameMaster gameMaster = new GameMaster(nbMaxPlayers, nbPositions, initialAmount, playground, chances);
+        GameMaster gameMaster = new GameMaster(_nbMaxPlayers, _nbPositions, _initialAmount, _playground, _chances);
         address tokenAddress = IContractFactory(tokenFactory).create(address(gameMaster));
         gameMaster.setToken(tokenAddress);
         address assetsAddress = IContractFactory(assetsFactory).create(address(gameMaster));
@@ -47,6 +42,7 @@ contract GameFactory is IGameStatus {
 
         // store gameMaster address in createdGameSet
         gamesSet.add(address(gameMaster));
+        emit GameCreated(address(gameMaster), gamesSet.length() - 1);
         return address(gameMaster);
     }
 

@@ -3,10 +3,11 @@ import { IGame } from './../_models/IGame';
 import { async } from '@angular/core/testing';
 import { environment, INetwork, IContracts } from './../../environments/environment';
 import { Injectable } from '@angular/core';
-import { Subject, Observable } from 'rxjs';
+import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import greeterABI from '../../../../buidler/artifacts/Greeter.json';
 import gameFactoryABI from '../../../../buidler/artifacts/GameFactory.json';
 import { Contract } from 'web3-eth-contract';
+import { getSpaces, getChances } from '../../../../buidler/db/playground';
 
 import Portis from '@portis/web3';
 import Web3 from 'web3';
@@ -21,6 +22,10 @@ import { ethers, BigNumber } from 'ethers';
 // ];
 
 const PORTIS_API_KEY = '9e5dce20-042d-456f-bfca-4850e23555c8';
+const NB_MAX_PLAYERS = 8;
+const INITIAL_BALANCE = 1000;
+const NB_POSITIONS = 24;
+const NB_CHANCES = 32;
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +34,8 @@ export class PortisL1Service {
 
   private isReady = false;
   private readySubject = new Subject<void>();
-  private connectSubject = new Subject<any>();
+  private connectSubject = new BehaviorSubject<{network: INetwork, account: string}>({network: undefined, account: undefined});
+  private gameCreatedSubject = new Subject<any>();
 
   private _network: INetwork;
   private portis: Portis;
@@ -77,7 +83,7 @@ export class PortisL1Service {
     return this.ethersSigner;
   }
 
-  public get onConnect(): Observable<any> {
+  public get onConnect(): Observable<{network: INetwork, account: string}> {
     return this.connectSubject.asObservable();
   }
 
@@ -122,8 +128,12 @@ export class PortisL1Service {
         console.log(accounts);
         this._accounts = accounts;
         this._contracts = environment.contracts[this._network.chainId];
+        const etheresGameFactory = this.getEthersContract(gameFactoryABI.abi, this.contracts.gameFactory);
+        etheresGameFactory.on('GameCreated', (gameMaster: string, index: BigNumber) => {
+          this.gameCreatedSubject.next(gameMaster);
+        });
         resolve();
-        this.connectSubject.next(this._network);
+        this.connectSubject.next({network: this._network, account: accounts[0]});
       });
     });
   }
@@ -233,7 +243,13 @@ export class PortisL1Service {
       this.gameFactory = this.getContract(gameFactoryABI.abi, this.contracts.gameFactory);
     }
     return new Promise((resolve, reject) => {
-      this.gameFactory.methods.create().send({from: this._accounts[0], gasPrice: this._network.gasPrice, gas: this._network.gasLimit})
+      this.gameFactory.methods.create(
+        NB_MAX_PLAYERS,
+        NB_POSITIONS,
+        ethers.BigNumber.from(INITIAL_BALANCE).toString(),
+        getSpaces(NB_POSITIONS),
+        getChances(NB_CHANCES, NB_POSITIONS)
+      ).send({from: this._accounts[0]})
       .on('transactionHash', function(hash){
 
       })
@@ -249,6 +265,10 @@ export class PortisL1Service {
         reject();
       });
     });
+  }
+
+  public get onGameCreated(): Observable<any> {
+    return this.gameCreatedSubject.asObservable();
   }
 
   public async getGames(): Promise<string[]> {

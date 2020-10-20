@@ -1,3 +1,4 @@
+import { GameToken } from './GameToken';
 import { async } from '@angular/core/testing';
 import { ethers } from 'ethers';
 import gameMasterABI from '../../../../../buidler/artifacts/GameMaster.json';
@@ -35,8 +36,14 @@ public async isPlayerRegistered(playerAddress: string): Promise<boolean> {
   return this.contract.isPlayerRegistered(playerAddress);
 }
 
+public async getTokenAddress(): Promise<string> {
+  return this.contract.getToken();
+}
+
 public async register(): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const tokenAddress = await this.getTokenAddress();
+    await (new GameToken(tokenAddress, this.contract.signer)).approveMax(this.contract.address);
     this.contract.register().then(async(response) => {
       console.log('Tx sent', response.hash);
       await response.wait().then(async(receipt) => {

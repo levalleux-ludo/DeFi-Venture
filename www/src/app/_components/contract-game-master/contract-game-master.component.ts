@@ -56,8 +56,8 @@ export class ContractGameMasterComponent implements OnInit {
       });
       this.updateContract();
     });
-    this.portisL1Service.onConnect.subscribe(() => {
-      this.currentAccount = this.portisL1Service.accounts[0];
+    this.portisL1Service.onConnect.subscribe(({network, account}) => {
+      this.currentAccount = account;
     })
     // this.connectionService.connected.subscribe((connectionData) => {
     //   this.currentAccount = connectionData.address;

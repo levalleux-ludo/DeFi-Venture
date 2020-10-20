@@ -24,6 +24,7 @@ import {MatInputModule} from '@angular/material/input';
 import {MatSelectModule} from '@angular/material/select';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatRadioModule} from '@angular/material/radio';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
 
 import { NavigationComponent } from './_components/navigation/navigation.component';
 import { DashboardComponent } from './_components/dashboard/dashboard.component';
@@ -105,7 +106,8 @@ export function enableWeb3Provider(provider) {
     MatFormFieldModule,
     FormsModule,
     MatProgressSpinnerModule,
-    MatRadioModule
+    MatRadioModule,
+    MatSnackBarModule
   ],
   providers: [
     {

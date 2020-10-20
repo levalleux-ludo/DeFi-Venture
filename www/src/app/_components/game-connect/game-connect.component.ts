@@ -77,9 +77,10 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     this.gameService.getUsername().subscribe((username) => {
       this.username = username;
     });
-    this.portisService.onConnect.subscribe(network => {
+    this.portisService.onConnect.subscribe(({network, account}) => {
       this.network = network;
-      this.currentAccount = this.portisService.accounts[0];
+      this.currentAccount = account;
+      console.log('set currentAccount', this.currentAccount);
     });
     this.gameMaster = this.route.snapshot.paramMap.get('id');
     this.portisService.connect(

@@ -34,11 +34,12 @@ export enum eAvatar {
 }
 
 export enum eOption {
-  NOTHING,
-  BUY_ASSET,
-  PAY_BILL,
-  CHANCE,
-  QUARANTINE
+  INVALID, // 0 not allowed
+  NOTHING, // 1
+  BUY_ASSET, // 2
+  PAY_BILL, // 4
+  CHANCE, // 8
+  QUARANTINE // 16
 }
 
 export interface IPlayer {

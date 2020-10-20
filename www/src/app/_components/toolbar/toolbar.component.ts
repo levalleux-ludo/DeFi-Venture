@@ -62,13 +62,9 @@ export class ToolbarComponent implements OnInit {
       //   this.balanceUSDc = '';
       // }
     // });
-    this.portisService.onConnect.subscribe((network) => {
+    this.portisService.onConnect.subscribe(({network, account}) => {
       this.network = network;
-      if (this.portisService.accounts && (this.portisService.accounts.length > 0)) {
-        this.ethAccount = this.portisService.accounts[0];
-      } else {
-        this.ethAccount = undefined;
-      }
+      this.ethAccount = account;
       if (this.network) {
         this.portisService.getL1BalanceETH(this.ethAccount).then((balanceETH) => {
           this.balanceEth = Utils.getBalanceAsNumber(balanceETH, Utils.ETH_decimals, 0.00001).toString();

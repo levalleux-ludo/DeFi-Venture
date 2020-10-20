@@ -68,19 +68,14 @@ describe("GameFactory", function() {
         GameMasterFactory = await ethers.getContractFactory("GameMaster");
         GameTokenFactory = await ethers.getContractFactory("GameToken");
         GameAssetsFactory = await ethers.getContractFactory("GameAssets");
-        const spaces = getSpaces(NB_POSITIONS);
-        const chances = getChances(NB_CHANCES, NB_POSITIONS);
 
         tokenFactory = await TokenFactoryFactory.deploy();
         assetsFactory = await AssetsFactoryFactory.deploy();
         await tokenFactory.deployed();
         await assetsFactory.deployed();
         gameFactory = await GameFactoryFactory.deploy(
-            NB_MAX_PLAYERS,
-            NB_POSITIONS,
-            ethers.BigNumber.from(INITIAL_BALANCE),
-            spaces,
-            chances
+            tokenFactory.address,
+            assetsFactory.address
         );
         await gameFactory.deployed();
     })
@@ -90,7 +85,15 @@ describe("GameFactory", function() {
         expect(nbGames.toNumber()).to.equal(0);
     });
     it('Should create one game', async function() {
-        await gameFactory.create(tokenFactory.address, assetsFactory.address);
+        const spaces = getSpaces(NB_POSITIONS);
+        const chances = getChances(NB_CHANCES, NB_POSITIONS);
+        await expect(gameFactory.create(
+            NB_MAX_PLAYERS,
+            NB_POSITIONS,
+            ethers.BigNumber.from(INITIAL_BALANCE),
+            spaces,
+            chances
+        )).to.emit(gameFactory, 'GameCreated');
         const nbGames = await gameFactory.nbGames();
         console.log('nbGames', nbGames, nbGames.toString());
         expect(nbGames.toNumber()).to.equal(1);
