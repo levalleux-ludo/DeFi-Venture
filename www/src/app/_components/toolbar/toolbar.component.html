@@ -3,16 +3,18 @@
     <mat-icon>menu</mat-icon>
   </button>
     <!-- <span>DeFi-PoLy</span> -->
-    <img src="assets/logo_toolbar.png" height="30">
+    <img src="assets/logo_1.png" height="60">
     <span class="example-spacer"></span>
     <button mat-icon-button class="toolbar-button favorite-icon" aria-label="Example icon-button with heart icon" [matMenuTriggerFor]="menuEth">
-    <mat-icon svgIcon="ethereum-eth-logo"></mat-icon>
+    <mat-icon *ngIf="network?.chainId != 80001" svgIcon="ethereum-eth-logo"></mat-icon>
+    <mat-icon *ngIf="network?.chainId == 80001" svgIcon="matic-logo"></mat-icon>
     <span>{{ethAccount}}</span>
   </button>
     <mat-menu #menuEth="matMenu" xPosition="before">
         <div class="mat-toolbar">
-            <div>MATIC balance: {{balanceEth}}</div>
+            <div>{{(network?.chainId == 80001) ? 'MATIC' : 'ETH'}} balance: {{balanceEth}}</div>
             <div>USDc balance: {{balanceUSDc}}</div>
+            <button mat-raised-button (click)="logout()" [disabled]="network == undefined">Logout</button>
             <!-- <button mat-menu-item>Expand</button>
         <button mat-menu-item>Remove</button> -->
         </div>

@@ -32,6 +32,10 @@ export class ToolbarComponent implements OnInit {
       `ethereum-eth-logo`,
       this.domSanitizer.bypassSecurityTrustResourceUrl("../assets/ethereum/ethereum-eth-logo.svg")
     );
+    this.matIconRegistry.addSvgIcon(
+      `matic-logo`,
+      this.domSanitizer.bypassSecurityTrustResourceUrl("../assets/matic/matic-logo-square/matic-logo-square.svg")
+    );
   }
 
   ngOnInit(): void {
@@ -71,7 +75,24 @@ export class ToolbarComponent implements OnInit {
         }).catch(e => console.error(e));
       }
 
-    })
+    });
+    this.portisService.onLogout.subscribe(() => {
+      this.network = undefined;
+      this.ethAccount = undefined;
+      this.balanceEth = '';
+      this.balanceUSDc = '';
+    });
+    setInterval(() => {
+      if (this.network && this.ethAccount) {
+        this.portisService.getL1BalanceETH(this.ethAccount).then((balanceETH) => {
+          this.balanceEth = Utils.getBalanceAsNumber(balanceETH, Utils.ETH_decimals, 0.00001).toString();
+        });
+      }
+    }, 5000);
+  }
+
+  logout() {
+    this.portisService.logout();
   }
 
 }

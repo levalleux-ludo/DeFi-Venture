@@ -1,22 +1,29 @@
-<img src='{{image}}'>
-<div>{{name}}</div>
-<div>{{detail}}</div>
+<!-- <img src='{{image}}'> -->
+
+<div class="mat-headline">Welcome To {{name}}</div>
+<div>
+    <h4>Description: {{detail}}
+    </h4>
+</div>
 <div *ngIf="isOptionValid(getOptionValue('CHANCE'))">
-    This the chance you've got: {{chanceCardId}}
+    <h2>This the chance you've got: {{chanceCardId}}</h2>
 </div>
 <div *ngIf="isOptionValid(getOptionValue('QUARANTINE'))">
-    Bad luck, you're now stuck in Quarantine
+    <h2>Bad luck, you're now stuck in Quarantine</h2>
 </div>
 <div *ngIf="isOptionValid(getOptionValue('PAY_BILL'))">
-    This startup is owned by player {{owner}}. You must pay the bill: {{productPrice}};
+    <h2>This startup is owned by player {{owner}}. You must pay the bill: {{productPrice}};</h2>
 </div>
 <div *ngIf="isOptionValid(getOptionValue('BUY_ASSET'))">
-    <h4> Take the opportunity to found the startup '{{name}}' <br> Founding capital: {{price}}</h4>
-    <mat-radio-group aria-label="Select an option" [(ngModel)]="selectedOption">
-        <mat-radio-button value="{{getOptionValue('BUY_ASSET')}}">Yes, great idea !</mat-radio-button>
-        <mat-radio-button value="{{getOptionValue('NOTHING')}}">Sorry, not interested</mat-radio-button>
-    </mat-radio-group>
+    <h3> Take the opportunity to found the startup '{{name}}' <br> Founding capital: {{price}}<br>
+        <mat-radio-group aria-label="Select an option" [(ngModel)]="selectedOption" style="display: inline-grid;">
+            <mat-radio-button value="{{getOptionValue('BUY_ASSET')}}">Yes, great idea !</mat-radio-button>
+            <mat-radio-button value="{{getOptionValue('NOTHING')}}">Sorry, not interested</mat-radio-button>
+        </mat-radio-group>
+    </h3>
 </div>
-Please choose your option and validate canValidate={{canValidate}} selectedOption={{selectedOption}}
-<button mat-raised-button color="primary" [disabled]="!canValidate || (selectedOption == undefined)" (click)="validate()">Validate</button>
+<h3>
+    <p>Please <span *ngIf="selectedOption == undefined">choose your option and </span>validate</p>
+    <button mat-raised-button color="primary" [disabled]="!canValidate || (selectedOption == undefined)" (click)="validate()">Validate</button>
+</h3>
 <div></div>

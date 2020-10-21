@@ -1,9 +1,8 @@
 :host {
-    position: absolute;
-    top: 12px;
-    left: 12px;
+    // position: absolute;
+    // top: 12px;
+    // left: 12px;
     width: 180px;
-    background-color: #ad9826;
     // z-index: 2000;
 }
 
@@ -13,7 +12,7 @@
     left: 6px;
     background-color: inherit;
     padding-right: 6px;
-    font-size: large;
+    // font-size: large;
     // z-index: 9999;
 }
 
@@ -23,29 +22,36 @@
 }
 
 .cash-value {
-    font-size: xx-large;
+    font-size: large;
     font-family: digital7;
-    margin: 6px;
+    // margin: 6px;
     text-align: right;
 }
 
 .border {
     border: solid;
     // width: 100%;
-    padding: 6px;
+    padding: 4px;
     margin-top: 12px;
-    margin-bottom: 12px;
-    margin-right: 6px;
-    margin-left: 6px;
+    border-width: 1px;
+    // margin-bottom: 12px;
+    // margin-right: 6px;
+    // margin-left: 6px;
     // max-height: 600px;
-    height: 100%;
+    // height: 100%;
 }
 
 .assets-value {
-    font-size: xx-large;
+    font-size: large;
     font-family: digital7;
-    margin: 6px;
+    // margin: 6px;
     text-align: right;
+}
+
+.block-username {
+    position: relative;
+    width: 100%;
+    text-align: center;
 }
 
 .block-cash {
@@ -74,7 +80,7 @@
 
 .assets-table {
     font-family: 'Lucida Sans';
-    font-size: medium;
+    font-size: small;
     border-top: white;
     height: 100%;
 }
@@ -110,8 +116,8 @@
 }
 
 td {
-    padding-top: 12px;
-    padding-bottom: 12px;
+    // padding-top: 12px;
+    padding-bottom: 6px;
 }
 
 .asset-cell {

@@ -1,4 +1,4 @@
-import { eSpaceType } from './../../_services/game-master-contract.service';
+import { eSpaceType, IGameData } from './../../_services/game-master-contract.service';
 import { ElementRef, Input, NgZone, ViewChild } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { ISpace } from 'src/app/_services/game-master-contract.service';
@@ -28,7 +28,8 @@ export class TestCanvasComponent implements OnInit {
   @Input()
   set width(value: number) {
     this.canvas.nativeElement.width = value;
-    this._zoom = value / (32 * this.block_imgs.length);
+    // this._zoom = value / (32 * this.block_imgs.length);
+    this._zoom = 1.2 + 1.2 * value / 2000;
     this.origin = {
       x: value / 2, // middle
       y: 50 // top
@@ -65,6 +66,16 @@ export class TestCanvasComponent implements OnInit {
     }
   }
 
+  @Input()
+  public set gameData(gameData: IGameData) {
+    if (gameData) {
+      gameData.playersPosition.forEach((position, player) => {
+        const avatar = gameData.players.find(aplayer => (aplayer.address === player)).avatar as any;
+        this.setPlayerPosition(avatar, position);
+      });
+    }
+  }
+
   images = {
     CHANCE: 'chance.png',
     GENESIS: 'genesis.png',
@@ -74,17 +85,17 @@ export class TestCanvasComponent implements OnInit {
 
   block_imgs = [];
   avatars = [
+    'assets/avatars/nobody.png',
     'assets/avatars/camel.png',
     'assets/avatars/crypto-chip.png',
     'assets/avatars/diamond.png',
-    'assets/avatars/nobody.png',
     'assets/avatars/rocket.png'
   ];
   avatarsPosition = new Map<number, number[]>();
   blocks_geometry = [];
   nbSteps = 0;
   private ctx: CanvasRenderingContext2D;
-  _zoom;
+  _zoom = 2.5;
   public get zoom() {
     return this._zoom;
   }
@@ -106,7 +117,7 @@ export class TestCanvasComponent implements OnInit {
 
   ngOnInit(): void {
     this.ctx = this.canvas.nativeElement.getContext('2d');
-    this._zoom = this.ctx.canvas.width / (32 * this.block_imgs.length);
+    // this._zoom = this.ctx.canvas.width / (32 * this.block_imgs.length);
     this.origin = {
       x: this.ctx.canvas.width / 2, // middle
       y: 50 // top
@@ -143,13 +154,38 @@ export class TestCanvasComponent implements OnInit {
     });
   }
 
-  public setPlayerPosition(player: number, oldPosition: number, newPosition) {
-    const oldTab = this.avatarsPosition.get(oldPosition);
-    const newTab = this.avatarsPosition.get(newPosition);
-    this.avatarsPosition.set(oldPosition, oldTab.filter((avatar) => avatar !== player));
-    if (!newTab.includes(player)) {
-      newTab.push(player);
+  public setPlayerPosition(player: number, newPosition) {
+    const avatarId = player - 1; // avatar 0 does not exist
+    const oldPosition = this.getOldPosition(avatarId);
+    if (oldPosition === newPosition) {
+      return;
     }
+    const oldTab = this.avatarsPosition.get(oldPosition);
+    let newTab = this.avatarsPosition.get(newPosition);
+    if (oldTab) {
+      this.avatarsPosition.set(oldPosition, oldTab.filter((avatar) => avatar !== avatarId));
+    }
+    if (!newTab) {
+      newTab = [];
+      this.avatarsPosition.set(newPosition, newTab);
+    }
+    if (!newTab.includes(avatarId)) {
+      newTab.push(avatarId);
+    }
+
+    if (this.ctx) {
+      this.draw(this._currentAngle);
+    }
+  }
+
+  private getOldPosition(avatar: number): number {
+    for (const position of this.avatarsPosition.keys()) {
+      const tab = this.avatarsPosition.get(position);
+      if (tab.includes(avatar)) {
+        return position;
+      }
+    }
+    return -1;
   }
 
   public lockAvatar() {}
@@ -159,7 +195,7 @@ export class TestCanvasComponent implements OnInit {
   private async load_images() {
     const promises = [];
     for (let i = 0; i < this.block_imgs.length; i++) {
-      this.avatarsPosition.set(i, []);
+      // this.avatarsPosition.set(i, []);
       const img = new Image();
       img.src = this.block_imgs[i];
       this.loaded_images.push(img);
@@ -171,7 +207,7 @@ export class TestCanvasComponent implements OnInit {
     }
     for (let i = 0; i < this.avatars.length; i++) {
 
-      this.avatarsPosition.get(0).push(i); // Everybody on the space 0
+      // this.avatarsPosition.get(0).push(i); // Everybody on the space 0
       const img = new Image();
       img.src = this.avatars[i];
       this.loaded_avatars.push(img);
@@ -197,15 +233,17 @@ export class TestCanvasComponent implements OnInit {
       this.ctx.rotate(-angle_rad);
       this.ctx.translate(-posX, -posY);
       this.ctx.drawImage(img, posX - (50 * this.zoom), posY - (30 * this.zoom), 105*this.zoom, 70*this.zoom);
-      this.ctx.font = '48px serif';
-      this.ctx.textAlign = 'center';
-      this.ctx.fillStyle = 'orange';
-      this.ctx.fillText(index.toString(), posX - (0 * this.zoom), posY + (60 * this.zoom));
-      const avatars = this.avatarsPosition.get(index);
-      for (let i = 0; i < avatars.length; i++) {
-        const avatar = avatars[i];
-        const offsetX = (15 * i - 5 * avatars.length) * this.zoom;
-        this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 40*this.zoom, 20*this.zoom, 20*this.zoom);
+      // this.ctx.font = '48px serif';
+      // this.ctx.textAlign = 'center';
+      // this.ctx.fillStyle = 'orange';
+      // this.ctx.fillText(index.toString(), posX - (0 * this.zoom), posY + (60 * this.zoom));
+      if (this.avatarsPosition.has(index)) {
+        const avatars = this.avatarsPosition.get(index);
+        for (let i = 0; i < avatars.length; i++) {
+          const avatar = avatars[i];
+          const offsetX = (15 * i - 5 * avatars.length) * this.zoom;
+          this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 40*this.zoom, 20*this.zoom, 20*this.zoom);
+        }
       }
       this.ctx.restore();
     }

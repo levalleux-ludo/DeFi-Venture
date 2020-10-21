@@ -31,6 +31,9 @@ export class PoolAccessPageComponent implements OnInit {
       this.refresh();
       this.ConnectL1();
     });
+    this.portisService.onLogout.subscribe(() => {
+      this.refresh();
+    });
   }
 
   refresh() {
@@ -63,7 +66,6 @@ export class PoolAccessPageComponent implements OnInit {
   Logout() {
     this.isLoggingOut = true;
     this.portisService.logout().then(() => {
-      this.refresh();
     });
   }
 

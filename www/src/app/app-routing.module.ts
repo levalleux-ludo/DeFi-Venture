@@ -1,3 +1,4 @@
+import { TestShowModalPageComponent } from './_components/test-show-modal-page/test-show-modal-page.component';
 import { TestPageComponent } from './_components/test-page/test-page.component';
 import { MyCashComponent } from './_components/my-cash/my-cash.component';
 import { MyAssetsComponent } from './_components/my-assets/my-assets.component';
@@ -21,9 +22,12 @@ const routes: Routes = [
   {path: 'dashboard', component: DashboardComponent, runGuardsAndResolvers: 'always'},
   {path: 'test/assets', component: MyAssetsComponent, runGuardsAndResolvers: 'always'},
   {path: 'test/mycash', component: MyCashComponent, runGuardsAndResolvers: 'always'},
+  {path: 'test/modal', component: TestShowModalPageComponent, runGuardsAndResolvers: 'always'},
   {path: 'test', component: TestPageComponent, runGuardsAndResolvers: 'always'},
   {path: 'portis1', component: PortisL1PageComponent},
   { path: '404', component: NotFoundComponent},
+  { path: '', redirectTo: '/pool', pathMatch: 'full'},
+
   // { path: '', pathMatch: 'full' },
   { path: '**', redirectTo: '/404', pathMatch: 'full'}
 ];

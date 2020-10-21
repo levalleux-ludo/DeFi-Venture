@@ -1,0 +1,18 @@
+<div class="username">
+    <mat-form-field appearance="legacy" class="input-headline">
+        <mat-label>Please Enter Your Username</mat-label>
+        <input matInput placeholder="Please enter your username" [(ngModel)]="username">
+        <mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
+    </mat-form-field>
+</div>
+<h1>Choose an avatar</h1>
+<div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="12">
+    <div fxFlex *ngFor="let avatar of avatars">
+        <div class="avatar" [ngClass]="{'selected': avatar.id == selectedAvatar}">
+            <img matTooltip="{{avatar.name}}" src="assets/avatars/{{avatar.name}}.png" width="100" (click)="selectAvatar(avatar.id)">
+        </div>
+    </div>
+</div>
+<div style="text-align: center;">
+    <button class="validate" mat-raised-button [disabled]="!canValidate" (click)="validate()">Register</button>
+</div>

@@ -1,22 +1,29 @@
 <div fxLayout="column" fxLayoutAlign="start center" class="block-container">
+    <div class="block-username" fxLayout="row">
+        <img src="assets/avatars/{{avatarsImgs[player.avatar]}}.png" height="36">
+        <div fxFlex style="font-size: medium;">{{player.username}}</div>
+    </div>
     <div class="block-cash">
-        <div class="cash-title">MY CASH</div>
+        <div *ngIf="showAssets" class="cash-title">MY CASH</div>
+        <div *ngIf="!showAssets" class="cash-title">CASH</div>
         <div class="border">
             <div class="cash-value">{{cash}}</div>
         </div>
     </div>
     <div class="block-debt">
-        <div class="cash-title">MY DEBT</div>
+        <div *ngIf="showAssets" class="cash-title">MY DEBT</div>
+        <div *ngIf="!showAssets" class="cash-title">DEBT</div>
         <div class="border">
             <div class="cash-value">{{debt}}</div>
         </div>
     </div>
     <div class="block-assets">
-        <div class="cash-title">MY ASSETS</div>
+        <div *ngIf="showAssets" class="cash-title">MY ASSETS</div>
+        <div *ngIf="!showAssets" class="cash-title">ASSETS</div>
         <div class="border">
             <div class="assets-value">{{assetsValue}}
             </div>
-            <div class="assets-table">
+            <div class="assets-table" *ngIf="showAssets">
                 <table>
                     <tr *ngFor="let asset of _assets">
                         <td><img src="{{asset.image}}" height="24"></td>

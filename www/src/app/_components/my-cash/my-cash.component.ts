@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
-import { ISpace } from 'src/app/_services/game-master-contract.service';
+import { IPlayer, ISpace } from 'src/app/_services/game-master-contract.service';
 import startups from '../../../assets/startups.json';
 
 @Component({
@@ -10,14 +10,28 @@ import startups from '../../../assets/startups.json';
 export class MyCashComponent implements OnInit {
 
   @Input()
-  cash = '100000';
+  cash = '0';
 
   @Input()
-  debt = '4572';
+  debt = '0';
 
   @Input()
-  assetsValue = '45575';
+  assetsValue = '0';
 
+  @Input()
+  player: IPlayer;
+
+  @Input()
+  showAssets = false;
+
+  avatarsImgs = [
+    undefined,
+    'nobody',
+    'camel',
+    'crypto-chip',
+    'diamond',
+    'rocket'
+  ];
 
   _assets = [];
   _assetIds = [];
@@ -41,11 +55,13 @@ export class MyCashComponent implements OnInit {
 
   buildAssets() {
     const assets = [];
+    let assetsValue = 0;
     for(const assetId of this._assetIds) {
       let assetValue;
       if (this._playground) {
         const space = this._playground.find(space => space.assetId === assetId);
         assetValue = space?.assetPrice;
+        assetsValue += assetValue;
       }
       assets.push({
         assetId,
@@ -56,5 +72,6 @@ export class MyCashComponent implements OnInit {
       });
     }
     this._assets = assets;
+    this.assetsValue = assetsValue.toString();
   }
 }

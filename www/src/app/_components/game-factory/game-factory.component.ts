@@ -1,9 +1,14 @@
+import { eGameStatus } from './../../_models/contracts/GameMaster';
 import { GameTokenContractService } from './../../_services/game-token-contract.service';
 import { INetwork } from './../../../environments/environment';
 import { GameMasterContractService } from './../../_services/game-master-contract.service';
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
+import { Utils } from 'src/app/_utils/utils';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { RegisterFormComponent } from '../register-form/register-form.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-game-factory',
@@ -27,28 +32,37 @@ export class GameFactoryComponent implements OnInit {
   _network;
   gameFactory;
   games = [];
-  eGameStatus = {
-    CREATED: 0,
-    STARTED: 1,
-    FROZEN: 2,
-    ENDED: 3
-  };
+  eGameStatus = (statusStr: string) => eGameStatus[statusStr];
+  status2String = (status: number) => eGameStatus[status];
   isCreating = false;
   isRegistering = false;
   refreshing = false;
+  balanceEth : number;
+  account;
 
   constructor(
     private portisL1Service: PortisL1Service,
     private gameMasterContractService: GameMasterContractService,
     private tokenContractService: GameTokenContractService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private http: HttpClient,
+    private dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
     this.portisL1Service.onGameCreated.subscribe((gameMasterAddress) => {
       this.showInfo('A new game has been created');
       this.refreshGames();
-    })
+    });
+    this.portisL1Service.onConnect.subscribe(({network, account}) => {
+      if (network) {
+        this.account = account;
+        this.portisL1Service.getL1BalanceETH(account).then((balanceETH) => {
+          this.balanceEth = Utils.getBalanceAsNumber(balanceETH, Utils.ETH_decimals, 0.00001);
+        }).catch(e => console.error(e));
+      }
+    });
+
     // this.portisL1Service.onConnect.subscribe(() => {
     //   this.network = this.portisL1Service.network;
     //   this.gameFactory = this.portisL1Service.contracts?.gameFactory;
@@ -93,14 +107,21 @@ export class GameFactoryComponent implements OnInit {
   register(gameMaster: string) {
     // this.tokenContractService.approveMAX(gameMaster)
     this.isRegistering = true;
-    this.gameMasterContractService.getContract(gameMaster).register().then(() => {
-      console.log('register called');
-      this.showSuccess('Player is registered');
-      this.refreshGames();
-    }).catch((e) => {
-      console.error(e);
-      this.showError('Registering has failed !');
-    }).finally(() => {
+    RegisterFormComponent.showModal(this.dialog).then((result) => {
+      this.gameMasterContractService.getContract(gameMaster).register(
+        result.username,
+        result.avatar
+      ).then(() => {
+        console.log('register called');
+        this.showSuccess('Player is registered');
+        this.refreshGames();
+      }).catch((e) => {
+        console.error(e);
+        this.showError('Registering has failed !');
+      }).finally(() => {
+        this.isRegistering = false;
+      });
+    }).catch(() => {
       this.isRegistering = false;
     });
   }
@@ -128,4 +149,31 @@ export class GameFactoryComponent implements OnInit {
     });
 
   }
+
+  callFaucet() {
+    if (this.network.chainId === 80001) {
+      this.refreshing = true;
+      const body = {network: 'mumbai', address: this.account, token: 'maticToken'}
+      this.http.post<{hash: string}>(
+        'https://api.faucet.matic.network/getTokens',
+        JSON.stringify(body),
+        {
+          headers: new HttpHeaders({'Content-Type': 'application/json' })
+        }
+      ).subscribe(({hash}) => {
+        console.log('Response from Faucet', hash);
+        setTimeout(() => {
+          this.portisL1Service.getL1BalanceETH(this.account).then((balanceETH) => {
+            this.balanceEth = Utils.getBalanceAsNumber(balanceETH, Utils.ETH_decimals, 0.00001);
+          }).catch(e => console.error(e)).finally(() => {
+            this.refreshing = false;
+          });
+        }, 5000);
+      }, error => {
+        console.error(error);
+        this.refreshing = false;
+      });
+    }
+  }
+
 }

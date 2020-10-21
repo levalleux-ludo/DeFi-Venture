@@ -1,6 +1,7 @@
 .board-canvas {
     position: absolute;
     left: 0;
+    bottom: 0;
 }
 
 .marketplace {
@@ -12,7 +13,7 @@
 .defi {
     position: absolute;
     right: 12px;
-    top: 182px;
+    top: 124px;
 }
 
 .sidenav-container {
@@ -58,20 +59,27 @@
 .dices-block {
     // position: absolute;
     // top: -300px;
-    background-color: #404040;
+    // background-color: #404040;
     padding: 24px;
 }
 
 .game-contract {
     position: absolute;
     top: 12px;
-    left: 12px;
+    left: 200px;
     width: calc(20% - 12px);
     z-index: 99;
 }
 
-.spinner {
+.block-my-cash {
     position: absolute;
-    top: calc(50% - 250px);
-    left: calc(50% - 250px);
+    top: 12px;
+    left: 12px;
+    width: 180px;
+    z-index: 2000;
+}
+
+.background-image {
+    position: fixed;
+    opacity: 0.3;
 }

@@ -1,0 +1,24 @@
+<!-- <p>test-modal works!</p> -->
+<!-- <div>Message: {{data.message}}</div> -->
+<!-- <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="12"> -->
+<!-- <h1>Enter your username</h1> -->
+<div class="username">
+    <mat-form-field appearance="legacy" class="input-headline">
+        <mat-label>Please Enter Your Username</mat-label>
+        <input matInput placeholder="Please enter your username" [(ngModel)]="username">
+        <mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
+        <!-- <mat-hint>Username</mat-hint> -->
+    </mat-form-field>
+</div>
+<!-- </div> -->
+<h1>Choose an avatar</h1>
+<div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="12">
+    <div fxFlex *ngFor="let avatar of ['camel', 'diamond', 'nobody', 'crypto-chip', 'rocket']">
+        <div class="avatar" [ngClass]="{'selected': avatar == selectedAvatar}">
+            <img matTooltip="{{avatar}}" src="assets/avatars/{{avatar}}.png" width="100" (click)="selectAvatar(avatar)">
+        </div>
+    </div>
+</div>
+<div style="text-align: center;">
+    <button class="validate" mat-raised-button [disabled]="!canValidate" (click)="validate()">Register</button>
+</div>

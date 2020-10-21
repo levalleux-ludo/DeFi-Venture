@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const { utils } = require("ethers");
 const { getSpaces, getChances } = require("../db/playground");
 
 const NB_MAX_PLAYERS = 8;
@@ -44,9 +45,11 @@ async function createGameMaster() {
     return gameMaster;
 }
 
+var avatarCount = 1;
+
 async function registerPlayers(gameMaster, players) {
     for (let player of players) {
-        await gameMaster.connect(player).register();
+        await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
     }
 }
 
@@ -90,25 +93,25 @@ describe("GameMaster", function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         const addr1Address = await addr1.getAddress();
-        await expect(gameMaster.connect(addr1).register()).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
+        await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
         expect(await gameMaster.getNbPlayers()).to.equal(1);
         expect(await gameMaster.getNextPlayer()).to.equal(addr1Address);
         const addr2Address = await addr2.getAddress();
-        await expect(gameMaster.connect(addr2).register()).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
+        await expect(gameMaster.connect(addr2).register(utils.formatBytes32String('titi'), 2)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
         expect(await gameMaster.getNbPlayers()).to.equal(2);
     });
     it("Should not allow to register same player twice", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
-        await gameMaster.connect(addr1).register();
+        await gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1);
         expect(await gameMaster.getNbPlayers()).to.equal(1);
-        await gameMaster.connect(addr1).register().then(shouldFail.then).catch(shouldFail.catch);
+        await gameMaster.connect(addr1).register(utils.formatBytes32String('titi'), 2).then(shouldFail.then).catch(shouldFail.catch);
     });
     it("Should not allow to start game if less than 2 players", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         await gameMaster.connect(owner).start().then(shouldFail.then).catch(shouldFail.catch);
-        await gameMaster.connect(addr1).register();
+        await gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1);
         await expect(gameMaster.connect(owner).start()).to.be.revertedWith(revertMessage("NOT_ENOUGH_PLAYERS"));
     });
     it("Should allow to start game", async function() {

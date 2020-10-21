@@ -27,6 +27,7 @@ import {MatRadioModule} from '@angular/material/radio';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatTableModule} from '@angular/material/table';
 import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatDialogModule} from '@angular/material/dialog';
 
 import { NavigationComponent } from './_components/navigation/navigation.component';
 import { DashboardComponent } from './_components/dashboard/dashboard.component';
@@ -58,6 +59,10 @@ import { TestPageComponent } from './_components/test-page/test-page.component';
 import { OtherPlayersComponent } from './_components/other-players/other-players.component';
 import { MarketplaceComponent } from './_components/marketplace/marketplace.component';
 import { DefiServicesComponent } from './_components/defi-services/defi-services.component';
+import { TestShowModalPageComponent } from './_components/test-show-modal-page/test-show-modal-page.component';
+import { TestModalComponent } from './_components/test-modal/test-modal.component';
+import { RegisterFormComponent } from './_components/register-form/register-form.component';
+import { SpaceImageComponent } from './_components/space-image/space-image.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -95,7 +100,11 @@ export function enableWeb3Provider(provider) {
     TestPageComponent,
     OtherPlayersComponent,
     MarketplaceComponent,
-    DefiServicesComponent
+    DefiServicesComponent,
+    TestShowModalPageComponent,
+    TestModalComponent,
+    RegisterFormComponent,
+    SpaceImageComponent
   ],
   imports: [
     BrowserModule,
@@ -123,7 +132,8 @@ export function enableWeb3Provider(provider) {
     MatRadioModule,
     MatSnackBarModule,
     MatTableModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatDialogModule
   ],
   providers: [
     {
@@ -133,6 +143,9 @@ export function enableWeb3Provider(provider) {
       multi: true
     }
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  entryComponents: [
+    TestModalComponent
+  ]
 })
 export class AppModule { }

@@ -1,6 +1,5 @@
-<p>other-players works!</p>
-<div fxLayout="row" fxLayoutAlign="end center">
-    <div class="block-player">Player 1</div>
-    <div class="block-player">Player 2</div>
-    <div class="block-player">Player 3</div>
+<div fxLayout="row" fxLayoutAlign="center end">
+    <div class="block-player" *ngFor="let player of _players">
+        <app-my-cash [cash]="player.cash" [assetIds]="player.assetIds" [playground]="_playground" [debt]="0" [player]="player"></app-my-cash>
+    </div>
 </div>

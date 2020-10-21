@@ -7,7 +7,7 @@
             <div class="">
                 <div *ngIf="!isConnected">
                     <span class="text-with-button">
-  <button [disabled]="isConnected || isConnecting" (click)="ConnectL1()">Connect Blockchain</button> with
+  <button mat-raised-button [disabled]="isConnected || isConnecting" (click)="ConnectL1()">Connect Blockchain</button> with
 </span>
                     <img src="assets/portis/portis_logo.svg" height="60">
                     <span class="trademark">
@@ -31,7 +31,7 @@
             <td>
 
                 <span class="text-with-button">
-                <button [disabled]="isLoggingOut" (click)="Logout()">Logout</button> from
+                <button mat-raised-button [disabled]="isLoggingOut" (click)="Logout()">Logout</button> from
               </span>
                 <img src="assets/portis/portis_logo.svg" height="60">
                 <span class="trademark">
@@ -76,7 +76,7 @@
             </td>
             <td>
                 <span class="text-with-button">
-          <button [disabled]="isBuyingUSDC" (click)="buyUSDC()">Buy USDC</button> with
+          <button mat-raised-button [disabled]="isBuyingUSDC" (click)="buyUSDC()">Buy USDC</button> with
         </span>
                 <img src="assets/USDCoin/SVG/USD Coin_OnDark_Horizontal lockup.svg" height="60">
                 <span class="trademark">
@@ -97,7 +97,7 @@
             </td>
             <td>
                 <span class="text-with-button">
-          <button [disabled]="!notInPool() || notEnoughUSDC() || isStaking" (click)="stakeInPool()">Stake in Pool</button> with
+          <button mat-raised-button [disabled]="!notInPool() || notEnoughUSDC() || isStaking" (click)="stakeInPool()">Stake in Pool</button> with
         </span>
                 <img src="assets/pooltogether-brand-assets/wordmark/pooltogether-wordmark--purple-gradient.svg" height="60">
                 <span class="trademark">
@@ -105,9 +105,15 @@
         </span>
             </td>
         </tr>
+        <tr *ngIf="!notInPool()" style="line-height: 50px;">
+            <td></td>
+            <td>
+                <p>You're now allowed to play !</p>
+            </td>
+            <td>
+                <button mat-raised-button routerLink="/games">Enter Games</button>
+            </td>
+        </tr>
     </table>
-    <div *ngIf="!notInPool()">
-        <p>You're now allowed to play !</p>
-        <button routerLink="/games">Enter Games</button>
-    </div>
 </section>
+<mat-spinner *ngIf="isConnecting" class="spinner"></mat-spinner>

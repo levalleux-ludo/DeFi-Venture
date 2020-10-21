@@ -3,7 +3,7 @@ import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { SessionStorageService, StorageKeys } from './session-storage.service';
 import { Injectable } from '@angular/core';
-import { Contract } from 'ethers';
+import { Contract, ethers } from 'ethers';
 import { EthereumService } from './ethereum.service';
 
 export const GAME_STATUS = [
@@ -26,6 +26,7 @@ export enum eEvent {
 }
 
 export enum eAvatar {
+  INVALID,
   Nobody,
   Camel,
   Microchip,
@@ -120,15 +121,17 @@ export class GameMasterContractService extends AbstractContractService<IGameData
           resolve({dice1, dice2, newPosition});
         }
       };
-      this._contract.rollDices().then((response) => {
-        response.wait().then(() => {
-          console.log('rollDices succeed');
-        }).catch(e => reject(e));
-        console.log('rollDices called');
-      }).catch((e) => {
-        reject(e);
-      });
-     });
+      this._contract.estimateGas.rollDices().then((gas) => {
+        this._contract.rollDices({gasLimit: gas.mul(2).toString()}).then((response) => {
+          response.wait().then(() => {
+            console.log('rollDices succeed');
+          }).catch(e => reject(e));
+          console.log('rollDices called');
+        }).catch((e) => {
+          reject(e);
+        });
+      })
+    });
    }
   public play(option: number) {
     return new Promise((resolve, reject) => {
@@ -228,10 +231,12 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     const players = [];
     for (let i = 0; i < nbPlayers; i++) {
       const playerAddress = await this._contract.getPlayerAtIndex(i);
+      const username = await this._contract.getUsername(playerAddress);
+      const avatar = await this._contract.getAvatar(playerAddress);
       players.push({
         address: playerAddress,
-        username: '???',
-        avatar: eAvatar.Nobody
+        username: ethers.utils.parseBytes32String(username),
+        avatar
       });
     }
     return players;

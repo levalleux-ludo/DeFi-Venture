@@ -40,11 +40,11 @@ public async getTokenAddress(): Promise<string> {
   return this.contract.getToken();
 }
 
-public async register(): Promise<void> {
+public async register(username: string, avatar: number): Promise<void> {
   return new Promise(async (resolve, reject) => {
     const tokenAddress = await this.getTokenAddress();
     await (new GameToken(tokenAddress, this.contract.signer)).approveMax(this.contract.address);
-    this.contract.register().then(async(response) => {
+    this.contract.register(ethers.utils.formatBytes32String(username), avatar).then(async(response) => {
       console.log('Tx sent', response.hash);
       await response.wait().then(async(receipt) => {
         console.log('Tx validated', receipt.transactionHash);

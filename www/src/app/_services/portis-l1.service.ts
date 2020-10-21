@@ -36,6 +36,7 @@ export class PortisL1Service {
   private readySubject = new Subject<void>();
   private connectSubject = new BehaviorSubject<{network: INetwork, account: string}>({network: undefined, account: undefined});
   private gameCreatedSubject = new Subject<any>();
+  private logoutSubject = new Subject<void>();
 
   private _network: INetwork;
   private portis: Portis;
@@ -85,6 +86,10 @@ export class PortisL1Service {
 
   public get onConnect(): Observable<{network: INetwork, account: string}> {
     return this.connectSubject.asObservable();
+  }
+
+  public get onLogout(): Observable<void> {
+    return this.logoutSubject.asObservable();
   }
 
   private async initEthers(network: INetwork) {
@@ -142,6 +147,7 @@ export class PortisL1Service {
       await this.portis.logout().then(({error, result}) => {
         if (result) {
           this.reset();
+          this.logoutSubject.next();
         } else {
           console.error(error);
         }

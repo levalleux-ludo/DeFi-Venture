@@ -125,11 +125,11 @@ contract GameMaster is GameScheduler {
         }
     }
 
-    function register() public override payable {
+    function register(bytes32 username, uint8 avatar) public override payable {
         if (tokenAddress != address(0)) {
             require(token.allowance(msg.sender, address(this)) == MAX_UINT256, "SENDER_MUST_APPROVE_GAME_MASTER");
         }
-        super.register();
+        super.register(username, avatar);
     }
 
     function rollDices() public returns (uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options) {

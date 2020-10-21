@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { BigNumber } = require("ethers");
+const { BigNumber, utils } = require("ethers");
 const { getSpaces, getChances } = require("../db/playground");
 
 const NB_MAX_PLAYERS = 8;
@@ -37,6 +37,7 @@ var GameAssetsFactory;
 var owner;
 var addr1;
 var addr2;
+var avatarCount = 1;
 
 
 async function registerPlayers(gameMaster, players) {
@@ -51,7 +52,7 @@ async function registerPlayers(gameMaster, players) {
         if (tokenContract) {
             await tokenContract.connect(player).approveMax(gameMaster.address);
         }
-        await gameMaster.connect(player).register();
+        await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
     }
 }
 
