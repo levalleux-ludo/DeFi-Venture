@@ -7,7 +7,7 @@ import { AfterContentInit, Component, OnDestroy, OnInit } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, OnDestroy, AfterContentInit {
-  title = 'www';
+  title = 'DeFi-Venture';
   isAuthenticated = false;
   constructor(private connectService: ConnectionService) {
 
