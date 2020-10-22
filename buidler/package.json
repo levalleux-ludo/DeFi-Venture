@@ -6,7 +6,7 @@
     "scripts": {
         "postinstall": "node scripts/post_install.js",
         "test": "buidler test",
-        "build": "buidler compile",
+        "build": "npx buidler compile",
         "deploy:ganache": "buidler run scripts/deploy_contracts.js --network ganache",
         "deploy:mocks": "buidler run scripts/deploy_mocks.js --network ganache",
         "deploy:goerli": "buidler run scripts/deploy_contracts.js --network goerli",
