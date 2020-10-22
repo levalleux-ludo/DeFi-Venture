@@ -1,0 +1,21 @@
+{
+    "name": "DeFi-Venture",
+    "version": "1.0.0",
+    "description": "This project has been built for ETHOnline Hackathon 2020",
+    "main": "index.js",
+    "scripts": {
+        "postinstall": "cd www && npm install",
+        "start:prod": "cd www && npm run start:prod"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/levalleux-ludo/DeFi-Venture.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/levalleux-ludo/DeFi-Venture/issues"
+    },
+    "homepage": "https://github.com/levalleux-ludo/DeFi-Venture#readme"
+}
