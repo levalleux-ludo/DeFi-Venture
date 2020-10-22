@@ -242,7 +242,7 @@ export class TestCanvasComponent implements OnInit {
         for (let i = 0; i < avatars.length; i++) {
           const avatar = avatars[i];
           const offsetX = (15 * i - 5 * avatars.length) * this.zoom;
-          this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 40*this.zoom, 20*this.zoom, 20*this.zoom);
+          this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
         }
       }
       this.ctx.restore();

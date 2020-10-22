@@ -1,0 +1,23 @@
+<h4>Select Asset To Sell</h4>
+<div fxLayout="column" style="min-width: 550px;">
+    <mat-form-field appearance="fill">
+        <mat-label>Your asset</mat-label>
+        <mat-select [value]="selectedAsset" (selectionChange)="selectedAsset = $event.value; fairPrice = selectedAsset?.value; minPrice = selectedAsset?.value/2">
+            <mat-option *ngFor="let asset of assets" [value]="asset">
+                {{asset.name}} value:{{asset.value}}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+    <mat-slide-toggle [checked]="liquidation" (change)="liquidation = $event.checked" style="padding-bottom: 24px;" [disabled]="(selectedAsset == undefined)">Immediate Liquidation</mat-slide-toggle>
+    <h4 *ngIf="!liquidation">Set Price</h4>
+    <mat-form-field *ngIf="!liquidation">
+        <mat-label>Fair Price (the price you expect to sell at)</mat-label>
+        <input #fairPriceInput matInput type="number" [min]="selectedAsset?.value/2" [value]="fairPrice" (change)="fairPrice = $event.target.value" [disabled]="(selectedAsset == undefined)">
+    </mat-form-field>
+    <mat-form-field *ngIf="!liquidation">
+        <mat-label>Min Price (the minimum price you accept to sell)</mat-label>
+        <input matInput type="number" [min]="selectedAsset?.value/2" [max]="fairPrice" [value]="minPrice" (change)="minPrice = $event.target.value" [disabled]="(selectedAsset == undefined)">
+    </mat-form-field>
+    <button *ngIf="!liquidation" [disabled]="(selectedAsset == undefined) || (!fairPrice) || (!minPrice)" mat-raised-button color="primary" (click)="apply()">List For Sell</button>
+    <button *ngIf="liquidation" [disabled]="selectedAsset == undefined" mat-raised-button color="primary" (click)="apply()">Immediate Liquidation For Value={{selectedAsset?.value / 2}}</button>
+</div>

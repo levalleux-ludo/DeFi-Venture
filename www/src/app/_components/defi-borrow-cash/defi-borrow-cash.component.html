@@ -1,0 +1,45 @@
+<h4>Borrow cash by locking your asset as collateral</h4>
+<h5>Loan rate: 12%/round</h5>
+<div fxLayout="column" style="min-width: 550px;">
+    <div fxLayout="row" fxLayoutAlign="center start" style="min-width: 550px;" fxLayoutGap="24px">
+        <div>
+            <h3>Collateral</h3>
+            <mat-form-field appearance="fill">
+                <mat-label>Your asset</mat-label>
+                <mat-select [value]="selectedAsset" (selectionChange)="selectedAsset = $event.value">
+                    <mat-option *ngFor="let asset of assets" [value]="asset">
+                        {{asset.name}} value:{{asset.value}}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+            <button style="margin: 12px;" mat-raised-button [disabled]="selectedAsset == undefined" (click)="lockAsset(selectedAsset)">Add Asset</button>
+
+            <h5>Locked Assets:</h5>
+            <div style="max-height: 120px; overflow: auto;">
+                <table>
+                    <tr>
+                        <th>name</th>
+                        <th>value</th>
+                    </tr>
+                    <tr *ngFor="let asset of lockedAssets">
+                        <td>{{asset.name}}</td>
+                        <td>{{asset.value}}</td>
+                        <td><button mat-raised-button (click)="unlockAsset(asset)">Remove</button></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div fxLayout="column">
+            <h3>Borrowing Allowance: <span class="cash-value">{{allowance}}</span></h3>
+            <h3 style="width: 250px;">
+                <mat-form-field appearance="fill">
+                    <mat-label>Borrowed Amount</mat-label>
+                    <input class="cash-value" matInput type="number" [min]="0" [max]="allowance" [value]="borrowedAmount" (change)="borrowedAmount = $event.target.value">
+                </mat-form-field>
+                <mat-slider style="width: 100%;" [disabled]="allowance == 0" [value]="borrowedAmount" [step]="1" [min]="0" [max]="allowance" (change)="borrowedAmount = $event.value"></mat-slider>
+            </h3>
+            <h3>Available: <span class="cash-value">{{allowance - borrowedAmount}}</span></h3>
+        </div>
+    </div>
+    <button mat-raised-button color="primary" (click)="apply()">Apply</button>
+</div>

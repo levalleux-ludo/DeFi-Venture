@@ -1,5 +1,5 @@
 <div fxLayout="column" fxLayoutAlign="start center" class="block-container">
-    <div class="block-username" fxLayout="row">
+    <div *ngIf="player != undefined" class="block-username" fxLayout="row">
         <img src="assets/avatars/{{avatarsImgs[player.avatar]}}.png" height="36">
         <div fxFlex style="font-size: medium;">{{player.username}}</div>
     </div>
@@ -8,6 +8,13 @@
         <div *ngIf="!showAssets" class="cash-title">CASH</div>
         <div class="border">
             <div class="cash-value">{{cash}}</div>
+        </div>
+    </div>
+    <div class="block-staked">
+        <div *ngIf="showAssets" class="cash-title">STAKED</div>
+        <div *ngIf="!showAssets" class="cash-title">STAKED</div>
+        <div class="border">
+            <div class="cash-value">{{staked}}</div>
         </div>
     </div>
     <div class="block-debt">

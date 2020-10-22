@@ -1,0 +1,48 @@
+<div fxLayout="column">
+    <h3>Issue Tokens and sell them to other players</h3>
+    <div fxLayout="row" fxLayoutAlign="center start" fxLayoutGap="12px">
+        <div style="width: 300px;">
+            <h4>Select Startup</h4>
+            <mat-form-field appearance="fill">
+                <mat-label>Your asset</mat-label>
+                <mat-select [value]="selectedAsset" (selectionChange)="selectedAsset = $event.value; fairPrice = selectedAsset.value / 20; minPrice = fairPrice;">
+                    <mat-option *ngFor="let asset of assets" [value]="asset">
+                        {{asset.name}} value:{{asset.value}}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+        <div style="width: 300px;">
+            <h4>Tokens Type</h4>
+            <mat-radio-group aria-label="Select an option" [(ngModel)]="tokenType" style="display: inline-grid;">
+                <mat-radio-button value="utility" matTooltip="Owners of this token will not pay for product when landing on the startup block">Utility Tokens</mat-radio-button>
+                <mat-radio-button value="security" matTooltip="Owners of this token will get a share in revenues of this startup">Security Tokens</mat-radio-button>
+            </mat-radio-group>
+        </div>
+    </div>
+    <div fxLayout="row" fxLayoutAlign="center start" fxLayoutGap="12px">
+        <div>
+            <h4>Tokens Quantity</h4>
+            <div fxLayout="column" fxLayoutAlign="center center" style="width: 300px;">
+                <mat-input-counter [min]="5" [max]="10" [label]="''" [step]="(selectedAsset == 0) ? 10 : 1" [_value]="nbTokens" (change)="nbTokens = $event" placeholder="your place holder">
+                    <!-- use a big step value to make it appearing disabled -->
+                </mat-input-counter>
+                <mat-slider style="width: 50%;" [disabled]="selectedAsset == 0" [value]="nbTokens" [step]="1" [min]="5" [max]="10" (change)="nbTokens = $event.value"></mat-slider>
+            </div>
+        </div>
+        <div>
+            <h4>Unit Price</h4>
+            <div fxLayout="column" fxLayoutAlign="center center" style="width: 300px;">
+                <mat-form-field>
+                    <mat-label>Fair Price</mat-label>
+                    <input #fairPriceInput matTooltip="the price you expect to sell at" matInput type="number" [min]="selectedAsset?.value/2" [value]="fairPrice" (change)="fairPrice = $event.target.value" [disabled]="(selectedAsset == undefined)">
+                </mat-form-field>
+                <mat-form-field>
+                    <mat-label>Min Price</mat-label>
+                    <input matTooltip="the minimum price you accept to sell" matInput type="number" [min]="selectedAsset?.value/2" [max]="fairPrice" [value]="minPrice" (change)="minPrice = $event.target.value" [disabled]="(selectedAsset == undefined)">
+                </mat-form-field>
+            </div>
+        </div>
+    </div>
+    <button style="margin: 12px;" mat-raised-button color="primary" [disabled]="(selectedAsset == undefined) || (tokenType == undefined)" (click)="issueTokens()">Issue Tokens</button>
+</div>

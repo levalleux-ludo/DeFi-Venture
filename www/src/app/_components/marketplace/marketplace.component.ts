@@ -1,3 +1,5 @@
+import { MarketplaceFormComponent } from './../marketplace-form/marketplace-form.component';
+import { MatDialog } from '@angular/material/dialog';
 import { Component, OnInit } from '@angular/core';
 
 @Component({
@@ -7,9 +9,19 @@ import { Component, OnInit } from '@angular/core';
 })
 export class MarketplaceComponent implements OnInit {
 
-  constructor() { }
+  constructor(
+    private dialog: MatDialog
+  ) { }
 
   ngOnInit(): void {
+  }
+
+  showDialog() {
+    MarketplaceFormComponent.showModal(this.dialog).then((result) => {
+
+    }).catch(() => {
+
+    });
   }
 
 }

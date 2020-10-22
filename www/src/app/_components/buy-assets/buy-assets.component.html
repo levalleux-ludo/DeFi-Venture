@@ -1,0 +1,22 @@
+<h4>Select Asset To Buy</h4>
+<div fxLayout="column" style="min-width: 550px;">
+    <mat-form-field appearance="fill">
+        <mat-label>Asset For Sale</mat-label>
+        <mat-select [value]="selectedAsset" (selectionChange)="selectedAsset = $event.value; fairPrice = selectedAsset?.value; maxPrice = selectedAsset?.value">
+            <mat-option *ngFor="let asset of assets" [value]="asset">
+                {{asset.name}} price:{{asset.value}}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+    <h4>Price: {{selectedAsset?.value}}</h4>
+    <h4>Bid</h4>
+    <mat-form-field>
+        <mat-label>Fair Price (the price you expect to buy at)</mat-label>
+        <input matInput type="number" [min]="0" [max]="selectedAsset?.value" [value]="fairPrice" (change)="fairPrice = $event.target.value" [disabled]="(selectedAsset == undefined)">
+    </mat-form-field>
+    <mat-form-field>
+        <mat-label>Max Price (the maximum price you accept to buy)</mat-label>
+        <input matInput type="number" [min]="fairPrice" [value]="maxPrice" (change)="maxPrice = $event.target.value" [disabled]="(selectedAsset == undefined)">
+    </mat-form-field>
+    <button [disabled]="(selectedAsset == undefined) || (!fairPrice) || (!maxPrice)" mat-raised-button color="primary" (click)="apply()">Place Buy Order</button>
+</div>

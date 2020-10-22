@@ -267,12 +267,25 @@ export class GameMasterContractService extends AbstractContractService<IGameData
 
   protected async buildPlayground(nbSpaces: number): Promise<ISpace[]> {
     const spaces = [];
+    // Optim:
+    const playground = await this._contract.getPlayground(); // bytes32 array
+
     for (let spaceId = 0; spaceId < nbSpaces; spaceId++) {
-      const spaceDetails = await this._contract.getSpaceDetails(spaceId);
-      const type = spaceDetails[0];
-      const assetId = spaceDetails[1];
-      const assetPrice = spaceDetails[2].toNumber();
-      const productPrice = spaceDetails[3].toNumber();
+      const spaceCodeStr = '0x' + playground.slice(2 + 64 - 2 * (spaceId + 1), 2 + 64 - 2 * spaceId);
+      const spaceCode = parseInt(spaceCodeStr, 16);
+      // tslint:disable-next-line: no-bitwise
+      const type = spaceCode & 0x7;
+      const isAsset = ((type >= eSpaceType.ASSET_CLASS_1) && (type <= eSpaceType.ASSET_CLASS_4));
+      // tslint:disable-next-line: no-bitwise
+      const assetId = spaceCode >> 3;
+      const assetClass = isAsset ? type - eSpaceType.ASSET_CLASS_1 + 1 : 0;
+      const assetPrice = isAsset ? 50 * assetClass : 0;
+      const productPrice = isAsset ? assetPrice / 4 : 0;
+    //   const spaceDetails = await this._contract.getSpaceDetails(spaceId);
+    //   const type = spaceDetails[0];
+    //   const assetId = spaceDetails[1];
+    //   const assetPrice = spaceDetails[2].toNumber();
+    //   const productPrice = spaceDetails[3].toNumber();
       spaces.push({
         type,
         assetId,

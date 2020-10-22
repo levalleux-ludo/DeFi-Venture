@@ -2,12 +2,20 @@
 
     <mat-sidenav-content style="height: auto;">
 
+
         <app-marketplace class="marketplace"></app-marketplace>
         <app-defi-services class="defi"></app-defi-services>
 
         <div #content fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="sidenav-content">
+            <!-- <app-sell-assets></app-sell-assets> -->
+            <!-- <app-buy-assets></app-buy-assets> -->
+            <app-defi-lend-cash [cash]="154"></app-defi-lend-cash>
 
-            <div>
+            <app-defi-borrow-cash [cash]="154" [collateral]="300"></app-defi-borrow-cash>
+
+            <app-defi-ico></app-defi-ico>
+
+            <div style="width:250px;">
                 <app-my-cash [assetIds]="[1,2,3,4,5,6]" [cash]="12345" [debt]="98765" [assetsValue]="4447"></app-my-cash>
             </div>
         </div>

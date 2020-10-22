@@ -1,0 +1,13 @@
+:host {
+    position: relative;
+}
+
+.btn-close {
+    position: absolute;
+    bottom: 12px;
+    left: calc(50% - 38px);
+}
+
+mat-tab {
+    margin: 12px !important;
+}

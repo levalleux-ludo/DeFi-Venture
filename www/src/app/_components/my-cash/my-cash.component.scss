@@ -16,18 +16,6 @@
     // z-index: 9999;
 }
 
-@font-face {
-    font-family: digital7;
-    src: url('../../../assets/fonts/digital-7.ttf');
-}
-
-.cash-value {
-    font-size: large;
-    font-family: digital7;
-    // margin: 6px;
-    text-align: right;
-}
-
 .border {
     border: solid;
     // width: 100%;
@@ -55,6 +43,12 @@
 }
 
 .block-cash {
+    position: relative;
+    width: 100%;
+    background-color: green;
+}
+
+.block-staked {
     position: relative;
     width: 100%;
     background-color: darkgoldenrod;

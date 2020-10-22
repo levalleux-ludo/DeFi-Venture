@@ -16,6 +16,9 @@ export class MyCashComponent implements OnInit {
   debt = '0';
 
   @Input()
+  staked = '0';
+
+  @Input()
   assetsValue = '0';
 
   @Input()

@@ -1,0 +1,33 @@
+<div style="position: relative; height: 100%; width: 100%;">
+    <img src="assets/spaces/TheGrandTezaar_tr.png" height="100" style="position: absolute;">
+    <div fxLayout="column" fxLayoutAlign="start center">
+        <div>
+            <div style="top: 40px;">
+                <h1>DeFi Services</h1>
+            </div>
+        </div>
+        <div>
+            <mat-tab-group>
+                <mat-tab label="Lend">
+                    <div style="margin: 12px;">
+                        <!-- TODO: perform lending validation -->
+                        <app-defi-lend-cash (validate)="close()"></app-defi-lend-cash>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Borrow">
+                    <div style="margin: 12px;">
+                        <!-- TODO: perform borrowing validation -->
+                        <app-defi-borrow-cash (validate)="close()"></app-defi-borrow-cash>
+                    </div>
+                </mat-tab>
+                <mat-tab label="Raised Funds (ICO)">
+                    <div style="margin: 12px;">
+                        <!-- TODO: perform ICO validation -->
+                        <app-defi-ico (validate)="close()"></app-defi-ico>
+                    </div>
+                </mat-tab>
+            </mat-tab-group>
+        </div>
+    </div>
+    <button mat-raised-button color="primary" (click)="close()" class="btn-close">Close</button>
+</div>

@@ -28,6 +28,9 @@ import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {MatTableModule} from '@angular/material/table';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import {MatDialogModule} from '@angular/material/dialog';
+import {MatTabsModule} from '@angular/material/tabs';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import { MatInputCounterModule } from '@angular-material-extensions/input-counter';
 
 import { NavigationComponent } from './_components/navigation/navigation.component';
 import { DashboardComponent } from './_components/dashboard/dashboard.component';
@@ -63,6 +66,13 @@ import { TestShowModalPageComponent } from './_components/test-show-modal-page/t
 import { TestModalComponent } from './_components/test-modal/test-modal.component';
 import { RegisterFormComponent } from './_components/register-form/register-form.component';
 import { SpaceImageComponent } from './_components/space-image/space-image.component';
+import { MarketplaceFormComponent } from './_components/marketplace-form/marketplace-form.component';
+import { SellAssetsComponent } from './_components/sell-assets/sell-assets.component';
+import { BuyAssetsComponent } from './_components/buy-assets/buy-assets.component';
+import { DefiFormComponent } from './_components/defi-form/defi-form.component';
+import { DefiLendCashComponent } from './_components/defi-lend-cash/defi-lend-cash.component';
+import { DefiBorrowCashComponent } from './_components/defi-borrow-cash/defi-borrow-cash.component';
+import { DefiIcoComponent } from './_components/defi-ico/defi-ico.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -104,7 +114,14 @@ export function enableWeb3Provider(provider) {
     TestShowModalPageComponent,
     TestModalComponent,
     RegisterFormComponent,
-    SpaceImageComponent
+    SpaceImageComponent,
+    MarketplaceFormComponent,
+    SellAssetsComponent,
+    BuyAssetsComponent,
+    DefiFormComponent,
+    DefiLendCashComponent,
+    DefiBorrowCashComponent,
+    DefiIcoComponent
   ],
   imports: [
     BrowserModule,
@@ -133,7 +150,10 @@ export function enableWeb3Provider(provider) {
     MatSnackBarModule,
     MatTableModule,
     MatTooltipModule,
-    MatDialogModule
+    MatDialogModule,
+    MatTabsModule,
+    MatSlideToggleModule,
+    MatInputCounterModule
   ],
   providers: [
     {
@@ -145,7 +165,8 @@ export function enableWeb3Provider(provider) {
   ],
   bootstrap: [AppComponent],
   entryComponents: [
-    TestModalComponent
+    TestModalComponent,
+    MarketplaceFormComponent
   ]
 })
 export class AppModule { }
