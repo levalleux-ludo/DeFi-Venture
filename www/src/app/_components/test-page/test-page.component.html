@@ -7,6 +7,9 @@
         <app-defi-services class="defi"></app-defi-services>
 
         <div #content fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="sidenav-content">
+            <input style="width: 150px;" #cardId matInput [value]="0" type="number" (change)="showChance($event.target.value)">
+
+            <input style="width: 150px;" #cardId matInput [value]="0" type="number" (change)="invest($event.target.value)">
             <!-- <app-sell-assets></app-sell-assets> -->
             <!-- <app-buy-assets></app-buy-assets> -->
             <app-defi-lend-cash [cash]="154"></app-defi-lend-cash>

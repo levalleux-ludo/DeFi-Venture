@@ -1,3 +1,5 @@
+import { MatDialog } from '@angular/material/dialog';
+import { InvestFormComponent } from './../invest-form/invest-form.component';
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { IPlayer, ISpace } from 'src/app/_services/game-master-contract.service';
 import startups from '../../../assets/startups.json';
@@ -51,7 +53,9 @@ export class MyCashComponent implements OnInit {
     this.buildAssets();
   }
 
-  constructor() { }
+  constructor(
+    private dialog: MatDialog
+  ) { }
 
   ngOnInit(): void {
   }
@@ -76,5 +80,9 @@ export class MyCashComponent implements OnInit {
     }
     this._assets = assets;
     this.assetsValue = assetsValue.toString();
+  }
+
+  invest(assetId: number, assetName: string) {
+    InvestFormComponent.showModal(this.dialog, {assetId, assetName}).then(() => {})
   }
 }

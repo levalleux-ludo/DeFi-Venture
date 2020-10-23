@@ -6,7 +6,8 @@
     </h4>
 </div>
 <div *ngIf="isOptionValid(getOptionValue('CHANCE'))">
-    <h2>This the chance you've got: {{chanceCardId}}</h2>
+    <!-- <h2><button mat-raised-button color="primary" (click)="viewChance(chanceCardId);">View Chance</button></h2> -->
+    <app-chance-detail [chanceId]="chanceCardId"></app-chance-detail>
 </div>
 <div *ngIf="isOptionValid(getOptionValue('QUARANTINE'))">
     <h2>Bad luck, you're now stuck in Quarantine</h2>

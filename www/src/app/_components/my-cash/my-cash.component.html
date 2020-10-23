@@ -39,7 +39,7 @@
                     </tr>
                 </table>
                 <mat-menu #menuEth="matMenu" xPosition="before" class="asset-menu-panel">
-                    <ng-template matMenuContent let-detail="detail" let-assetPrice="assetPrice">
+                    <ng-template matMenuContent let-detail="detail" let-assetPrice="value" let-assetName="name" let-assetId="assetId">
                         <div>
                             <div>
                                 <h2>Details</h2>
@@ -50,7 +50,7 @@
                                 <p>{{assetPrice}}</p>
                             </div>
                         </div>
-                        <button mat-raised-button>Invest</button>
+                        <button mat-raised-button (click)="invest(assetId, assetName)">Invest</button>
                         <button mat-raised-button>Sell</button>
                     </ng-template>
                 </mat-menu>
