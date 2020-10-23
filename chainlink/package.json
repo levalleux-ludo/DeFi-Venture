@@ -1,0 +1,32 @@
+{
+    "name": "pricefeed_tuto",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start:node": "buidler node",
+        "build:v0.6.6": "buidler compile --config buidler.config.v0.6.6.js",
+        "deploy:VRF:mumbai": "buidler run scripts/deploy_VRFCoordinator.js --network mumbai --config buidler.config.v0.6.6.js",
+        "deploy;local": "buidler run scripts/sample-scripts.js",
+        "deploy:LINK:mumbai": "buidler run scripts/deploy_LINKToken.js --network mumbai --config buidler.config.v0.4.js",
+        "getmaticprice:mumbai": "buidler run scripts/test-httpGetMaticPrice.js --network mumbai",
+        "testRandom:kovan": "buidler run scripts/test-randomNumber.js --network kovan",
+        "test": "buidler test"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@nomiclabs/buidler": "^1.4.7",
+        "@nomiclabs/buidler-ethers": "^2.0.2",
+        "@nomiclabs/buidler-waffle": "^2.1.0",
+        "chai": "^4.2.0",
+        "dotenv": "^8.2.0",
+        "ethereum-waffle": "^3.1.1",
+        "ethers": "^5.0.17"
+    },
+    "dependencies": {
+        "@chainlink/contracts": "0.0.10",
+        "@openzeppelin/contracts": "^3.2.0"
+    }
+}
