@@ -1,0 +1,14 @@
+<h1>Invest in startup {{data.assetName}}:</h1>
+<div fxLayout="column" style="min-width: 550px;">
+    <div fxLayout="row" fxLayoutAlign="center center">
+        <h3 style="width: 250px;">
+            <mat-form-field appearance="fill">
+                <mat-label>Amount to invest</mat-label>
+                <input class="cash-value" matInput type="number" [min]="0" [max]="cash" [value]="investAmount" (change)="investAmount = $event.target.value">
+            </mat-form-field>
+            <mat-slider style="width: 100%;" [disabled]="cash == undefined" [value]="investAmount" [step]="1" [min]="0" [max]="cash" (change)="investAmount = $event.value"></mat-slider>
+        </h3>
+        <h3>Cash available: <span class="cash-value">{{cash - investAmount}}</span></h3>
+    </div>
+    <button [disabled]="(investAmount == 0)" mat-raised-button color="primary" (click)="close()">Invest</button>
+</div>

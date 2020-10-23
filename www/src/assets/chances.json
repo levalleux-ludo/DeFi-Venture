@@ -1,0 +1,83 @@
+{
+    "chances": [{
+            "text": "Electricity Prices raise. All mining farms must pay %AMOUNT%",
+            "amount": 100,
+            "impl": "pay_amount_per_mining_farm"
+        },
+        {
+            "text": "Hacker group find vulnerabilities in your product. You must pay %AMOUNT% for each company you own",
+            "amount": 100,
+            "impl": "pay_amount_per_company"
+        },
+        {
+            "text": "You win the first prize at ETHOnline Hackathon. Receive %AMOUNT%",
+            "amount": 100,
+            "impl": "receive_amount"
+        },
+        {
+            "text": "Delegation rewards. All bakeries must pay %AMOUNT%",
+            "amount": 100,
+            "impl": "pay_amount_per_bakery"
+        },
+        {
+            "text": "States debt crisis. You must pay %AMOUNT%",
+            "amount": 100,
+            "impl": "pay_amount"
+        },
+        {
+            "text": "Cryptos banned in your country. You must pay %AMOUNT%",
+            "amount": 100,
+            "impl": "pay_amount"
+        },
+        {
+            "text": "You've caught COVID-19. Go to quarantine and you miss you next turn.",
+            "amount": 0,
+            "impl": "go_to_quarantine"
+        },
+        {
+            "text": "You've got support from Crypto activists. They give you %AMOUNT%",
+            "amount": 100,
+            "impl": "receive_amount"
+        },
+        {
+            "text": "One of your crypto startup gets listed on a major exchanges. You receive %AMOUNT%",
+            "amount": 100,
+            "impl": "receive_amount"
+        },
+        {
+            "text": "Advance to %SPACE%. If you pass the Genesis Block, you receive %AMOUNT%",
+            "amount": 100,
+            "space": 12,
+            "impl": "go_to_space"
+        },
+        {
+            "text": "You've completed a bug bounty. You receive %AMOUNT%",
+            "amount": 100,
+            "impl": "receive_amount"
+        },
+        {
+            "text": "Crypto-Market is getting bullish. You receive %AMOUNT%",
+            "amount": 100,
+            "impl": "receive_amount"
+        },
+        {
+            "text": "Crypto-Market is manipulated. You loose %AMOUNT%",
+            "amount": 100,
+            "impl": "pay_amount"
+        },
+        {
+            "text": "Capital Gain Tax recall. You must pay %AMOUNT%",
+            "amount": 100,
+            "impl": "pay_amount"
+        },
+        {
+            "text": "Go back %NB% Spaces",
+            "nb": -3,
+            "impl": "move_n_spaces"
+        },
+        {
+            "text": "COVID-19 Immunity Passport. You're not be going to quarantine anymore",
+            "impl": "covid_immunity"
+        }
+    ]
+}

@@ -1,3 +1,5 @@
+import { ChanceDetailFormComponent } from './../chance-detail-form/chance-detail-form.component';
+import { MatDialog } from '@angular/material/dialog';
 import { eOption, ISpace } from './../../_services/game-master-contract.service';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { eSpaceType } from 'src/app/_services/game-master-contract.service';
@@ -74,7 +76,9 @@ export class SpaceDetailsComponent implements OnInit {
     return eOption[optionStr];
   }
 
-  constructor() { }
+  constructor(
+    private dialog: MatDialog
+  ) { }
 
   ngOnInit(): void {
   }
@@ -134,6 +138,10 @@ export class SpaceDetailsComponent implements OnInit {
 
   validate() {
     this.onValidate.emit(this.selectedOption);
+  }
+
+  viewChance(chanceId: number) {
+    ChanceDetailFormComponent.showModal(this.dialog, {chanceId}).then(() => {});
   }
 
 }

@@ -73,6 +73,9 @@ import { DefiFormComponent } from './_components/defi-form/defi-form.component';
 import { DefiLendCashComponent } from './_components/defi-lend-cash/defi-lend-cash.component';
 import { DefiBorrowCashComponent } from './_components/defi-borrow-cash/defi-borrow-cash.component';
 import { DefiIcoComponent } from './_components/defi-ico/defi-ico.component';
+import { ChanceDetailFormComponent } from './_components/chance-detail-form/chance-detail-form.component';
+import { ChanceDetailComponent } from './_components/chance-detail/chance-detail.component';
+import { InvestFormComponent } from './_components/invest-form/invest-form.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -121,7 +124,10 @@ export function enableWeb3Provider(provider) {
     DefiFormComponent,
     DefiLendCashComponent,
     DefiBorrowCashComponent,
-    DefiIcoComponent
+    DefiIcoComponent,
+    ChanceDetailFormComponent,
+    ChanceDetailComponent,
+    InvestFormComponent
   ],
   imports: [
     BrowserModule,

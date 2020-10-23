@@ -1,6 +1,5 @@
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Component, Inject, OnInit } from '@angular/core';
-import { RegisterResultData, RegisterFormComponent } from '../register-form/register-form.component';
 
 export interface MarketplaceFormData {
 
