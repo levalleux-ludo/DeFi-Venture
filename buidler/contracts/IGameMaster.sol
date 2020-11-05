@@ -3,8 +3,8 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import {IGameScheduler} from './IGameScheduler.sol';
 interface IGameMaster is IGameScheduler {
-    event RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
-    event PlayPerformed(address player, uint8 option, uint8 cardId, uint8 newPosition);
+    event RolledDices(address indexed player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
+    event PlayPerformed(address indexed player, uint8 option, uint8 cardId, uint8 newPosition);
     function setToken(address _token) external;
     function setAssets(address _assets) external;
     function getToken() external view returns (address);

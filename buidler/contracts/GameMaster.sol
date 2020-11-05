@@ -24,8 +24,8 @@ contract GameMaster is GameScheduler, IGameMaster {
     bytes32 private playground;
     bytes32 private chances;
 
-    event RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
-    event PlayPerformed(address player, uint8 option, uint8 cardId, uint8 newPosition);
+    event RolledDices(address indexed player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
+    event PlayPerformed(address indexed player, uint8 option, uint8 cardId, uint8 newPosition);
 
     constructor (
         uint8 nbMaxPlayers,
@@ -156,6 +156,7 @@ contract GameMaster is GameScheduler, IGameMaster {
         options = this.getOptionsAt(msg.sender, newPosition);
         currentOptions = options;
         currentCardId = cardId;
+        console.log('emit RolledDices event');
         emit RolledDices(msg.sender, dice1, dice2, cardId, newPosition, options);
     }
 
