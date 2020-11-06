@@ -1,6 +1,17 @@
 {
-  "extends": [
-    "tslint:latest",
-    "tslint-config-prettier"
-  ]
+    "rules": {
+        "variable-name": {
+            "options": [
+                "ban-keywords",
+                "check-format",
+                "allow-leading-underscore",
+                "allow-pascal-case"
+            ]
+        },
+        "no-console": [false, "log", "error"]
+    },
+    "extends": [
+        "tslint:latest",
+        "tslint-config-prettier"
+    ]
 }

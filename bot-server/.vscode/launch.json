@@ -6,15 +6,16 @@
   "configurations": [
     {
       "type": "node",
+      "protocol": "inspector",
       "request": "launch",
       "name": "Debug file",
-      "program": "${workspaceRoot}/lib/${fileBasenameNoExtension}.js",
-      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/index.ts",
+      "cwd": "${workspaceFolder}",
       "sourceMaps": true,
       "smartStep": true,
       "preLaunchTask": "build",
       "outFiles": [
-        "${workspaceRoot}/lib/*.js"
+        "${workspaceFolder}/lib/**/*.js"
       ]
     },
     {

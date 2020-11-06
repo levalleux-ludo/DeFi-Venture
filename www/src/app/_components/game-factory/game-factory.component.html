@@ -1,32 +1,45 @@
-<p>Game Factory:
+<p *ngIf="(gameFactory != undefined)">Game Factory:
     <app-blockchain-link [network]="network" [link]="gameFactory"></app-blockchain-link>
 </p>
-<div *ngIf="balanceEth == 0">
+<div *ngIf="balanceEth <= 0.02">
     <h2>Warning !</h2>
-    <p>Your account balance is empty. You need to purchase native tokens ({{(network?.chainId == 80001) ? 'MATIC' : 'ETH'}})</p>
+    <p>Your account balance is too low. You need to purchase native tokens ({{(network?.chainId == 80001) ? 'MATIC' : 'ETH'}})</p>
     <button mat-raised-button (click)="callFaucet()">Get Tokens</button>
 </div>
-<h1>Games: {{games.length}}</h1>
-<table *ngIf="!refreshing">
-    <tr>
-        <th></th>
-        <th>Status</th>
-        <th>Game Master Contract</th>
-        <th>Nb Players</th>
-        <th></th>
-    </tr>
-    <tr *ngFor="let game of games; let i = index;">
-        <td>#{{i+1}}</td>
-        <td>{{status2String(game.status)}}</td>
-        <td>
-            <app-blockchain-link [network]="network" [link]="game.gameMaster"></app-blockchain-link>
-        </td>
-        <td>{{game.nbPlayers}}</td>
-        <td>
-            <button mat-raised-button *ngIf="!game.isRegistered" [disabled]="(game.status != eGameStatus('CREATED')) || isRegistering" (click)="register(game.gameMaster)">Register</button>
-            <button mat-raised-button *ngIf="game.isRegistered" routerLink="/game/{{game.gameMaster}}">Join</button>
-        </td>
-    </tr>
-</table>
-<button mat-raised-button [disabled]="!gameFactory || isCreating" (click)="createGame()">Create Game</button>
 <mat-spinner *ngIf="(gameFactory == undefined) || isCreating || isRegistering || refreshing"></mat-spinner>
+<div *ngIf="(gameFactory != undefined) && !refreshing">
+    <h1>Games: {{games.length}}</h1>
+    <table>
+        <tr>
+            <th></th>
+            <th>Status</th>
+            <th>Game Master Contract</th>
+            <!-- <th>Nb Players</th> -->
+            <th></th>
+            <th>Players</th>
+            <th></th>
+        </tr>
+        <tr *ngFor="let game of games; let i = index;">
+            <td>#{{i+1}}</td>
+            <td>{{status2String(game.status)}}</td>
+            <td>
+                <app-blockchain-link [network]="network" [link]="game.gameMaster"></app-blockchain-link>
+            </td>
+            <!-- <td>{{game.nbPlayers}}</td> -->
+            <td>
+                <button mat-raised-button *ngIf="!game.isRegistered" [disabled]="(game.status != eGameStatus('CREATED')) || isRegistering" (click)="register(game.gameMaster)">Register</button>
+                <button mat-raised-button *ngIf="game.isRegistered" routerLink="/game/{{game.gameMaster}}">Join</button>
+            </td>
+            <td>
+                <span *ngFor="let player of game.players">
+                  <img src="assets/avatars/{{avatarsImgs[player.avatar]}}.png" height="15">
+                  {{player.username}}<span *ngIf="player.address == account">(You)</span>&nbsp;
+                </span>
+            </td>
+            <td>
+                <button mat-raised-button [disabled]="(game.status != eGameStatus('CREATED')) || addingBot" (click)="addBot(game.gameMaster)">Add a Bot Player</button>
+            </td>
+        </tr>
+    </table>
+    <button mat-raised-button [disabled]="!gameFactory || isCreating" (click)="createGame()">Create Game</button>
+</div>

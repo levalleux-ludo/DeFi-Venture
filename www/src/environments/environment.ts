@@ -19,10 +19,11 @@ export interface IContracts {
 
 export const environment = {
   production: false,
+  botServerUrl: 'http://localhost:8899',
   networks: {
     l1: { name: 'L1 (Goerli)', portisId: 'goerli', chainId: 5, nodeUrl: `https://goerli.infura.io/v3/833d4fef573b4c429e7f283dac2ba507`,
      gasPrice: '100000000', gasLimit: 400000, explorer: 'https://goerli.etherscan.io/'  },
-    l2: { name: 'L2 (Mumbai)', portisId: 'maticMumbai', chainId: 80001, nodeUrl: 'https://rpc-mumbai.matic.today',
+    l2: { name: 'L2 (Mumbai)', portisId: 'maticMumbai', chainId: 80001, nodeUrl: 'https://rpc-mumbai.maticvigil.com/v1/aab3069bd822af86609df80c02f9d0e8642b3b6b',
      gasPrice: '1000000000', gasLimit: 4000000, explorer: 'https://mumbai-explorer.matic.today/' }
   },
   contracts: {
@@ -32,7 +33,7 @@ export const environment = {
       gasRelay: 'tbd'
     },
     80001: { // mumbai
-      gameFactory: '0xf417DAF7106BEc2ee19403259340c53336e4CB81',
+      gameFactory: '0x2dD64d434f96f6e33Df89982F4143CBF83E2e6eD',
       greeter: '0x83a4BcdD650f67b7DbC92346B20e97fef660Ee20',
       gasRelay: 'tbd'
     }

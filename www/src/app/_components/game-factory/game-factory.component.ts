@@ -1,4 +1,5 @@
-import { eGameStatus } from './../../_models/contracts/GameMaster';
+import { BotServerService } from './../../_services/bot-server.service';
+import { eGameStatus, GameMaster } from './../../_models/contracts/GameMaster';
 import { GameTokenContractService } from './../../_services/game-token-contract.service';
 import { INetwork } from './../../../environments/environment';
 import { GameMasterContractService } from './../../_services/game-master-contract.service';
@@ -37,8 +38,23 @@ export class GameFactoryComponent implements OnInit {
   isCreating = false;
   isRegistering = false;
   refreshing = false;
+  addingBot = false;
   balanceEth : number;
   account;
+  gameContracts = new Map<string, GameMaster>();
+  avatarsImgs = [
+    undefined,
+    'nobody',
+    'camel',
+    'crypto-chip',
+    'diamond',
+    'rocket',
+    'r1d1',
+    'r2d2',
+    'r3d3',
+    'r4d4',
+    'r5d5'
+  ];
 
   constructor(
     private portisL1Service: PortisL1Service,
@@ -46,7 +62,8 @@ export class GameFactoryComponent implements OnInit {
     private tokenContractService: GameTokenContractService,
     private snackBar: MatSnackBar,
     private http: HttpClient,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private botServerService: BotServerService
   ) { }
 
   ngOnInit(): void {
@@ -85,21 +102,43 @@ export class GameFactoryComponent implements OnInit {
   }
 
   refreshGames() {
-      this.games = [];
-      this.refreshing = true;
+      // this.games = [];
+      const newGames = [];
+      // this.refreshing = true;
       this.portisL1Service.getGames().then(async (games) => {
-        const newGames = [];
+        const toBeRemoved = Array.from(this.gameContracts.keys());
         for (let gameMaster of games) {
-          const gameMasterContract = this.gameMasterContractService.getContract(gameMaster);
+          let gameMasterContract;
+          if (this.gameContracts.has(gameMaster)) {
+            gameMasterContract = this.gameContracts.get(gameMaster);
+            toBeRemoved.splice(toBeRemoved.indexOf(gameMaster), 1);
+          } else {
+            gameMasterContract = this.gameMasterContractService.getContract(gameMaster);
+            gameMasterContract.on('PlayerRegistered', (newPlayer: string, _nbPlayers: number) => {
+              this.refreshGames();
+            });
+            gameMasterContract.on('StatusChanged', (newStatus: number) => {
+              this.refreshGames();
+            });
+            this.gameContracts.set(gameMaster, gameMasterContract);
+          }
           const status = await gameMasterContract.getStatus();
           const nbPlayers = await gameMasterContract.getNbPlayers();
           const isRegistered = await gameMasterContract.isPlayerRegistered(this.portisL1Service.accounts[0]);
-          newGames.push({gameMaster, status, nbPlayers, isRegistered});
+          const players = await gameMasterContract.getPlayers();
+          newGames.push({gameMaster, status, nbPlayers, isRegistered, players});
         }
-        this.games = newGames;
+        for (const oldGame of toBeRemoved) {
+          const contract = this.gameContracts.get(oldGame);
+          for (const event of ['PlayerRegistered', 'StatusChanged']) {
+            contract.removeAllListeners(event);
+          }
+          this.gameContracts.delete(oldGame);
+        }
       }).catch(e => {
         console.error(e);
       }).finally(() => {
+        this.games = newGames;
         this.refreshing = false;
       })
   }
@@ -174,6 +213,20 @@ export class GameFactoryComponent implements OnInit {
         this.refreshing = false;
       });
     }
+  }
+
+  addBot(gameMaster: string) {
+    this.addingBot = true;
+    this.botServerService.ready.then(() => {
+      console.log('Calling bot Server API ...');
+      this.botServerService.addBotToGame(gameMaster).then(() => {
+
+      }).catch(e => {
+        console.error(e);
+      }).finally(() => {
+        this.addingBot = false;
+      })
+    });
   }
 
 }

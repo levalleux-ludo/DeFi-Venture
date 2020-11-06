@@ -152,6 +152,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     const status = await this._contract.getStatus();
     const nbPlayers = await this._contract.getNbPlayers();
     const nextPlayer = await this._contract.getNextPlayer();
+    console.log('Update GameData, nextPlayer:', nextPlayer);
     const currentPlayer = await this._contract.getCurrentPlayer();
     const currentOptions = await this._contract.getCurrentOptions();
     const chanceCardId = await this._contract.getCurrentCardId();

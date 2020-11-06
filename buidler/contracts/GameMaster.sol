@@ -168,10 +168,12 @@ contract GameMaster is GameScheduler, IGameMaster {
         require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
         performOption(positions[msg.sender], option);
         chooseNextPlayer();
-        emit PlayPerformed(msg.sender, option, currentCardId, positions[msg.sender]);
+        uint8 eventCardId = currentCardId;
         currentPlayer = address(0);
         currentOptions = 0;
         currentCardId = 0;
+        // emit event at the end
+        emit PlayPerformed(msg.sender, option, eventCardId, positions[msg.sender]);
     }
 
 
