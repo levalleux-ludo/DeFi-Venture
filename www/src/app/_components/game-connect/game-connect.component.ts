@@ -87,8 +87,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit(): void {
     this.board_width = this.content.nativeElement.clientWidth;
     // this.board_height = this.content.nativeElement.clientHeight;
-    // this.board_height = Math.min(this.content.nativeElement.clientHeight, this.board_width);
-    this.board_height = 800 + 200 * this.board_width / 1600;
+    this.board_height = Math.min(this.content.nativeElement.clientHeight, 800 + 200 * this.board_width / 1600);
+    // this.board_height = 800 + 200 * this.board_width / 1600;
   }
 
   ngOnDestroy(): void {
@@ -143,7 +143,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       });
     }).catch(e => console.error(e));
     this.board_width = this.content.nativeElement.clientWidth;
-    this.board_height = 800 + 200 * this.board_width / 1600;
+    this.board_height = Math.min(this.content.nativeElement.clientHeight, 800 + 200 * this.board_width / 1600);
     // this.board_height = this.content.nativeElement.clientHeight;
     // this.board_height = Math.min(this.content.nativeElement.clientHeight, this.board_width);
     this.resizeObservable$ = fromEvent(window, 'resize');
@@ -154,7 +154,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     this.resizeSubscription$ = this.resizeObservable$.subscribe(evt => {
       console.log('resize', evt);
       this.board_width = this.content.nativeElement.clientWidth;
-      this.board_height = 800 + 200 * this.board_width / 1600;
+      this.board_height = Math.min(this.content.nativeElement.clientHeight, 800 + 200 * this.board_width / 1600);
       // this.board_height = this.content.nativeElement.clientHeight;
       // this.board_height = Math.min(this.content.nativeElement.clientHeight, this.board_width);
     });

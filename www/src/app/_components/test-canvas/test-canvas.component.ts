@@ -89,7 +89,12 @@ export class TestCanvasComponent implements OnInit {
     'assets/avatars/camel.png',
     'assets/avatars/crypto-chip.png',
     'assets/avatars/diamond.png',
-    'assets/avatars/rocket.png'
+    'assets/avatars/rocket.png',
+    'assets/avatars/r1d1.png',
+    'assets/avatars/r2d2.png',
+    'assets/avatars/r3d3.png',
+    'assets/avatars/r4d4.png',
+    'assets/avatars/r5d5.png'
   ];
   avatarsPosition = new Map<number, number[]>();
   blocks_geometry = [];

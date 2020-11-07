@@ -34,8 +34,8 @@ function createNetworkConfig(network) {
         switch (network) {
             case 'matic-mumbai':
                 {
-                    // url = `https://rpc-mumbai.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`;
-                    url = `https://rpc-mumbai.matic.today`;
+                    url = `https://rpc-mumbai.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`;
+                    // url = `https://rpc-mumbai.matic.today`;
                     break;
                 }
             default:

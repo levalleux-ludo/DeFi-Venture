@@ -26,7 +26,7 @@ const routes: Routes = [
   {path: 'test', component: TestPageComponent, runGuardsAndResolvers: 'always'},
   {path: 'portis1', component: PortisL1PageComponent},
   { path: '404', component: NotFoundComponent},
-  { path: '', redirectTo: '/pool', pathMatch: 'full'},
+  { path: '', redirectTo: '/games', pathMatch: 'full'},
 
   // { path: '', pathMatch: 'full' },
   { path: '**', redirectTo: '/404', pathMatch: 'full'}

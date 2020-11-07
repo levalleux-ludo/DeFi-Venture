@@ -31,7 +31,7 @@
                     <app-defi-services class="defi"></app-defi-services>
                     <div fxLayout="column" fxLayoutAlign="start center" style="text-align: center;">
                         <!-- zone 1 -->
-                        <div style="position: absolute; bottom: 680px; width: {{board_width / 3}}px; height: 300px; z-index: 2;">
+                        <div style="position: absolute; bottom: {{2 * board_height / 3}}px; width: {{board_width / 3}}px; height: {{board_height / 3}}px; z-index: 2;">
                             <div *ngIf="(gameData.status == 'STARTED') && isNextPlayer && !isCurrentPlayer">
                                 <app-dices #dices class="dices-block"></app-dices>
                             </div>
@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <!-- zone 2 -->
-                        <div style="position: absolute; bottom: 210px; width: {{board_width / 2}}px; height: 470px; z-index: 3;">
+                        <div style="position: absolute; bottom: {{board_height / 4}}px; width: {{board_width / 2}}px; height: {{board_height / 3}}px; z-index: 3;">
                             <div *ngIf="gameData.status == 'STARTED'">
                                 <div *ngIf="isNextPlayer">
                                     <div class="dices-block">
@@ -70,7 +70,7 @@
                         <!-- <app-events-log [events]="events"></app-events-log> -->
                         <!-- </div> -->
                         <!-- zone 4 -->
-                        <div style="position: absolute; bottom: 0px; width: {{2*board_width/3}}px; height: 210px; z-index: 1;">
+                        <div style="position: absolute; bottom: 0px; width: {{2*board_width/3}}px; height: {{board_height / 4}}px; z-index: 1;">
                             <app-other-players #otherPlayers [playground]="playground" [gameData]="gameData" [portfolios]="assetsData?.portfolios" [currentAccount]="currentAccount" [balances]="balances"></app-other-players>
                         </div>
                     </div>

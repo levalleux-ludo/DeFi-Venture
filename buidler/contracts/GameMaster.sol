@@ -4,9 +4,10 @@ pragma solidity >=0.6.0 <0.7.0;
 import "@nomiclabs/buidler/console.sol";
 
 import "./GameScheduler.sol";
+import "./IGameMaster.sol";
 import "./GameToken.sol";
 import "./GameAssets.sol";
-contract GameMaster is GameScheduler {
+contract GameMaster is GameScheduler, IGameMaster {
     uint256 constant public MAX_UINT256 = 2**256 - 1;
 
     GameToken private token;
@@ -23,8 +24,8 @@ contract GameMaster is GameScheduler {
     bytes32 private playground;
     bytes32 private chances;
 
-    event RolledDices(address player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
-    event PlayPerformed(address player, uint8 option, uint8 cardId, uint8 newPosition);
+    event RolledDices(address indexed player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
+    event PlayPerformed(address indexed player, uint8 option, uint8 cardId, uint8 newPosition);
 
     constructor (
         uint8 nbMaxPlayers,
@@ -39,54 +40,54 @@ contract GameMaster is GameScheduler {
         chances = _chances;
     }
     
-    function setToken(address _token) public onlyOwner {
+    function setToken(address _token) external override onlyOwner {
         tokenAddress = _token;
         token = GameToken(_token);
     }
 
-    function setAssets(address _assets) public onlyOwner {
+    function setAssets(address _assets) external override onlyOwner {
         assetsAddress = _assets;
         assets = GameAssets(_assets);
     }
 
-    function getToken() public view returns (address) {
+    function getToken() external override view returns (address) {
         return tokenAddress;
     }
 
-    function getAssets() public view returns (address) {
+    function getAssets() external override view returns (address) {
         return assetsAddress;
     }
 
-    function getCurrentPlayer() public view returns (address) {
+    function getCurrentPlayer() external override view returns (address) {
         return currentPlayer;
     }
 
-    function getCurrentOptions() public view returns (uint8) {
+    function getCurrentOptions() external override view returns (uint8) {
         return currentOptions;
     }
 
 
-    function getCurrentCardId() public view returns (uint8) {
+    function getCurrentCardId() external override view returns (uint8) {
         return currentCardId;
     }
 
-    function getNbPositions() public view returns (uint8) {
+    function getNbPositions() external override view returns (uint8) {
         return nbPositions;
     }
 
-    function getPositionOf(address player) public view returns (uint8) {
+    function getPositionOf(address player) external override view returns (uint8) {
         return positions[player];
     }
 
-    function getChances() public view returns (bytes32) {
+    function getChances() external override view returns (bytes32) {
         return chances;
     }
 
-    function getPlayground() public view returns (bytes32) {
+    function getPlayground() external override view returns (bytes32) {
         return playground;
     }
 
-     function getSpaceDetails(uint8 spaceId) public view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
+     function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
         require(spaceId < nbPositions, "INVALID_ARGUMENT");
         uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
         spaceType = spaceCode & 0x7;
@@ -102,88 +103,15 @@ contract GameMaster is GameScheduler {
         }
     }
 
-    function getChanceDetails(uint8 chanceId) public view returns (uint8 chanceType, uint8 chanceParam) {
+    function getChanceDetails(uint8 chanceId) external override view returns (uint8 chanceType, uint8 chanceParam) {
         require(chanceId < chances.length, "INVALID_ARGUMENT");
         uint8 chanceCode = uint8(chances[31 - chanceId]);// Important storage reverse (end-endian)
         chanceType = chanceCode & 0x7;
         chanceParam = chanceCode >> 3;
     }
 
-    function start() public override {
-        super.start();
-        for (uint i = 0; i < nbPlayers; i++) {
-            address player = playersSet[i];
-            if (tokenAddress != address(0)) {
-                token.mint(player, initialAmount);
-            }
-        }
-    }
-    function end() public override {
-        super.end();
-        if (tokenAddress != address(0)) {
-            token.reset();
-        }
-    }
-
-    function register(bytes32 username, uint8 avatar) public override payable {
-        if (tokenAddress != address(0)) {
-            require(token.allowance(msg.sender, address(this)) == MAX_UINT256, "SENDER_MUST_APPROVE_GAME_MASTER");
-        }
-        super.register(username, avatar);
-    }
-
-    function rollDices() public returns (uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options) {
-        require(status == STARTED, "INVALID_GAME_STATE");
-        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
-        require(currentPlayer == address(0), "NOT_AUTHORIZED");
-        currentPlayer = msg.sender;
-        uint random = random();
-        uint8 oldPosition = positions[msg.sender];
-        dice1 = 1 + uint8(random % 6);
-        dice2 = 1 + uint8(random % 7 % 6);
-        cardId = uint8(random % 47 % 32);
-        newPosition = (oldPosition + dice1 + dice2) % nbPositions;
-        positions[msg.sender] = newPosition;
-        options = getOptionsAt(msg.sender, newPosition);
-        currentOptions = options;
-        currentCardId = cardId;
-        emit RolledDices(msg.sender, dice1, dice2, cardId, newPosition, options);
-    }
-
-    function play(uint8 option) public {
-        require(status == STARTED, "INVALID_GAME_STATE");
-        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
-        require(msg.sender == currentPlayer, "NOT_AUTHORIZED");
-        require((option & currentOptions) != 0, "OPTION_NOT_ALLOWED");
-        require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
-        performOption(positions[msg.sender], option);
-        chooseNextPlayer();
-        emit PlayPerformed(msg.sender, option, currentCardId, positions[msg.sender]);
-        currentPlayer = address(0);
-        currentOptions = 0;
-        currentCardId = 0;
-    }
-
-    function random() internal returns (uint) {
-        uint _random = uint(keccak256(abi.encodePacked(now, msg.sender, nonce)));
-        nonce++;
-        return _random;
-    }
-
-    function bytesToUint8(bytes memory _bytes, uint256 _start) internal pure returns (uint8) {
-        require(_start + 1 >= _start, "toUint8_overflow");
-        require(_bytes.length >= _start + 1 , "toUint8_outOfBounds");
-        uint8 tempUint;
-
-        assembly {
-            tempUint := mload(add(add(_bytes, 0x1), _start))
-        }
-
-        return tempUint;
-    }
-
-    function getOptionsAt(address player, uint8 position) public view returns (uint8 options) {
-        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = getSpaceDetails(position);
+    function getOptionsAt(address player, uint8 position) external override view returns (uint8 options) {
+        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = this.getSpaceDetails(position);
         require(spaceType < 8, "SPACE_TYPE_INVALID");
         options = 0;
         if (
@@ -213,8 +141,86 @@ contract GameMaster is GameScheduler {
         }
     }
 
+    function rollDices() external override returns (uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options) {
+        require(status == STARTED, "INVALID_GAME_STATE");
+        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
+        require(currentPlayer == address(0), "NOT_AUTHORIZED");
+        currentPlayer = msg.sender;
+        uint random = random();
+        uint8 oldPosition = positions[msg.sender];
+        dice1 = 1 + uint8(random % 6);
+        dice2 = 1 + uint8(random % 7 % 6);
+        cardId = uint8(random % 47 % 32);
+        newPosition = (oldPosition + dice1 + dice2) % nbPositions;
+        positions[msg.sender] = newPosition;
+        options = this.getOptionsAt(msg.sender, newPosition);
+        currentOptions = options;
+        currentCardId = cardId;
+        console.log('emit RolledDices event');
+        emit RolledDices(msg.sender, dice1, dice2, cardId, newPosition, options);
+    }
+
+    function play(uint8 option) external override {
+        require(status == STARTED, "INVALID_GAME_STATE");
+        require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
+        require(msg.sender == currentPlayer, "NOT_AUTHORIZED");
+        require((option & currentOptions) != 0, "OPTION_NOT_ALLOWED");
+        require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
+        performOption(positions[msg.sender], option);
+        chooseNextPlayer();
+        uint8 eventCardId = currentCardId;
+        currentPlayer = address(0);
+        currentOptions = 0;
+        currentCardId = 0;
+        // emit event at the end
+        emit PlayPerformed(msg.sender, option, eventCardId, positions[msg.sender]);
+    }
+
+
+    function _start() internal override {
+        super._start();
+        for (uint i = 0; i < nbPlayers; i++) {
+            address player = playersSet[i];
+            if (tokenAddress != address(0)) {
+                token.mint(player, initialAmount);
+            }
+        }
+    }
+    function _end() internal override {
+        super._end();
+        if (tokenAddress != address(0)) {
+            token.reset();
+        }
+    }
+
+    function _register(bytes32 username, uint8 avatar) internal override {
+        if (tokenAddress != address(0)) {
+            require(token.allowance(msg.sender, address(this)) == MAX_UINT256, "SENDER_MUST_APPROVE_GAME_MASTER");
+        }
+        super._register(username, avatar);
+    }
+
+
+    function random() internal returns (uint) {
+        uint _random = uint(keccak256(abi.encodePacked(now, msg.sender, nonce)));
+        nonce++;
+        return _random;
+    }
+
+    function bytesToUint8(bytes memory _bytes, uint256 _startIndex) internal pure returns (uint8) {
+        require(_startIndex + 1 >= _startIndex, "toUint8_overflow");
+        require(_bytes.length >= _startIndex + 1 , "toUint8_outOfBounds");
+        uint8 tempUint;
+
+        assembly {
+            tempUint := mload(add(add(_bytes, 0x1), _startIndex))
+        }
+
+        return tempUint;
+    }
+
     function performOption(uint8 position, uint8 option) internal {
-        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = getSpaceDetails(position);
+        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = this.getSpaceDetails(position);
         console.log("getSpaceDetails");
         console.log("position");
         console.log(position);

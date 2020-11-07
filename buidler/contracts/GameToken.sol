@@ -6,7 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 
-contract GameToken is ERC20Burnable, Ownable {
+import {IGameToken} from "./IGameToken.sol";
+
+contract GameToken is ERC20Burnable, Ownable, IGameToken {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     EnumerableSet.AddressSet private accountsSet;
@@ -54,7 +56,7 @@ contract GameToken is ERC20Burnable, Ownable {
         super.burnFrom(account, amount);
     }
 
-    function approveMax(address spender) external returns (bool) {
+    function approveMax(address spender) external override returns (bool) {
         approve(spender, MAX_UINT256);
     }
 

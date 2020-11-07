@@ -1,2 +1,5 @@
 **/~$*.*
 ~$*.*
+buidler/.mainnet.gas-price.json
+buidler/.testnet.gas-price.json
+buidler/.testnet.seed-phrase

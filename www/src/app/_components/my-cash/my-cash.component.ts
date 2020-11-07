@@ -35,7 +35,12 @@ export class MyCashComponent implements OnInit {
     'camel',
     'crypto-chip',
     'diamond',
-    'rocket'
+    'rocket',
+    'r1d1',
+    'r2d2',
+    'r3d3',
+    'r4d4',
+    'r5d5'
   ];
 
   _assets = [];

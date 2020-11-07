@@ -1,3 +1,4 @@
+import { IPlayer } from './../../_services/game-master-contract.service';
 import { GameToken } from './GameToken';
 import { async } from '@angular/core/testing';
 import { ethers } from 'ethers';
@@ -28,6 +29,22 @@ public async getNbPlayers(): Promise<number> {
   return this.contract.getNbPlayers();
 }
 
+public async getPlayers(): Promise<IPlayer[]> {
+  const nbPlayers = await this.contract.getNbPlayers();
+  const players = [];
+  for (let i = 0; i < nbPlayers; i++) {
+    const playerAddress = await this.contract.getPlayerAtIndex(i);
+    const username = await this.contract.getUsername(playerAddress);
+    const avatar = await this.contract.getAvatar(playerAddress);
+    players.push({
+      username: ethers.utils.parseBytes32String(username),
+      address: playerAddress,
+      avatar
+    });
+  }
+  return players;
+}
+
 public async getNextPlayer(): Promise<string> {
   return this.contract.getNextPlayer();
 }
@@ -38,6 +55,16 @@ public async isPlayerRegistered(playerAddress: string): Promise<boolean> {
 
 public async getTokenAddress(): Promise<string> {
   return this.contract.getToken();
+}
+
+public on(eventName: string, callback: ethers.providers.Listener): GameMaster {
+  this.contract.on(eventName, callback);
+  return this;
+}
+
+public removeAllListeners(eventName: string): GameMaster {
+  this.contract.removeAllListeners(eventName);
+  return this;
 }
 
 public async register(username: string, avatar: number): Promise<void> {
