@@ -5,6 +5,8 @@ import { ApiServer } from './api/api.server';
 import { BotController } from './bot/bot.controller';
 import { BotFactory } from './bot/bot.factory';
 import { config } from './config';
+import { AppDiscord } from './discord/discord';
+import { DiscordController } from './discord/discord.controller';
 import { IGame } from './game/game';
 import { GameFactory } from './game/game.factory';
 import { Web3Provider } from './web3/web3.provider';
@@ -36,12 +38,17 @@ const main = async () => {
   // create BotFactory(provider)
   const botFactory = new BotFactory(gameFactory);
   // call botFactory.createBots(gameFactory.getGames)
-  await botFactory.createBots(config.bots, web3, botPlayerAbi.abi);
+  // await botFactory.createBots(config.bots, web3, botPlayerAbi.abi);
   // create and start apiServer(botFactory)
   const botController = new BotController(botFactory);
-  const apiServer = new ApiServer(botController);
+  const appDiscord = new AppDiscord();
+  const discordController = new DiscordController(appDiscord);
+  const apiServer = new ApiServer(botController, discordController);
   apiServer.start(config.api_port);
   // create and start scheduler(botFactory)
+  setImmediate(() => {
+    botFactory.check();
+  });
 };
 
 main();

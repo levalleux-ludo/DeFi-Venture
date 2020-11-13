@@ -3,10 +3,22 @@ import { Web3Provider } from '../web3/web3.provider';
 
 export interface ICallbacks {
   onPlayerRegistered?: (newPlayer: string, nbPlayers: number) => void;
-  onPlayPerformed?: (player: string, option: number, cardId: number, newPosition: number) => void;
-  onRolledDices?: (player: string, dice1: number, dice2: number, cardId: number, newPosition: number, options: number) => void;
+  onPlayPerformed?: (
+    player: string,
+    option: number,
+    cardId: number,
+    newPosition: number
+  ) => void;
+  onRolledDices?: (
+    player: string,
+    dice1: number,
+    dice2: number,
+    cardId: number,
+    newPosition: number,
+    options: number
+  ) => void;
   onStatusChanged?: (newStatus: number) => void;
-};
+}
 
 export interface IGame {
   address: string;
@@ -38,7 +50,7 @@ export enum eGameStatus {
   CREATED = 0,
   STARTED = 1,
   FROZEN = 2,
-  ENDED = 3
+  ENDED = 3,
 }
 
 export class Game implements IGame {
@@ -168,9 +180,7 @@ export class Game implements IGame {
   //   });
   // }
 
-  public registerToEvents(
-    callbacks: ICallbacks
-  ) {
+  public registerToEvents(callbacks: ICallbacks) {
     if (callbacks.onRolledDices) {
       this._contract.on('RolledDices', callbacks.onRolledDices);
     }

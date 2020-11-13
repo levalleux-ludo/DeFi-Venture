@@ -30,14 +30,24 @@
         "test": "jest",
         "coverage": "jest --coverage",
         "watch": "npx nodemon",
-        "watch:test": "jest --watch"
+        "start": "npx ts-node ./src/index.ts",
+        "watch:test": "jest --watch",
+        "docker:build": "docker build --rm -f Dockerfile -t local/defiventure/defibot:latest .",
+        "docker:run": "docker run -p 8899:8899 --env PORT=8899 --env-file ./.env local/defiventure/defibot",
+        "docker:push": "docker tag local/defiventure/defibot:latest levalleuxludo/my_repo:defibot && docker push levalleuxludo/my_repo:defibot",
+        "docker:run:remote": "docker pull levalleuxludo/my_repo:defibot && docker run -p 8899:8899 --env PORT=8899 --env-file ./.env  levalleuxludo/my_repo:defibot"
     },
     "dependencies": {
+        "@typeit/discord": "^4.0.8",
+        "abab": "^2.0.5",
         "body-parser": "^1.19.0",
+        "btoa": "^1.2.1",
         "cors": "^2.8.5",
+        "discord.js": "^12.4.1",
         "dotenv": "^8.2.0",
         "ethers": "^5.0.19",
         "express": "^4.17.1",
+        "node-fetch": "^2.6.1",
         "node-schedule": "^1.3.2"
     },
     "devDependencies": {
@@ -47,6 +57,7 @@
         "@types/express": "^4.17.8",
         "@types/jest": "^23.3.3",
         "@types/node": "^10.11.4",
+        "@types/node-fetch": "^2.5.7",
         "@types/node-schedule": "^1.3.1",
         "coveralls": "^3.0.2",
         "cpy-cli": "^3.1.1",

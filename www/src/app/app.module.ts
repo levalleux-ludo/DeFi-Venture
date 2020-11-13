@@ -76,6 +76,7 @@ import { DefiIcoComponent } from './_components/defi-ico/defi-ico.component';
 import { ChanceDetailFormComponent } from './_components/chance-detail-form/chance-detail-form.component';
 import { ChanceDetailComponent } from './_components/chance-detail/chance-detail.component';
 import { InvestFormComponent } from './_components/invest-form/invest-form.component';
+import { DiscordTestComponent } from './_components/discord-test/discord-test.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -127,7 +128,8 @@ export function enableWeb3Provider(provider) {
     DefiIcoComponent,
     ChanceDetailFormComponent,
     ChanceDetailComponent,
-    InvestFormComponent
+    InvestFormComponent,
+    DiscordTestComponent
   ],
   imports: [
     BrowserModule,

@@ -14,10 +14,13 @@ export class GameFactory {
     private _gameMasterAbi: ethers.ContractInterface
   ) {
     this._contract = new ethers.Contract(address, gameFactoryAbi, web3.signer);
-    this._contract.on('GameCreated', (gameMasterAddress: string, index: ethers.BigNumber) => {
-      console.log('New game created! Update data model', gameMasterAddress);
-      this.createGame(gameMasterAddress);
-    });
+    this._contract.on(
+      'GameCreated',
+      (gameMasterAddress: string, index: ethers.BigNumber) => {
+        console.log('New game created! Update data model', gameMasterAddress);
+        this.createGame(gameMasterAddress);
+      }
+    );
   }
 
   public get games(): IGame[] {
@@ -44,8 +47,7 @@ export class GameFactory {
     });
   }
 
-  public async createGames(
-  ): Promise<IGame[]> {
+  public async createGames(): Promise<IGame[]> {
     if (!this._initialized) {
       throw new Error('GameFactory shall be initialized first');
     }
@@ -71,6 +73,8 @@ export class GameFactory {
   }
 
   private createGame(gameMasterAddress: string) {
-    this._games.push(new Game(this.web3, gameMasterAddress, this._gameMasterAbi));
+    this._games.push(
+      new Game(this.web3, gameMasterAddress, this._gameMasterAbi)
+    );
   }
 }

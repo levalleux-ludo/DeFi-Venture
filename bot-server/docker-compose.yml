@@ -1,0 +1,13 @@
+version: '3'
+services:
+
+  defibot:
+    build: .
+    container_name: 'defibot'
+    ports:
+      - '8899:8899'
+    restart: always
+    image: levalleuxludo/my_repo:defibot
+    env_file: .env
+
+

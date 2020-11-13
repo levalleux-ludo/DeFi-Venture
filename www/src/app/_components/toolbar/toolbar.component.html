@@ -27,4 +27,14 @@
     <mat-icon>account_circle</mat-icon>
     <span>{{username}}</span>
   </button>
+    <button mat-icon-button class="toolbar-button favorite-icon" aria-label="Example icon-button with share icon" [matMenuTriggerFor]="menuDiscord">
+    <img src="https://discord.com/assets/35d75407bd75d70e84e945c9f879bab8.svg" height="24">
+  </button>
+    <mat-menu #menuDiscord="matMenu" xPosition="before">
+        <div class="mat-toolbar">
+            <a mat-raised-button href="http://localhost:8899/discord/login" target="_blank">Connect</a>
+            <!-- <button mat-menu-item>Expand</button>
+    <button mat-menu-item>Remove</button> -->
+        </div>
+    </mat-menu>
 </mat-toolbar>
