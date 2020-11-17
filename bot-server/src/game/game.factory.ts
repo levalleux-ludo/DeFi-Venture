@@ -1,8 +1,12 @@
 import { ethers } from 'ethers';
+import { EventEmitter } from 'events';
 import { Web3Provider } from '../web3/web3.provider';
 import { Game, IGame } from './game';
 
-export class GameFactory {
+export class GameFactory extends EventEmitter {
+  public get games(): IGame[] {
+    return this._games;
+  }
   private _contract: ethers.Contract;
   private _initialized = false;
   private _games: IGame[] = [];
@@ -13,18 +17,16 @@ export class GameFactory {
     gameFactoryAbi: ethers.ContractInterface,
     private _gameMasterAbi: ethers.ContractInterface
   ) {
+    super();
     this._contract = new ethers.Contract(address, gameFactoryAbi, web3.signer);
     this._contract.on(
       'GameCreated',
       (gameMasterAddress: string, index: ethers.BigNumber) => {
         console.log('New game created! Update data model', gameMasterAddress);
-        this.createGame(gameMasterAddress);
+        const game = this.createGame(gameMasterAddress);
+        this.emit('GameCreated', game);
       }
     );
-  }
-
-  public get games(): IGame[] {
-    return this._games;
   }
 
   public getGame(gameMasterAddress: string): IGame | undefined {
@@ -72,9 +74,9 @@ export class GameFactory {
     });
   }
 
-  private createGame(gameMasterAddress: string) {
-    this._games.push(
-      new Game(this.web3, gameMasterAddress, this._gameMasterAbi)
-    );
+  private createGame(gameMasterAddress: string): Game {
+    const game = new Game(this.web3, gameMasterAddress, this._gameMasterAbi);
+    this._games.push(game);
+    return game;
   }
 }

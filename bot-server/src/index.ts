@@ -38,11 +38,12 @@ const main = async () => {
   // create BotFactory(provider)
   const botFactory = new BotFactory(gameFactory);
   // call botFactory.createBots(gameFactory.getGames)
-  // await botFactory.createBots(config.bots, web3, botPlayerAbi.abi);
-  // create and start apiServer(botFactory)
+  await botFactory.createBots(config.bots, web3, botPlayerAbi.abi);
   const botController = new BotController(botFactory);
-  const appDiscord = new AppDiscord();
+  const appDiscord = new AppDiscord(gameFactory);
   const discordController = new DiscordController(appDiscord);
+  appDiscord.createObservers();
+  // create and start apiServer
   const apiServer = new ApiServer(botController, discordController);
   apiServer.start(config.api_port);
   // create and start scheduler(botFactory)

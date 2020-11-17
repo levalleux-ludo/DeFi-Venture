@@ -25,6 +25,7 @@
         "prepublishOnly": "npm run build",
         "prebuild": "npm run clean && npm run format && npm run lint && echo Using TypeScript && tsc --version",
         "build": "tsc --pretty",
+        "build:test": "tsc --pretty && npm run postbuild",
         "postbuild": "npx cpy ./.env ./lib/bot-server/",
         "build:dev": "tsc",
         "test": "jest",

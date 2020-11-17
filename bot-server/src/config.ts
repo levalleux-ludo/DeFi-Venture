@@ -33,6 +33,7 @@ export const config = {
     name: 'L2 (Mumbai)',
     // nodeUrl: 'https://rpc-mumbai.maticvigil.com',
     nodeUrl: `https://rpc-mumbai.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
+    wssUrl: `wss://rpc-mumbai.maticvigil.com/ws/v1/${process.env.MATICVIGIL_API_KEY}`,
     portisId: 'maticMumbai',
   },
   schedule: '0/20 * * * * *', // every 20 seconds

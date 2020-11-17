@@ -1,10 +1,11 @@
-import { ethers } from 'ethers';
+import { ContractInterface, ethers } from 'ethers';
 
 export interface INetwork {
   name: string;
   portisId: string;
   chainId: number;
   nodeUrl: string;
+  wssUrl: string;
 }
 
 export class Web3Provider {
@@ -12,10 +13,20 @@ export class Web3Provider {
   private _wallet: ethers.Wallet;
 
   public constructor(network: INetwork) {
-    this._provider = new ethers.providers.JsonRpcProvider(
-      network.nodeUrl,
+    this._provider = new ethers.providers.StaticJsonRpcProvider(
+      {
+        timeout: 4000,
+        url: network.nodeUrl
+      },
       network
     );
+    // this._provider = new ethers.providers.WebSocketProvider(
+    //   network.wssUrl,
+    //   network
+    // );
+
+    console.log('pollingInterval', this._provider.pollingInterval);
+
     this._wallet = ethers.Wallet.fromMnemonic(
       process.env.MNEMONIC as string
     ).connect(this._provider);
@@ -35,5 +46,9 @@ export class Web3Provider {
 
   public get currentAccount(): string {
     return this._wallet.address;
+  }
+
+  public getContract(address: string, abi: ContractInterface) {
+    return new ethers.Contract(address, abi, this._provider);
   }
 }

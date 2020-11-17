@@ -8,7 +8,20 @@ import {
   On, // Use the Client that are provided by @typeit/discord
 } from '@typeit/discord';
 // You must import the types from @types/discord.js
-import { GuildChannel, Message } from 'discord.js';
+import {
+  CategoryChannel,
+  Channel,
+  Guild,
+  GuildChannel,
+  Message,
+  TextChannel,
+  VoiceChannel,
+} from 'discord.js';
+import fetch from 'node-fetch';
+import { REPL_MODE_SLOPPY } from 'repl';
+import { GameFactory } from '../game/game.factory';
+import { IGame } from './../game/game';
+import { GameObserver } from './game.observer';
 
 const COMMAND_PREFIX = '!';
 
@@ -19,14 +32,22 @@ const GAME_CHANNELS_CATEGORY_ID = '773477314125758465';
 const TEST_USER_ID = 'yvalek#7395';
 
 // Decorate the class with the @Discord decorator
-@Discord(COMMAND_PREFIX)
+// @Discord(COMMAND_PREFIX)
 export class AppDiscord {
   private _client: Client;
   private _prefix: string = '!';
   private _sayHelloMessage: string = 'hello !';
   private _commandNotFoundMessage: string = 'command not found...';
+  private _userAccounts = new Map<
+    string,
+    { userId: string; username: string }
+  >();
+  private _channelGames = new Map<string, TextChannel>();
+  private _gameObservers = new Map<string, GameObserver>();
+  private isReady = false;
+  private _readyWaiters: Array<() => void> = [];
 
-  public constructor() {
+  public constructor(private _gameFactory: GameFactory) {
     console.log('process.env.DISCORD_TOKEN', process.env.DISCORD_TOKEN);
     if (
       process.env.DISCORD_TOKEN === undefined ||
@@ -39,17 +60,101 @@ export class AppDiscord {
     this._client = new Client();
     // In the login method, you must specify the glob string to load your classes (for the framework).
     // In this case that's not necessary because the entry point of your application is this file.
-    this._client.login(
-      process.env.DISCORD_TOKEN as string,
-      `${__dirname}/*Discord.ts` // glob string to load the classes
+    this._client
+      .login(
+        process.env.DISCORD_TOKEN as string,
+        `${__dirname}/*Discord.ts` // glob string to load the classes
+      )
+      .then(() => {
+        this.isReady = true;
+        this._readyWaiters.forEach(callback => {
+          callback();
+        });
+        this._readyWaiters = [];
+      })
+      .catch(e => console.error(e));
+  }
+
+  public async waitReady() {
+    return new Promise((resolve, reject) => {
+      if (this.isReady) {
+        resolve();
+      } else {
+        this._readyWaiters.push(() => {
+          resolve();
+        });
+      }
+    });
+  }
+
+  public async createObservers() {
+    await this.waitReady();
+    await this.getGameChannelsCategory(GAME_CHANNELS_CATEGORY_ID);
+    await this.getAllGameChannels(GUILD_ID, GAME_CHANNELS_CATEGORY_ID).then(
+      async channels => {
+        console.log('game channels:', channels.length);
+        // for (const channel of channels) {await channel.delete();}
+        // throw new Error('STOP');
+      }
     );
+    for (const game of this._gameFactory.games) {
+      const channel = await this.createChannelForGame(game);
+      const observer = new GameObserver(game, channel, this);
+      this._gameObservers.set(game.address, observer);
+    }
+    this._gameFactory.on('GameCreated', async (game: IGame) => {
+      const channel = await this.createChannelForGame(game);
+      const observer = new GameObserver(game, channel, this);
+      this._gameObservers.set(game.address, observer);
+    });
+  }
+
+  public resolveUserAccount(userId: string, username: string, account: string) {
+    if (!this.isReady) {
+      throw new Error('Instance nor ready');
+    }
+    this._userAccounts.set(account, { userId, username });
+  }
+
+  public async createChannelForGame(game: IGame): Promise<TextChannel> {
+    await this.waitReady();
+    const channelName = `game-${this.shortAddress(game.address)}`;
+    let channel = await this.findTextChannel(
+      channelName,
+      GAME_CHANNELS_CATEGORY_ID
+    );
+    if (!channel) {
+      channel = await this.createTextChannel(
+        channelName,
+        GAME_CHANNELS_CATEGORY_ID
+      );
+    }
+    this._channelGames.set(game.address, channel);
+    return channel;
+  }
+
+  public getChannelFromGame(gameAddress: string) {
+    if (!this.isReady) {
+      throw new Error('Instance nor ready');
+    }
+    return this._channelGames.get(gameAddress);
+  }
+
+  public getUserIdFromAccount(
+    account: string
+  ): { userId: string; username: string } | undefined {
+    if (!this.isReady) {
+      throw new Error('Instance nor ready');
+    }
+    return this._userAccounts.get(account);
   }
 
   public async addUserToGuild(userId: string, accessToken) {
+    await this.waitReady();
     await this._client.guilds.fetch(GUILD_ID).then(async guild => {
       try {
-        guild.addMember(userId, { accessToken });
-      } catch(e) {
+        // guild.addMember(userId, { accessToken });
+      } catch (e) {
         // do not complain, it happens when the member is already in the guild
       }
     });
@@ -78,44 +183,81 @@ export class AppDiscord {
   // }
 
   // Reachable with the command: !hello
-  @Command('hello')
-  private hello([message]: ArgsOf<'commandMessage'>) {
-    message.reply(this._sayHelloMessage);
-  }
+  // @Command('hello')
+  // private hello([message]: ArgsOf<'commandMessage'>) {
+  //   message.reply(this._sayHelloMessage);
+  // }
 
-  @Command('invite')
-  private invite([message]: ArgsOf<'commandMessage'>) {
-    message.reply(`I'm going to invite the test user to this server`);
-    this._client.channels.fetch(GUILD_ID).then(guild => {
-      (guild as GuildChannel).createInvite().then(invite => {
-        console.log('invite', invite, invite.code, invite.url);
-        message.reply(`Here is the invite: ${invite.code}`);
-      });
+  // @Command('invite')
+  // private invite([message]: ArgsOf<'commandMessage'>) {
+  //   message.reply(`I'm going to invite the test user to this server`);
+  //   this._client.channels.fetch(GUILD_ID).then(guild => {
+  //     (guild as GuildChannel).createInvite().then(invite => {
+  //       console.log('invite', invite, invite.code, invite.url);
+  //       message.reply(`Here is the invite: ${invite.code}`);
+  //     });
+  //   });
+  // }
+
+  // @Command('create :game')
+  // private createGame([message]: ArgsOf<'commandMessage'>) {
+  //   message.reply(`I'm gonna create a game for you with ${message.args.game}`);
+  //   this._client.channels
+  //     .fetch(GAME_CHANNELS_CATEGORY_ID)
+  //     .then(parentCategory => {
+  //       message.guild?.channels
+  //         .create('new-channel' + message.args.game, {
+  //           parent: parentCategory,
+  //           type: 'text',
+  //         })
+  //         .then(channel => {
+  //           message.reply(`Link to the game channel: <#${channel.id}>`);
+  //           channel.send('Welcome to the game ' + message.args.game);
+  //         })
+  //         .catch(e => {
+  //           console.error(e);
+  //         });
+  //     })
+  //     .catch(e => {
+  //       console.error(e);
+  //     });
+  // }
+
+  private async createTextChannel(
+    name: string,
+    parentCategoryId
+  ): Promise<TextChannel> {
+    const parentCategory = await this._client.channels.fetch(parentCategoryId);
+    const guild = await this._client.guilds.fetch(GUILD_ID);
+    return guild.channels.create(name, {
+      parent: parentCategory,
+      type: 'text',
     });
   }
 
-  @Command('create :game')
-  private createGame([message]: ArgsOf<'commandMessage'>) {
-    message.reply(`I'm gonna create a game for you with ${message.args.game}`);
-    this._client.channels
-      .fetch(GAME_CHANNELS_CATEGORY_ID)
-      .then(parentCategory => {
-        message.guild?.channels
-          .create('new-channel' + message.args.game, {
-            parent: parentCategory,
-            type: 'text',
-          })
-          .then(channel => {
-            message.reply(`Link to the game channel: <#${channel.id}>`);
-            channel.send('Welcome to the game ' + message.args.game);
-          })
-          .catch(e => {
-            console.error(e);
-          });
-      })
-      .catch(e => {
-        console.error(e);
-      });
+  private async findTextChannel(
+    channelName,
+    parentCategoryId
+  ): Promise<TextChannel> {
+    return new Promise((resolve, reject) => {
+      console.log('find channel with name', channelName);
+      console.log(
+        'nb channels in cache:',
+        this._client.channels.cache.array().length
+      );
+      const found = this._client.channels.cache
+        .array()
+        .find(
+          child => (child as TextChannel).name === channelName
+        ) as TextChannel;
+      console.log('found', found !== undefined);
+      resolve(found);
+    });
+    // const parentCategory = await this._client.channels.fetch(parentCategoryId);
+    // const guild = await this._client.guilds.fetch(GUILD_ID);
+    // return (parentCategory as CategoryChannel).children.find(
+    //   child => child.name === channelName
+    // ) as TextChannel;
   }
 
   // !bye
@@ -124,5 +266,60 @@ export class AppDiscord {
   private notFound([message]: ArgsOf<'commandMessage'>) {
     console.warn('command not found');
     message.reply(this._commandNotFoundMessage);
+  }
+
+  private async getGameChannelsCategory(
+    channelId: string
+  ): Promise<CategoryChannel> {
+    const channel = await this._client.channels.fetch(channelId);
+    return channel as CategoryChannel;
+  }
+
+  private async getAllGameChannels(
+    guildId: string,
+    parentId: string
+  ): Promise<Channel[]> {
+    const gameChannels: Channel[] = [];
+    return new Promise((resolve, reject) => {
+      fetch(`https://discord.com/api/guilds/${guildId}/channels`, {
+        headers: {
+          Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
+        },
+        method: 'GET',
+      }).then(response => {
+        if (response.ok) {
+          response
+            .json()
+            .then(async channels => {
+              console.log('channels', channels.length);
+              const children = channels.filter(
+                channel => channel.parent_id === parentId
+              );
+              console.log('children', children.length);
+              for (const child of children) {
+                console.log('child', child);
+                const channel = await this._client.channels.fetch(child.id);
+                if (channel !== undefined && channel !== null) {
+                  gameChannels.push(channel);
+                } else {
+                  console.error('channel is null', channel);
+                }
+              }
+              resolve(gameChannels);
+            })
+            .catch(e => reject(e));
+        } else {
+          reject(response.text);
+        }
+      });
+    });
+  }
+
+  private shortAddress(address: string, nbChars = 4) {
+    return `${address
+      .toLowerCase()
+      .substring(0, nbChars)}-${address
+      .toLowerCase()
+      .substring(address.length - nbChars)}`;
   }
 }

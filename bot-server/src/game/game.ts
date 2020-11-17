@@ -28,6 +28,7 @@ export interface IGame {
   getNextPlayer(): Promise<string>;
   getCurrentPlayer(): Promise<string>;
   getStatus(): Promise<number>;
+  getPlayers(): Promise<IPlayer[]>;
   // rollDices(): Promise<{
   //   dice1: number;
   //   dice2: number;
@@ -35,6 +36,12 @@ export interface IGame {
   //   options: number;
   // }>;
   // play(option: number): Promise<void>;
+}
+
+export interface IPlayer {
+  address: string;
+  username: string;
+  avatar: number;
 }
 
 export enum eOption {
@@ -53,6 +60,13 @@ export enum eGameStatus {
   ENDED = 3,
 }
 
+export const GAME_STATUS = {
+  0: 'CREATED',
+  1: 'STARTED',
+  2: 'FROZEN',
+  3: 'ENDED',
+};
+
 export class Game implements IGame {
   private _contract: ethers.Contract;
   private _onRolledDices:
@@ -64,7 +78,8 @@ export class Game implements IGame {
     private _address: string,
     abi: ethers.ContractInterface
   ) {
-    this._contract = new ethers.Contract(this._address, abi, _web3.signer);
+    // this._contract = new ethers.Contract(this._address, abi, _web3.signer);
+    this._contract = _web3.getContract(this._address, abi);
     this._contract.on(
       'RolledDices',
       (player, dice1, dice2, cardId, newPosition, options) => {
@@ -105,6 +120,28 @@ export class Game implements IGame {
 
   public async getStatus(): Promise<number> {
     return this._contract.getStatus();
+  }
+
+  public async getPlayers(): Promise<IPlayer[]> {
+    return new Promise<IPlayer[]>(async (resolve, reject) => {
+      try {
+        const players: IPlayer[] = [];
+        const nbPlayers = await this._contract.getNbPlayers();
+        for (let i = 0; i < nbPlayers; i++) {
+          const playerAddress = await this._contract.getPlayerAtIndex(i);
+          const username = await this._contract.getUsername(playerAddress);
+          const avatar = await this._contract.getAvatar(playerAddress);
+          players.push({
+            address: playerAddress,
+            avatar,
+            username: ethers.utils.parseBytes32String(username),
+          });
+        }
+        resolve(players);
+      } catch (e) {
+        reject(e);
+      }
+    });
   }
 
   // public async rollDices(): Promise<{
