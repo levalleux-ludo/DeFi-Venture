@@ -2,8 +2,8 @@ import { BotServerService } from './../../_services/bot-server.service';
 import { eGameStatus, GameMaster } from './../../_models/contracts/GameMaster';
 import { GameTokenContractService } from './../../_services/game-token-contract.service';
 import { INetwork } from './../../../environments/environment';
-import { GameMasterContractService } from './../../_services/game-master-contract.service';
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { GameMasterContractService, GAME_STATUS } from './../../_services/game-master-contract.service';
+import { Component, Input, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import { Utils } from 'src/app/_utils/utils';
@@ -17,7 +17,7 @@ import { MatDialog } from '@angular/material/dialog';
   styleUrls: ['./game-factory.component.scss'],
   encapsulation: ViewEncapsulation.None // required to get the component css applying to matsnackbar
 })
-export class GameFactoryComponent implements OnInit {
+export class GameFactoryComponent implements OnInit, OnDestroy {
 
   @Input()
   set network(value: INetwork) {
@@ -30,11 +30,26 @@ export class GameFactoryComponent implements OnInit {
   get network() {
     return this._network;
   }
+
+  constructor(
+    private portisL1Service: PortisL1Service,
+    private gameMasterContractService: GameMasterContractService,
+    private tokenContractService: GameTokenContractService,
+    private snackBar: MatSnackBar,
+    private http: HttpClient,
+    private dialog: MatDialog,
+    private botServerService: BotServerService
+  ) { }
   _network;
   gameFactory;
-  games = [];
-  eGameStatus = (statusStr: string) => eGameStatus[statusStr];
-  status2String = (status: number) => eGameStatus[status];
+  games: Array<{
+    gameMaster: string,
+    status: string,
+    nbPlayers: number,
+    isRegistered: boolean,
+    players: any[],
+    isCompleted: boolean
+  }> = [];
   isCreating = false;
   isRegistering = false;
   refreshing = false;
@@ -55,16 +70,8 @@ export class GameFactoryComponent implements OnInit {
     'r4d4',
     'r5d5'
   ];
-
-  constructor(
-    private portisL1Service: PortisL1Service,
-    private gameMasterContractService: GameMasterContractService,
-    private tokenContractService: GameTokenContractService,
-    private snackBar: MatSnackBar,
-    private http: HttpClient,
-    private dialog: MatDialog,
-    private botServerService: BotServerService
-  ) { }
+  eGameStatus = (statusStr: string) => eGameStatus[statusStr];
+  status2String = (status: number) => eGameStatus[status];
 
   ngOnInit(): void {
     this.portisL1Service.onGameCreated.subscribe((gameMasterAddress) => {
@@ -89,6 +96,14 @@ export class GameFactoryComponent implements OnInit {
     // });
   }
 
+  ngOnDestroy(): void {
+    for (const contract of this.gameContracts.values()) {
+      for (const event of ['PlayerRegistered', 'StatusChanged']) {
+        contract.removeAllListeners(event);
+      }
+    }
+  }
+
   createGame() {
     this.isCreating = true;
     this.portisL1Service.createGame().then(() => {
@@ -102,12 +117,23 @@ export class GameFactoryComponent implements OnInit {
   }
 
   refreshGames() {
-      // this.games = [];
-      const newGames = [];
-      // this.refreshing = true;
-      this.portisL1Service.getGames().then(async (games) => {
+      // const newGames = [];
+      this.refreshing = true;
+      this.portisL1Service.getGames().then((games) => {
         const toBeRemoved = Array.from(this.gameContracts.keys());
         for (let gameMaster of games) {
+          let gameData = this.games.find(game => game.gameMaster === gameMaster);
+          if (!gameData) {
+            gameData = {
+              gameMaster,
+              status: '...',
+              nbPlayers: 0,
+              isRegistered: false,
+              players: [],
+              isCompleted: false
+            };
+            this.games.push(gameData);
+          }
           let gameMasterContract;
           if (this.gameContracts.has(gameMaster)) {
             gameMasterContract = this.gameContracts.get(gameMaster);
@@ -122,11 +148,31 @@ export class GameFactoryComponent implements OnInit {
             });
             this.gameContracts.set(gameMaster, gameMasterContract);
           }
-          const status = await gameMasterContract.getStatus();
-          const nbPlayers = await gameMasterContract.getNbPlayers();
-          const isRegistered = await gameMasterContract.isPlayerRegistered(this.portisL1Service.accounts[0]);
-          const players = await gameMasterContract.getPlayers();
-          newGames.push({gameMaster, status, nbPlayers, isRegistered, players});
+          const promises = [];
+          let p;
+          p = gameMasterContract.getStatus();
+          promises.push(p);
+          p.then(status => {
+            gameData.status = GAME_STATUS[status];
+          }).catch(e => console.error(e));
+          p = gameMasterContract.getNbPlayers();
+          promises.push(p);
+          p.then(nbPlayers => {
+            gameData.nbPlayers = nbPlayers;
+          }).catch(e => console.error(e));
+          p = gameMasterContract.isPlayerRegistered(this.portisL1Service.accounts[0]);
+          promises.push(p);
+          p.then(isRegistered => {
+            gameData.isRegistered = isRegistered;
+          }).catch(e => console.error(e));
+          p = gameMasterContract.getPlayers();
+          promises.push(p);
+          p.then(players => {
+            gameData.players = players;
+          }).catch(e => console.error(e));
+          Promise.all(promises).then(() => {
+            gameData.isCompleted = true;
+          });
         }
         for (const oldGame of toBeRemoved) {
           const contract = this.gameContracts.get(oldGame);
@@ -134,11 +180,12 @@ export class GameFactoryComponent implements OnInit {
             contract.removeAllListeners(event);
           }
           this.gameContracts.delete(oldGame);
+          this.gameContracts.delete(oldGame);
         }
       }).catch(e => {
         console.error(e);
       }).finally(() => {
-        this.games = newGames;
+        // this.games = newGames;
         this.refreshing = false;
       })
   }
