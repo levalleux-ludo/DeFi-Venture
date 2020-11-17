@@ -6,10 +6,11 @@ import { Injectable } from '@angular/core';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import greeterABI from '../../../../buidler/artifacts/Greeter.json';
 import gameFactoryABI from '../../../../buidler/artifacts/GameFactory.json';
-import { Contract } from 'web3-eth-contract';
+// import { Contract } from 'web3-eth-contract';
 import { getSpaces, getChances } from '../../../../buidler/db/playground';
 
-import Portis from '@portis/web3';
+// import Portis from '@portis/web3';
+import {Portis} from './portis-hack/Portis';
 import Web3 from 'web3';
 import { ethers, BigNumber } from 'ethers';
 
@@ -40,7 +41,7 @@ export class PortisL1Service {
 
   private _network: INetwork;
   private portis: Portis;
-  private web3: Web3;
+  // private web3: Web3;
   private ethersProvider: ethers.providers.Web3Provider;
   private ethersSigner;
   private _accounts;
@@ -98,6 +99,10 @@ export class PortisL1Service {
       this.portis.provider,
       network
     );
+    // this.ethersProvider = new ethers.providers.Web3Provider((window as any).ethereum);
+    this.ethersProvider.pollingInterval = 40000;
+    this.ethersProvider.polling = false;
+    console.log('pollingInterval', this.ethersProvider.pollingInterval);
     const ethersNetwork = await this.ethersProvider.getNetwork();
     console.log('ETHERS network', ethersNetwork);
     // Get the current suggested gas price (in wei)...
@@ -110,18 +115,20 @@ export class PortisL1Service {
 
     this.ethersSigner = this.ethersProvider.getSigner();
     this._account = await this.ethersSigner.getAddress();
+    this._accounts = [this._account];
     console.log('ETHERS signer', this.ethersSigner.getAddress());
   }
 
-  public async connect(network: INetwork) {
-    return new Promise(async (resolve) => {
+  public async connect(network: INetwork): Promise<string> {
+    return new Promise<string>(async (resolve) => {
       if (!this.portis) {
         this.portis = new Portis(PORTIS_API_KEY, network as any);
-        this.web3 = new Web3(this.portis.provider);
+        this.portis.provider.stop();
+        // this.web3 = new Web3(this.portis.provider);
         await this.initEthers(network);
       } else {
         if (this._network === network) {
-          resolve();
+          resolve(this._accounts ? this._accounts[0] : undefined);
           return;
         }
         this.reset();
@@ -129,17 +136,19 @@ export class PortisL1Service {
         await this.initEthers(network);
       }
       this._network = network;
-      this.web3.eth.getAccounts((error, accounts) => {
-        console.log(accounts);
-        this._accounts = accounts;
-        this._contracts = environment.contracts[this._network.chainId];
-        const etheresGameFactory = this.getEthersContract(gameFactoryABI.abi, this.contracts.gameFactory);
-        etheresGameFactory.on('GameCreated', (gameMaster: string, index: BigNumber) => {
-          this.gameCreatedSubject.next(gameMaster);
-        });
-        resolve();
-        this.connectSubject.next({network: this._network, account: accounts[0]});
-      });
+      this._contracts = environment.contracts[this._network.chainId];
+      resolve(this._account);
+      this.connectSubject.next({network: this._network, account: this._account});
+      // this.web3.eth.getAccounts((error, accounts) => {
+      //   console.log(accounts);
+      //   this._accounts = accounts;
+      //   const etheresGameFactory = this.getEthersContract(gameFactoryABI.abi, this.contracts.gameFactory);
+      //   etheresGameFactory.on('GameCreated', (gameMaster: string, index: BigNumber) => {
+      //     this.gameCreatedSubject.next(gameMaster);
+      //   });
+      //   resolve(accounts[0]);
+      //   this.connectSubject.next({network: this._network, account: accounts[0]});
+      // });
     });
   }
   public async logout() {
@@ -158,7 +167,8 @@ export class PortisL1Service {
 
   public async getL1BalanceETH(account: string): Promise<BigNumber> {
     return new Promise((resolve, reject) => {
-      this.web3.eth.getBalance(account).then((balanceStr) => {
+      this.ethersProvider.getBalance(account).then((balanceStr) => {
+      // this.web3.eth.getBalance(account).then((balanceStr) => {
         const bn = BigNumber.from(balanceStr);
         resolve(bn);
       }).catch(e => reject(e));
@@ -228,15 +238,15 @@ export class PortisL1Service {
     });
   }
 
-  public getContract(contractAbi: any, contractAddress: string): Contract {
-    console.log('get contract at ', contractAddress);
-    return new this.web3.eth.Contract(
-        contractAbi,
-        contractAddress
-      );
-  }
+  // public getContract(contractAbi: any, contractAddress: string): Contract {
+  //   console.log('get contract at ', contractAddress);
+  //   return new this.web3.eth.Contract(
+  //       contractAbi,
+  //       contractAddress
+  //     );
+  // }
 
-  public getEthersContract(contractAbi: any, contractAddress: string) {
+  public getEthersContract(contractAbi: any, contractAddress: string): ethers.Contract {
     return new ethers.Contract(
       contractAddress,
       contractAbi,
@@ -246,30 +256,42 @@ export class PortisL1Service {
 
   public async createGame() {
     if (!this.gameFactory) {
-      this.gameFactory = this.getContract(gameFactoryABI.abi, this.contracts.gameFactory);
+      // this.gameFactory = this.getContract(gameFactoryABI.abi, this.contracts.gameFactory);
+      this.gameFactory = this.getEthersContract(gameFactoryABI.abi, this.contracts.gameFactory);
     }
     return new Promise((resolve, reject) => {
-      this.gameFactory.methods.create(
+      // this.gameFactory.methods.create(
+      //   NB_MAX_PLAYERS,
+      //   NB_POSITIONS,
+      //   ethers.BigNumber.from(INITIAL_BALANCE).toString(),
+      //   getSpaces(NB_POSITIONS),
+      //   getChances(NB_CHANCES, NB_POSITIONS)
+      // ).send({from: this._accounts[0]})
+      // .on('transactionHash', function(hash){
+
+      // })
+      // .on('confirmation', function(confirmationNumber, receipt){
+
+      // })
+      // .on('receipt', function(receipt){
+      //   resolve();
+      // })
+      // .on('error', function(error, receipt) {
+      //   // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      //   console.error(error, receipt);
+      //   reject();
+      // });
+      this.gameFactory.create(
         NB_MAX_PLAYERS,
         NB_POSITIONS,
         ethers.BigNumber.from(INITIAL_BALANCE).toString(),
         getSpaces(NB_POSITIONS),
         getChances(NB_CHANCES, NB_POSITIONS)
-      ).send({from: this._accounts[0]})
-      .on('transactionHash', function(hash){
-
-      })
-      .on('confirmation', function(confirmationNumber, receipt){
-
-      })
-      .on('receipt', function(receipt){
-        resolve();
-      })
-      .on('error', function(error, receipt) {
-        // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
-        console.error(error, receipt);
-        reject();
-      });
+      ).then((response) => {
+        response.wait(() => {
+          resolve();
+        }).catch(e => reject(e));
+      }).catch(e => reject(e));
     });
   }
 
@@ -277,20 +299,32 @@ export class PortisL1Service {
     return this.gameCreatedSubject.asObservable();
   }
 
+  public async getNbGames(): Promise<number> {
+    if (!this.gameFactory) {
+      // this.gameFactory = this.getContract(gameFactoryABI.abi, this.contracts.gameFactory);
+      this.gameFactory = this.getEthersContract(gameFactoryABI.abi, this.contracts.gameFactory);
+    }
+    return this.gameFactory.nbGames();
+  }
+
   public async getGames(): Promise<string[]> {
     if (!this.gameFactory) {
-      this.gameFactory = this.getContract(gameFactoryABI.abi, this.contracts.gameFactory);
+      // this.gameFactory = this.getContract(gameFactoryABI.abi, this.contracts.gameFactory);
+      this.gameFactory = this.getEthersContract(gameFactoryABI.abi, this.contracts.gameFactory);
     }
     return new Promise((resolve, reject) => {
-      this.gameFactory.methods.nbGames().call().then(async (nbGames) => {
+      // this.gameFactory.methods.nbGames().call().then(async (nbGames) => {
+      this.gameFactory.nbGames().then(async (nbGames) => {
         const games = [];
         for (let i = 0; i < nbGames; i++) {
-          await this.gameFactory.methods.getGameAt(i).call().then((game) => {
+          // await this.gameFactory.methods.getGameAt(i).call().then((game) => {
+          await this.gameFactory.getGameAt(i).then((game) => {
             games.push(game);
           }).catch((e) => {
             reject(e);
           });
         }
+        console.log('polling', this.ethersProvider.polling);
         resolve(games);
       }).catch((e) => {
         reject(e);
