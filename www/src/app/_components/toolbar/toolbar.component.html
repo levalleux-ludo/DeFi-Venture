@@ -19,16 +19,13 @@
         <button mat-menu-item>Remove</button> -->
         </div>
     </mat-menu>
-    <div class="toolbar-button favorite-icon">
+    <button mat-icon-button class="toolbar-button favorite-icon">
         <img src="assets/blockchain.png" height="24" style="top: 4px; position:relative;">
         <span>{{network?.name}}</span>
-    </div>
-    <button mat-icon-button class="toolbar-button favorite-icon" aria-label="Example icon-button with share icon">
-    <mat-icon>account_circle</mat-icon>
-    <span>{{username}}</span>
-  </button>
+    </button>
     <button mat-icon-button class="toolbar-button favorite-icon" aria-label="Example icon-button with share icon" [matMenuTriggerFor]="menuDiscord">
-    <img src="https://discord.com/assets/35d75407bd75d70e84e945c9f879bab8.svg" height="24">
+    <img src="https://discord.com/assets/1c8a54f25d101bdc607cec7228247a9a.svg" height="30">
+    <span>{{discordUsername}}</span>
   </button>
     <mat-menu #menuDiscord="matMenu" xPosition="before">
         <div class="mat-toolbar">
@@ -37,4 +34,8 @@
     <button mat-menu-item>Remove</button> -->
         </div>
     </mat-menu>
+    <button mat-icon-button class="toolbar-button favorite-icon" aria-label="Example icon-button with share icon">
+      <mat-icon>account_circle</mat-icon>
+      <span>{{username}}</span>
+    </button>
 </mat-toolbar>
