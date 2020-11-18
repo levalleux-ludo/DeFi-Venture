@@ -4,4 +4,5 @@
 <diV>Zoom: {{zoom}}</diV>
 <mat-slider [disabled]="zoom == undefined" [value]="zoom" [step]="0.1" [min]="0.5" [max]="5" (change)="changeZoom($event.value)"></mat-slider>
 <button (click)="changeCanvasSize()">change</button>
+<button (click)="lockAvatar()">lock avatar</button>
 <app-test-canvas #canvas [width]="1200" [height]="800"></app-test-canvas>

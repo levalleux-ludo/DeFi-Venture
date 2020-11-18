@@ -1,13 +1,15 @@
 import { TestCanvasComponent } from './../test-canvas/test-canvas.component';
 import { Utils } from './../../_utils/utils';
-import { Component, OnInit, ViewChild, AfterContentInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterContentInit, AfterViewInit } from '@angular/core';
+import { eSpaceType } from 'src/app/_services/game-master-contract.service';
+import { Stats } from 'fs';
 
 @Component({
   selector: 'app-test-canvas-page',
   templateUrl: './test-canvas-page.component.html',
   styleUrls: ['./test-canvas-page.component.scss']
 })
-export class TestCanvasPageComponent implements OnInit, AfterContentInit {
+export class TestCanvasPageComponent implements OnInit, AfterContentInit, AfterViewInit {
 
   spaceId = 0;
   nbSpaces = 12;
@@ -15,11 +17,89 @@ export class TestCanvasPageComponent implements OnInit, AfterContentInit {
   PI = Math.PI;
   computing = false;
   zoom;
+  lockedAvatar = undefined;
 
   @ViewChild('canvas', {static: true})
   canvas: TestCanvasComponent;
 
   constructor() { }
+
+  ngAfterViewInit(): void {
+    this.canvas.playground = [
+      {
+        type: eSpaceType.GENESIS,
+        assetId: 0,
+        assetPrice: 50,
+        productPrice: 12,
+        owner: ''
+      },
+      {
+        type: eSpaceType.ASSET_CLASS_1,
+        assetId: 0,
+        assetPrice: 50,
+        productPrice: 12,
+        owner: ''
+      },
+      {
+        type: eSpaceType.ASSET_CLASS_1,
+        assetId: 1,
+        assetPrice: 50,
+        productPrice: 12,
+        owner: ''
+      },
+      {
+        type: eSpaceType.CHANCE,
+        assetId: 0,
+        assetPrice: 50,
+        productPrice: 12,
+        owner: ''
+      },
+      {
+        type: eSpaceType.ASSET_CLASS_1,
+        assetId: 2,
+        assetPrice: 50,
+        productPrice: 12,
+        owner: ''
+      },
+      {
+        type: eSpaceType.ASSET_CLASS_1,
+        assetId: 3,
+        assetPrice: 50,
+        productPrice: 12,
+        owner: ''
+      },
+      {
+        type: eSpaceType.ASSET_CLASS_1,
+        assetId: 4,
+        assetPrice: 50,
+        productPrice: 12,
+        owner: ''
+      },
+    ];
+
+    this.canvas.gameData = {
+      players: [
+        {address: 'aaaaaaa', avatar: 1, username: 'toto'},
+        {address: 'bbbbbbb', avatar: 2, username: 'titi'},
+        {address: 'ccccccc', avatar: 3, username: 'tata'},
+      ],
+      playersPosition: new Map([
+        ['aaaaaaa', 0],
+        ['bbbbbbb', 3],
+        ['ccccccc', 2]
+      ]),
+      status: '',
+      nextPlayer: '',
+      currentPlayer: '',
+      currentOptions: 0,
+      chanceCardId: 0,
+      tokenAddress: '',
+      assetsAddress: '',
+      playground: []
+    };
+
+  }
+
   ngAfterContentInit(): void {
     // this.zoom = this.canvas.zoom;
   }
@@ -58,6 +138,16 @@ export class TestCanvasPageComponent implements OnInit, AfterContentInit {
 
   changeCanvasSize() {
     this.canvas.width = 250;
+  }
+
+  lockAvatar() {
+    if (this.lockedAvatar) {
+      this.canvas.unlockAvatar(this.lockedAvatar);
+      this.lockedAvatar = undefined;
+    } else {
+      this.lockedAvatar = 1;
+      this.canvas.lockAvatar(this.lockedAvatar);
+    }
   }
 
 }

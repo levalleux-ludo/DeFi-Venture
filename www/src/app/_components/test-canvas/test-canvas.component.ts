@@ -62,7 +62,9 @@ export class TestCanvasComponent implements OnInit {
       this.block_imgs.push(`assets/blocks/block_${image}`);
     }
     if (this.ctx) {
-      this.draw(this._currentAngle);
+      this.load_images().then(() => {
+        this.draw(this._currentAngle);
+      });
     }
   }
 
@@ -159,12 +161,30 @@ export class TestCanvasComponent implements OnInit {
     });
   }
 
-  public setPlayerPosition(player: number, newPosition) {
+  public setPlayerPosition(player: number, newPosition, animate = false) {
     const avatarId = player - 1; // avatar 0 does not exist
     const oldPosition = this.getOldPosition(avatarId);
     if (oldPosition === newPosition) {
       return;
     }
+    if (!animate) {
+      this.movePlayerOnBoard(avatarId, oldPosition, newPosition);
+    } else {
+      let currentPos = oldPosition;
+      const velocity =
+       ((newPosition >= oldPosition) ? newPosition - oldPosition : newPosition + this.nbBlocks - oldPosition) / this.nbBlocks;
+      console.log('velocity', velocity, 300 * (1 - velocity));
+      const interval = setInterval(() => {
+        if (currentPos === newPosition) {
+          clearInterval(interval);
+        } else {
+          currentPos = this.movePlayerOnBoard(avatarId, currentPos, (currentPos + 1) % this.nbBlocks);
+        }
+      }, 300 * (1 - velocity));
+    }
+  }
+
+  private movePlayerOnBoard(avatarId: number, oldPosition: number, newPosition: number): number {
     const oldTab = this.avatarsPosition.get(oldPosition);
     let newTab = this.avatarsPosition.get(newPosition);
     if (oldTab) {
@@ -181,6 +201,8 @@ export class TestCanvasComponent implements OnInit {
     if (this.ctx) {
       this.draw(this._currentAngle);
     }
+
+    return newPosition;
   }
 
   private getOldPosition(avatar: number): number {
@@ -193,12 +215,29 @@ export class TestCanvasComponent implements OnInit {
     return -1;
   }
 
-  public lockAvatar() {}
+  lockedAvatar = undefined;
 
-  public unlockAvatar() {}
+  public lockAvatar(player: number) {
+    const avatarId = player - 1; // avatar 0 does not exist
+    console.log('lock avatar', avatarId);
+    this.lockedAvatar = avatarId;
+  }
+
+  public unlockAvatar(player: number, newPosition?: number) {
+    const avatarId = player - 1; // avatar 0 does not exist
+    console.log('unlock avatar', avatarId);
+    if (this.lockedAvatar === avatarId) {
+      this.lockedAvatar = undefined;
+      // TODO: set avatar at newPosition
+      if (newPosition !== undefined) {
+        this.setPlayerPosition(player, newPosition, false);
+      }
+    }
+  }
 
   private async load_images() {
     const promises = [];
+    this.loaded_images = [];
     for (let i = 0; i < this.block_imgs.length; i++) {
       // this.avatarsPosition.set(i, []);
       const img = new Image();
@@ -210,6 +249,7 @@ export class TestCanvasComponent implements OnInit {
         };
       }));
     }
+    this.loaded_avatars = [];
     for (let i = 0; i < this.avatars.length; i++) {
 
       // this.avatarsPosition.get(0).push(i); // Everybody on the space 0
@@ -246,11 +286,26 @@ export class TestCanvasComponent implements OnInit {
         const avatars = this.avatarsPosition.get(index);
         for (let i = 0; i < avatars.length; i++) {
           const avatar = avatars[i];
-          const offsetX = (15 * i - 5 * avatars.length) * this.zoom;
-          this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
+          if (avatar !== this.lockedAvatar) {
+            const offsetX = (15 * i - 5 * avatars.length) * this.zoom;
+            this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
+          }
         }
       }
       this.ctx.restore();
+    }
+  }
+
+  private drawAvatar(avatar: number, posX, posY) {
+    const img = this.loaded_avatars[avatar];
+    if (img.complete) {
+      // this.ctx.save();
+      // Translate to the center point of our image
+      // this.ctx.translate(posX, posY);
+      // this.ctx.translate(-posX, -posY);
+      this.ctx.drawImage(img, posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
+      console.log('draw locked avatar', posX, posY);
+      // this.ctx.restore();
     }
   }
 
@@ -292,6 +347,16 @@ export class TestCanvasComponent implements OnInit {
         -(angle + block_angle)
       );
     }
+    if (this.lockedAvatar !== undefined) {
+      const offsetX = radius * Math.sin(angle);
+      const offsetY = radius * (1 - Math.cos(angle));
+      this.drawAvatar(
+        this.lockedAvatar,
+        this.origin.x - 10*this.zoom,
+        this.origin.y * this.zoom - 50*this.zoom + 100
+      );
+    }
+
   }
 
 

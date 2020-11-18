@@ -223,7 +223,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
           this.players.setPlayerPosition(player, position);
         }
         if (this.board !== undefined) {
-          this.board.setPlayerPosition(this.avatars.get(player), position);
+          this.board.setPlayerPosition(this.avatars.get(player), position, true);
         }
       });
     }
@@ -325,14 +325,14 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       });
       return;
     }
-    this.board.lockAvatar();
+    this.board.lockAvatar(this.avatars.get(this.currentAccount));
     const oldPosition = this.position;
     const nbBlocks = this.board.nbBlocks;
     let offset = (oldPosition <= newPosition) ? newPosition - oldPosition : (newPosition + nbBlocks) - oldPosition;
     const revPosition = nbBlocks - newPosition % nbBlocks;
     const targetAngle = revPosition * 2 * Math.PI / nbBlocks;
     this.board.setTargetAngle(targetAngle, offset/nbBlocks).then(() => {
-      this.board.unlockAvatar();
+      this.board.unlockAvatar(this.avatars.get(this.currentAccount), newPosition);
       this.position = newPosition;
       const space = this.playground[newPosition];
       if ((space.type >= eSpaceType.ASSET_CLASS_1) && (space.type <= eSpaceType.ASSET_CLASS_4)) {
