@@ -20,6 +20,7 @@ const STATUS = {
 var GameMasterFactory;
 var TokenFactory;
 var AssetsFactory;
+var MarketplaceFactory;
 
 // generic handlers to test exceptions
 const shouldFail = {
@@ -49,8 +50,15 @@ async function createGameAssets() {
     return gameAssets;
 }
 
+async function createMarketplace() {
+    MarketplaceFactory = await ethers.getContractFactory("Marketplace");
+    const marketplace = await MarketplaceFactory.deploy();
+    await marketplace.deployed();
+    return marketplace;
+}
 
-async function createGameMaster(token, assets) {
+
+async function createGameMaster(token, assets, marketplace) {
     GameMasterFactory = await ethers.getContractFactory("GameMasterForTest");
     const gameMaster = await GameMasterFactory.deploy(
         NB_MAX_PLAYERS,
@@ -65,21 +73,37 @@ async function createGameMaster(token, assets) {
     await assets.transferOwnership(gameMaster.address);
     await gameMaster.setToken(token.address);
     await gameMaster.setAssets(assets.address);
+    // await marketplace.setToken(token.address);
+    // await marketplace.setAssets(assets.address);
+    await marketplace.transferOwnership(gameMaster.address);
+    await gameMaster.setMarketplace(marketplace.address);
     return gameMaster;
 }
 var avatarCount = 1;
 
 async function registerPlayers(gameMaster, players) {
     let tokenContract;
+    let assetsContract;
     const token = await gameMaster.getToken();
     if (token !== 0) {
         tokenContract = await TokenFactory.attach(token);
         await tokenContract.deployed();
     }
+    const assets = await gameMaster.getAssets();
+    if (assets !== 0) {
+        assetsContract = await AssetsFactory.attach(assets);
+        await assetsContract.deployed();
+    }
+    const marketplaceAddr = await gameMaster.getMarketplace();
     for (let player of players) {
-        const token = await gameMaster.getToken();
         if (tokenContract) {
             await tokenContract.connect(player).approveMax(gameMaster.address);
+            if (marketplaceAddr) {
+                await tokenContract.connect(player).approveMax(marketplaceAddr);
+            }
+        }
+        if (assetsContract && marketplaceAddr) {
+            await assetsContract.connect(player).setApprovalForAll(marketplaceAddr, true);
         }
         await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
     }
@@ -112,6 +136,7 @@ describe('Game play <ith token and assets', () => {
     var gameMaster;
     var token;
     var assets;
+    var marketplace;
     var owner;
     var addr1;
     var addr1Address;
@@ -122,7 +147,8 @@ describe('Game play <ith token and assets', () => {
         [owner, addr1, addr2] = await ethers.getSigners();
         token = await createGameToken();
         assets = await createGameAssets();
-        gameMaster = await createGameMaster(token, assets);
+        marketplace = await createMarketplace();
+        gameMaster = await createGameMaster(token, assets, marketplace);
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
         addr1Address = await addr1.getAddress();
@@ -196,6 +222,32 @@ describe('Game play <ith token and assets', () => {
         await gameMaster.setCardId(12);
         const position = await gameMaster.getPositionOf(addr2Address);
         await expect(gameMaster.connect(addr2).play(8)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr2Address, 8, 12, position);
+    })
+    it('exchange asset via marketplace', async() => {
+        // before transfer
+        {
+            const assets1 = await assets.balanceOf(addr1Address);
+            expect(assets1.toString()).to.equal('1');
+            const assetId1 = await assets.tokenOfOwnerByIndex(addr1Address, 0);
+            expect(assetId1.toString()).to.equal('1');
+            const assets2 = await assets.balanceOf(addr2Address);
+            expect(assets2.toString()).to.equal('0');
+        }
+        await marketplace.connect(addr1).sell(1, 100, 75);
+        expect((await marketplace.getNbSales()).toString()).to.equal('1');
+        await marketplace.connect(addr2).bid(1, 100);
+        const nbSales = await marketplace.getNbSales();
+        await expect(nbSales.toString()).to.equal('0');
+
+        // after transfer
+        {
+            const assets1 = await assets.balanceOf(addr1Address);
+            expect(assets1.toString()).to.equal('0');
+            const assets2 = await assets.balanceOf(addr2Address);
+            await expect(assets2.toString()).to.equal('1');
+            const assetId2 = await assets.tokenOfOwnerByIndex(addr2Address, 0);
+            await expect(assetId2.toString()).to.equal('1');
+        }
     })
 })
 

@@ -7,8 +7,10 @@ interface IGameMaster is IGameScheduler {
     event PlayPerformed(address indexed player, uint8 option, uint8 cardId, uint8 newPosition);
     function setToken(address _token) external;
     function setAssets(address _assets) external;
+    function setMarketplace(address _marketplace) external;
     function getToken() external view returns (address);
     function getAssets() external view returns (address);
+    function getMarketplace() external view returns (address);
     function getCurrentPlayer() external view returns (address);
     function getCurrentOptions() external view returns (uint8);
     function getCurrentCardId() external view returns (uint8);

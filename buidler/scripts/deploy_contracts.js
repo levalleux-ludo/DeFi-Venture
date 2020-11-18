@@ -25,15 +25,18 @@ async function main() {
     const GameFactoryFactory = await ethers.getContractFactory("GameFactory");
     const TokenFactoryFactory = await ethers.getContractFactory("TokenFactory");
     const AssetsFactoryFactory = await ethers.getContractFactory("AssetsFactory");
+    const MarketplaceFactoryFactory = await ethers.getContractFactory("MarketplaceFactory");
 
-
-    tokenFactory = await TokenFactoryFactory.deploy();
-    assetsFactory = await AssetsFactoryFactory.deploy();
+    const tokenFactory = await TokenFactoryFactory.deploy();
+    const assetsFactory = await AssetsFactoryFactory.deploy();
+    const marketplaceFactory = await MarketplaceFactoryFactory.deploy();
     await tokenFactory.deployed();
     await assetsFactory.deployed();
+    await marketplaceFactory.deployed();
     gameFactory = await GameFactoryFactory.deploy(
         tokenFactory.address,
-        assetsFactory.address
+        assetsFactory.address,
+        marketplaceFactory.address
     );
     await gameFactory.deployed();
     console.log("gameFactory deployed to:", gameFactory.address);

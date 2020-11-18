@@ -7,6 +7,7 @@ import "./GameScheduler.sol";
 import "./IGameMaster.sol";
 import "./GameToken.sol";
 import "./GameAssets.sol";
+import "./Marketplace.sol";
 contract GameMaster is GameScheduler, IGameMaster {
     uint256 constant public MAX_UINT256 = 2**256 - 1;
 
@@ -14,6 +15,8 @@ contract GameMaster is GameScheduler, IGameMaster {
     address private tokenAddress;
     GameAssets private assets;
     address private assetsAddress;
+    address private marketplaceAddress;
+    Marketplace private marketplace;
     uint256 initialAmount;
     address currentPlayer;
     uint256 internal nonce;
@@ -43,11 +46,24 @@ contract GameMaster is GameScheduler, IGameMaster {
     function setToken(address _token) external override onlyOwner {
         tokenAddress = _token;
         token = GameToken(_token);
+        if (marketplaceAddress != address(0)) {
+            marketplace.setToken(_token);
+        }
     }
 
     function setAssets(address _assets) external override onlyOwner {
         assetsAddress = _assets;
         assets = GameAssets(_assets);
+        if (marketplaceAddress != address(0)) {
+            marketplace.setAssets(_assets);
+        }
+    }
+
+    function setMarketplace(address _marketplace) external override onlyOwner {
+        marketplaceAddress = _marketplace;
+        marketplace = Marketplace(_marketplace);
+        marketplace.setToken(tokenAddress);
+        marketplace.setAssets(assetsAddress);
     }
 
     function getToken() external override view returns (address) {
@@ -56,6 +72,10 @@ contract GameMaster is GameScheduler, IGameMaster {
 
     function getAssets() external override view returns (address) {
         return assetsAddress;
+    }
+
+    function getMarketplace() external override view returns (address) {
+        return marketplaceAddress;
     }
 
     function getCurrentPlayer() external override view returns (address) {

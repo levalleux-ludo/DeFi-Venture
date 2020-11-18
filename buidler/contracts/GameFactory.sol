@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import "./IGameStatus.sol";
 
 import { IContractFactory } from "./IContractFactory.sol";
+import { IMarketplace } from "./IMarketplace.sol";
 
 contract GameFactory is IGameStatus {
     // Add the library methods
@@ -16,13 +17,15 @@ contract GameFactory is IGameStatus {
 
     address tokenFactory;
     address assetsFactory;
+    address marketplaceFactory;
     EnumerableSet.AddressSet private gamesSet;
 
     event GameCreated(address gameMasterAddress, uint index);
 
-    constructor (address _tokenFactory, address _assetsFactory) public {
+    constructor (address _tokenFactory, address _assetsFactory, address _marketplaceFactory) public {
         tokenFactory = _tokenFactory;
         assetsFactory = _assetsFactory;
+        marketplaceFactory = _marketplaceFactory;
     }
 
     /**
@@ -37,13 +40,20 @@ contract GameFactory is IGameStatus {
         gameMaster.setToken(tokenAddress);
         address assetsAddress = IContractFactory(assetsFactory).create(address(gameMaster));
         gameMaster.setAssets(assetsAddress);
-        // gameToken.transferOwnership(address(gameMaster));
-        // gameAssets.transferOwnership(address(gameMaster));
 
         // store gameMaster address in createdGameSet
         gamesSet.add(address(gameMaster));
         emit GameCreated(address(gameMaster), gamesSet.length() - 1);
         return address(gameMaster);
+    }
+
+    function createMarketplace(address gameMasterAddress) external {
+        GameMaster gameMaster = GameMaster(gameMasterAddress);
+        address marketplaceAddress = IContractFactory(marketplaceFactory).create(gameMasterAddress);
+        IMarketplace marketplace = IMarketplace(marketplaceAddress);
+        // marketplace.setToken(gameMaster.getToken());
+        // marketplace.setAssets(gameMaster.getAssets());
+        gameMaster.setMarketplace(marketplaceAddress);
     }
 
     function assignContracts(address gameMaster, address token, address assets) public {
