@@ -159,6 +159,30 @@ describe('Game play <ith token and assets', () => {
         const assetId1 = await assets.tokenOfOwnerByIndex(addr1Address, 0);
         expect(assetId1.toString()).to.equal('1');
     })
+    it('option PAY_BILL shall be available if asset owned by another player', async() => {
+        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        expect(await gameMaster.getCurrentPlayer()).to.equal(addr2Address, "current player shall be changed");
+        await gameMaster.setPlayerPosition(addr2Address, 3); // ASSET id 1
+        const position = await gameMaster.getPositionOf(addr2Address);
+        const options = await gameMaster.getOptionsAt(addr2Address, position);
+        await gameMaster.setOptions(options);
+        await gameMaster.setCardId(12);
+        expect(await gameMaster.getCurrentOptions()).to.equal(4); // PAY_BILL
+        await expect(gameMaster.connect(addr2).play(2)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
+        await expect(gameMaster.connect(addr2).play(4)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr2Address, 4, 12, position);
+    })
+    it('option PAY_BILL shall NOT be available if asset owned by same player', async() => {
+        await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
+        expect(await gameMaster.getCurrentPlayer()).to.equal(addr1Address, "current player shall be changed");
+        await gameMaster.setPlayerPosition(addr1Address, 3); // ASSET id 1
+        const position = await gameMaster.getPositionOf(addr1Address);
+        const options = await gameMaster.getOptionsAt(addr1Address, position);
+        expect(options).to.equal(1);
+        await gameMaster.setOptions(options);
+        await gameMaster.setCardId(12);
+        expect(await gameMaster.getCurrentOptions()).to.equal(1); // NOTHING
+        await expect(gameMaster.connect(addr1).play(1)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, 1, 12, position);
+    })
     it('play CHANCE', async() => {
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.getCurrentPlayer()).to.equal(addr2Address, "current player shall be changed");

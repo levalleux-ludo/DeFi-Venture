@@ -127,7 +127,7 @@ contract GameMaster is GameScheduler, IGameMaster {
             if (assetsAddress != address(0)) {
                 if (assets.exists(uint256(assetId))) {
                     address owner = assets.ownerOf(uint256(assetId));
-                    if (owner != msg.sender) {
+                    if (owner != player) {
                         options = 4; // 4 = PAY_BILL
                     } else {
                         options = 1; // 1 = NOTHING
