@@ -26,6 +26,11 @@
             </div>
             <div *ngIf="gameData != undefined">
                 <div *ngIf="isRegistered">
+                    <div class="zoom-box" fxLayout="row">
+                        <diV>Zoom: {{zoom}}</diV>
+                        <mat-slider [disabled]="zoom == undefined" [value]="zoom" [step]="0.1" [min]="0.5" [max]="5" (change)="changeZoom($event.value)"></mat-slider>
+
+                    </div>
                     <app-test-canvas #board [playground]="playground" [width]="board_width" [height]="board_height" [gameData]="gameData" class="board-canvas"></app-test-canvas>
                     <app-marketplace class="marketplace"></app-marketplace>
                     <app-defi-services class="defi"></app-defi-services>
@@ -40,7 +45,7 @@
                             </div>
                         </div>
                         <!-- zone 2 -->
-                        <div style="position: absolute; bottom: {{board_height / 4}}px; width: {{board_width / 2}}px; height: {{board_height / 3}}px; z-index: 3;">
+                        <div style="position: absolute; bottom: {{board_height / 3}}px; width: {{board_width / 2}}px; height: {{board_height / 3}}px; z-index: 3;">
                             <div *ngIf="gameData.status == 'STARTED'">
                                 <div *ngIf="isNextPlayer">
                                     <div class="dices-block">

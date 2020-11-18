@@ -28,8 +28,8 @@ export class TestCanvasComponent implements OnInit {
   @Input()
   set width(value: number) {
     this.canvas.nativeElement.width = value;
-    // this._zoom = value / (32 * this.block_imgs.length);
-    this._zoom = 1.2 + 1.2 * value / 2000;
+    // this._zoom = 1.2 + 1.2 * value / 2000;
+    this._zoom = 0.5 + value / 2000;
     this.origin = {
       x: value / 2, // middle
       y: 50 // top
@@ -225,12 +225,14 @@ export class TestCanvasComponent implements OnInit {
 
   public unlockAvatar(player: number, newPosition?: number) {
     const avatarId = player - 1; // avatar 0 does not exist
-    console.log('unlock avatar', avatarId);
+    console.log('unlock avatar', avatarId, newPosition);
     if (this.lockedAvatar === avatarId) {
       this.lockedAvatar = undefined;
-      // TODO: set avatar at newPosition
       if (newPosition !== undefined) {
         this.setPlayerPosition(player, newPosition, false);
+      }
+      if (this.ctx) {
+        this.draw(this._currentAngle);
       }
     }
   }
@@ -352,7 +354,7 @@ export class TestCanvasComponent implements OnInit {
       this.drawAvatar(
         this.lockedAvatar,
         this.origin.x - 10*this.zoom,
-        this.origin.y * this.zoom - 50*this.zoom + 100
+        this.origin.y * this.zoom - 30*this.zoom
       );
     }
 

@@ -83,3 +83,11 @@
     position: fixed;
     opacity: 0.3;
 }
+
+.zoom-box {
+    position: absolute;
+    top: 36px;
+    left: 200px;
+    width: 180px;
+    z-index: 2000;
+}

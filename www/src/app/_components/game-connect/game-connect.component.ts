@@ -57,6 +57,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   isStarting = false;
   isRegistering = false;
   avatars = new Map<string, eAvatar>();
+  zoom;
 
   @ViewChild('dices', {static: false})
   dices: DicesComponent;
@@ -108,7 +109,6 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       this.discordWidget.refreshChannel();
     },
     500);
-
   }
 
   ngOnDestroy(): void {
@@ -226,6 +226,11 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
           this.board.setPlayerPosition(this.avatars.get(player), position, true);
         }
       });
+      setTimeout(() => {
+        if (this.board !== undefined) {
+          this.zoom = this.board.zoom;
+        }
+      }, 500);
     }
   }
 
@@ -428,5 +433,11 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   getPlayer(address: string) {
     return this.gameData?.players.find(player => player.address === address);
   }
+
+  changeZoom(zoom: number) {
+    this.zoom = zoom;
+    this.board.zoom = zoom;
+  }
+
 
 }
