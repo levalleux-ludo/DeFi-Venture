@@ -26,6 +26,7 @@ const redirect = encodeURIComponent('http://localhost:8899/discord/callback');
 export class DiscordController {
   private _router = express.Router();
   private requestPerAccount = new Map<string, express.Response | undefined>();
+  private callbackUrl;
   public constructor(private appDiscord: AppDiscord) {
     this._router.get('/', this.get);
     this._router.get('/login', this.login);
@@ -47,7 +48,7 @@ export class DiscordController {
     if (!req.query.api_url) {
       throw new Error('Query parameter api_url is expected');
     }
-    let callbackUrl = `${req.query.api_url}/discord/callback`;
+    this.callbackUrl = `${req.query.api_url}/discord/callback`;
     if (req.query.account) {
       console.log('Discord login for account', req.query.account);
       // this.requestPerAccount.set(req.query.account as string, undefined);
@@ -57,7 +58,7 @@ export class DiscordController {
       `${DISCORD_AUTHORIZE}?client_id=${CLIENT_ID}&scope=${encodeURIComponent(
         'identify guilds.join'
       )}&response_type=code&redirect_uri=${encodeURIComponent(
-        callbackUrl
+        this.callbackUrl
       )}&state=${req.query.account}`
     );
   };
@@ -109,7 +110,7 @@ export class DiscordController {
     const body = {
       code,
       grant_type: 'authorization_code',
-      redirect_uri: 'http://localhost:8899/discord/callback',
+      redirect_uri: this.callbackUrl,
     };
     console.log('body', JSON.stringify(body));
     fetch(DISCORD_GRANT, {
