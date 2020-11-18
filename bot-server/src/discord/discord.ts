@@ -1,16 +1,17 @@
-import {
-  ArgsOf,
-  Client,
-  Command,
-  CommandMessage,
-  CommandNotFound,
-  Discord,
-  On, // Use the Client that are provided by @typeit/discord
-} from '@typeit/discord';
+// import {
+//   ArgsOf,
+//   Client,
+//   Command,
+//   CommandMessage,
+//   CommandNotFound,
+//   Discord,
+//   On, // Use the Client that are provided by @typeit/discord
+// } from '@typeit/discord';
 // You must import the types from @types/discord.js
 import {
   CategoryChannel,
   Channel,
+  Client,
   Guild,
   GuildChannel,
   Message,
@@ -62,8 +63,8 @@ export class AppDiscord {
     // In this case that's not necessary because the entry point of your application is this file.
     this._client
       .login(
-        process.env.DISCORD_TOKEN as string,
-        `${__dirname}/*Discord.ts` // glob string to load the classes
+        process.env.DISCORD_TOKEN as string
+        //, `${__dirname}/*Discord.ts` // glob string to load the classes
       )
       .then(() => {
         this.isReady = true;
@@ -151,7 +152,9 @@ export class AppDiscord {
     await this.waitReady();
     await this._client.guilds.fetch(GUILD_ID).then(async guild => {
       try {
-        guild.addMember(userId, { accessToken });
+        guild.addMember(userId, { accessToken }).catch(e => {
+          // do not complain, it happens when the member is already in the guild
+        })
       } catch (e) {
         // do not complain, it happens when the member is already in the guild
       }
@@ -260,11 +263,11 @@ export class AppDiscord {
 
   // !bye
   // !yo
-  @CommandNotFound()
-  private notFound([message]: ArgsOf<'commandMessage'>) {
-    console.warn('command not found');
-    message.reply(this._commandNotFoundMessage);
-  }
+  // @CommandNotFound()
+  // private notFound([message]: ArgsOf<'commandMessage'>) {
+  //   console.warn('command not found');
+  //   message.reply(this._commandNotFoundMessage);
+  // }
 
   private async getGameChannelsCategory(
     channelId: string

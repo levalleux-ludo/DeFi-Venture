@@ -126,11 +126,11 @@ export class Game implements IGame {
     return new Promise<IPlayer[]>(async (resolve, reject) => {
       try {
         const players: IPlayer[] = [];
-        const nbPlayers = await this._contract.getNbPlayers();
+        const nbPlayers = await this._contract.getNbPlayers().catch(e => console.error(e));
         for (let i = 0; i < nbPlayers; i++) {
-          const playerAddress = await this._contract.getPlayerAtIndex(i);
-          const username = await this._contract.getUsername(playerAddress);
-          const avatar = await this._contract.getAvatar(playerAddress);
+          const playerAddress = await this._contract.getPlayerAtIndex(i).catch(e => console.error(e));
+          const username = await this._contract.getUsername(playerAddress).catch(e => console.error(e));
+          const avatar = await this._contract.getAvatar(playerAddress).catch(e => console.error(e));
           players.push({
             address: playerAddress,
             avatar,

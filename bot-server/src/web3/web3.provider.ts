@@ -15,7 +15,7 @@ export class Web3Provider {
   public constructor(network: INetwork) {
     this._provider = new ethers.providers.StaticJsonRpcProvider(
       {
-        timeout: 4000,
+        // timeout: 180000,
         url: network.nodeUrl
       },
       network
@@ -25,7 +25,8 @@ export class Web3Provider {
     //   network
     // );
 
-    console.log('pollingInterval', this._provider.pollingInterval);
+    // console.log('pollingInterval', this._provider.pollingInterval);
+    // this._provider.pollingInterval = 10000;
 
     this._wallet = ethers.Wallet.fromMnemonic(
       process.env.MNEMONIC as string
