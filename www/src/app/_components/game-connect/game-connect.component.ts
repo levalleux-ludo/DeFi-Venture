@@ -23,6 +23,7 @@ import { BigNumber } from 'ethers';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import { AriaDescriber } from '@angular/cdk/a11y';
 import { DiscordConnectDialogComponent } from '../discord-connect-dialog/discord-connect-dialog.component';
+import { GameTranslatorService } from 'src/app/_services/game-translator.service';
 
 @Component({
   selector: 'app-game-connect',
@@ -55,7 +56,6 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   isPlaying = false;
   isStarting = false;
   isRegistering = false;
-  usernames = new Map<string, string>();
   avatars = new Map<string, eAvatar>();
 
   @ViewChild('dices', {static: false})
@@ -88,7 +88,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     private assetsContractService: AssetsContractService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
-    public discordService: DiscordService
+    public discordService: DiscordService,
+    public translatorService: GameTranslatorService
   ) { }
   ngAfterViewInit(): void {
     this.board_width = this.content.nativeElement.clientWidth;
@@ -139,14 +140,14 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       this.network = this.portisService.network;
       this.gameMasterContractService.setAddress(this.gameMaster).then(() => {
         this.gameMasterContractService.onEvent.subscribe((event) => {
-          const message = this.event2message('gameMaster', event);
+          const message = this.translatorService.event2message('gameMaster', event);
           this.events.push({log: message});
           this.showInfo(message);
         });
         const tokenAddress = this.gameMasterContractService.data.tokenAddress;
         this.tokenContractService.setAddress(tokenAddress).then(() => {
           this.tokenContractService.onEvent.subscribe((event) => {
-            const message = this.event2message('token', event);
+            const message = this.translatorService.event2message('token', event);
             this.events.push({log: message});
             this.showInfo(message);
           })
@@ -157,7 +158,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         const assetsAddress = this.gameMasterContractService.data.assetsAddress;
         this.assetsContractService.setAddress(assetsAddress).then(() => {
           this.assetsContractService.onEvent.subscribe((event) => {
-            const message = this.event2message('assets', event);
+            const message = this.translatorService.event2message('assets', event);
             this.events.push({log: message});
             this.showInfo(message);
           })
@@ -215,7 +216,6 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         this.refreshPosition(newPosition);
       }
       this.gameData.players.forEach(player => {
-        this.usernames.set(player.address, player.username);
         this.avatars.set(player.address, player.avatar);
       });
       this.gameData.playersPosition.forEach((position, player) => {
@@ -405,82 +405,6 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
 
   }
 
-  event2message(contract: string, event: any): string {
-    switch (contract) {
-      case 'gameMaster': {
-        switch(event.type) {
-          case 'StatusChanged': {
-            return `Game status has changed to ${event.value.newStatus}`;
-            break;
-          }
-          case 'PlayerRegistered': {
-            return `Player ${this.getUsername(event.value.newPlayer)} has registered to the game`;
-            break;
-          }
-          case 'PlayPerformed': {
-            return `Player ${this.getUsername(event.value.player)} has played with option ${event.value.option}`;
-            break;
-          }
-          case 'RolledDices': {
-            return `Player ${this.getUsername(event.value.player)} has rolled the dices, got ${event.value.dice1}+${event.value.dice2} and moved to block ${event.value.newPosition}`;
-            break;
-          }
-          default: {
-            return '';
-          }
-        }
-        break;
-      }
-      case 'token': {
-        switch(event.type) {
-          case 'Transfer': {
-            if (event.value.from === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.to)} has received ${event.value.value.toString()} tokens`;
-            } else if (event.value.to === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.from)} has spent ${event.value.value.toString()} tokens`;
-            } else {
-              return `Player ${this.getUsername(event.value.from)} has transferred ${event.value.value.toString()} tokens to account ${this.getUsername(event.value.to)}`;
-            }
-            break;
-          }
-          // case 'Approval': {
-          //   return `Player ${event.value.owner} has approved account ${event.value.spender} for amount ${event.value.value.toString()}`;
-          //   break;
-          // }
-          default: {
-            return '';
-          }
-        }
-        break;
-      }
-      case 'assets': {
-        switch(event.type) {
-          case 'Transfer': {
-            if (event.value.from === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.to)} has received asset with id ${event.value.tokenId.toString()}`;
-            } else if (event.value.to === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.from)} has released asset with id ${event.value.tokenId.toString()}`;
-            } else {
-              return `Player ${this.getUsername(event.value.from)} has transferred asset with id ${event.value.tokenId.toString()} to account ${this.getUsername(event.value.to)}`;
-            }
-            break;
-          }
-          // case 'Approval': {
-          //   return `Player ${event.value.owner} has approved account ${event.value.spender} for amount ${event.value.value.toString()}`;
-          //   break;
-          // }
-          default: {
-            return '';
-          }
-        }
-        break;
-      }
-
-      default:
-        return '';
-    }
-  }
-
   register() {
     this.isRegistering = true;
     RegisterFormComponent.showModal(this.dialog).then((result) => {
@@ -503,13 +427,6 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getPlayer(address: string) {
     return this.gameData?.players.find(player => player.address === address);
-  }
-
-  getUsername(address: string): string {
-    if (this.usernames.has(address)) {
-      return this.usernames.get(address);
-    }
-    return address;
   }
 
 }

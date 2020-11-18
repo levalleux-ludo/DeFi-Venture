@@ -27,7 +27,8 @@ export class DiscordConnectDialogComponent implements OnInit, AfterViewInit {
   public static showModal(dialog: MatDialog): Promise<DiscordConnectResultData> {
     const dialogRef = dialog.open(DiscordConnectDialogComponent, {
       width: '410px',
-      data: {}
+      data: {},
+      disableClose: true
     });
     return new Promise((resolve, reject) => {
       dialogRef.afterClosed().subscribe(result => {
@@ -61,6 +62,10 @@ export class DiscordConnectDialogComponent implements OnInit, AfterViewInit {
       // TODO: close the popup
       this.dialogRef.close({});
     });
+  }
+
+  close() {
+    this.dialogRef.close({});
   }
 
 }

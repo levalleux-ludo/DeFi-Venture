@@ -304,7 +304,6 @@ export class TestCanvasComponent implements OnInit {
       // this.ctx.translate(posX, posY);
       // this.ctx.translate(-posX, -posY);
       this.ctx.drawImage(img, posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
-      console.log('draw locked avatar', posX, posY);
       // this.ctx.restore();
     }
   }

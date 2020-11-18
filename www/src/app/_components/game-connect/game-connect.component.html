@@ -50,12 +50,12 @@
                                         </div>
                                     </div>
                                     <div *ngIf="isCurrentPlayer">
-                                        <app-space-details [spaceId]="position" [owner]="getUsername(owner)" [playground]="playground" [canValidate]="canValidate" [options]="gameData.currentOptions" [chanceCardId]="gameData.chanceCardId" (onValidate)="validate($event)"></app-space-details>
+                                        <app-space-details [spaceId]="position" [owner]="translatorService.getUsername(owner)" [playground]="playground" [canValidate]="canValidate" [options]="gameData.currentOptions" [chanceCardId]="gameData.chanceCardId" (onValidate)="validate($event)"></app-space-details>
                                     </div>
                                 </div>
                             </div>
                             <div *ngIf="(gameData.status == 'STARTED') && !isNextPlayer" class="mat-headline">
-                                {{getUsername(gameData.nextPlayer)}} is currently playing
+                                {{translatorService.getUsername(gameData.nextPlayer)}} is currently playing
                             </div>
                             <div *ngIf="gameData.status == 'CREATED'">
                                 <div class="mat-headline">
