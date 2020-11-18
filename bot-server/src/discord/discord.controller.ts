@@ -32,6 +32,7 @@ export class DiscordController {
     this._router.get('/callback', this.callback);
     this._router.get('/wait/:account', this.wait);
     this._router.get('/user/:account', this.user);
+    this._router.get('/game/:game', this.gameChannel);
   }
 
   public get router(): express.Router {
@@ -86,6 +87,15 @@ export class DiscordController {
 
   private get = (req: express.Request, res: express.Response) => {
     res.send('OK');
+  };
+
+  private gameChannel = (req: express.Request, res: express.Response) => {
+    this.appDiscord.getChannelFromGame(req.params.game).then((channel) => {
+      res.send(channel);
+    }).catch(e => {
+      console.error(e);
+      res.status(400).send(e);
+    });
   };
 
   private callback = (req: express.Request, res: express.Response) => {

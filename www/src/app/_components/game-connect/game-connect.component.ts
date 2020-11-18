@@ -1,3 +1,5 @@
+import { DiscordWidgetbotComponent } from './../discord-widgetbot/discord-widgetbot.component';
+import { DiscordService } from './../../_services/discord.service';
 import { OtherPlayersComponent } from './../other-players/other-players.component';
 import { MatDialog } from '@angular/material/dialog';
 import { RegisterFormComponent } from './../register-form/register-form.component';
@@ -20,6 +22,7 @@ import { element } from 'protractor';
 import { BigNumber } from 'ethers';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import { AriaDescriber } from '@angular/cdk/a11y';
+import { DiscordConnectDialogComponent } from '../discord-connect-dialog/discord-connect-dialog.component';
 
 @Component({
   selector: 'app-game-connect',
@@ -67,6 +70,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   players: PlayersTableComponent;
   @ViewChild('otherPlayers', {static: false})
   otherPlayers: OtherPlayersComponent;
+  @ViewChild('discord', {static: false})
+  discordWidget: DiscordWidgetbotComponent;
   resizeObservable$: Observable<Event>;
   clickObservable$: Observable<Event>;
   resizeSubscription$: Subscription;
@@ -82,13 +87,27 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     private tokenContractService: GameTokenContractService,
     private assetsContractService: AssetsContractService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    public discordService: DiscordService
   ) { }
   ngAfterViewInit(): void {
     this.board_width = this.content.nativeElement.clientWidth;
     // this.board_height = this.content.nativeElement.clientHeight;
     this.board_height = Math.min(this.content.nativeElement.clientHeight, 800 + 200 * this.board_width / 1600);
     // this.board_height = 800 + 200 * this.board_width / 1600;
+    this.discordService.getChannelFromGame(this.gameMaster).then((channelId) => {
+      if (channelId) {
+        this.discordWidget.channelId = channelId;
+      } else {
+        console.error('UNable to get Discord channel for game', this.gameMaster);
+      }
+    });
+
+    setTimeout(() => {
+      this.discordWidget.refreshChannel();
+    },
+    500);
+
   }
 
   ngOnDestroy(): void {
@@ -103,6 +122,15 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       this.network = network;
       this.currentAccount = account;
       console.log('set currentAccount', this.currentAccount);
+      if (account) {
+        this.discordService.getUserData(account).then((discordUserData) => {
+          if (!discordUserData) {
+            DiscordConnectDialogComponent.showModal(this.dialog).then((result) => {
+              console.log('discord dialog closed');
+            });
+          }
+        }).catch(e => console.error(e));
+      }
     });
     this.gameMaster = this.route.snapshot.paramMap.get('id');
     this.portisService.connect(

@@ -13,6 +13,7 @@ export class DiscordWidgetbotComponent implements OnInit, AfterViewInit {
   @Input()
   set guildId(value: string) {
     this._guildId = value;
+    console.log('DiscordWidgetbotComponent GuildId:', value);
     this.refreshChannel();
   }
 
@@ -20,6 +21,7 @@ export class DiscordWidgetbotComponent implements OnInit, AfterViewInit {
   @Input()
   set channelId(value: string) {
     this._channelId = value;
+    console.log('DiscordWidgetbotComponent ChannelId:', value);
     this.refreshChannel();
   }
 

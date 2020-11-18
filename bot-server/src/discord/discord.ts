@@ -133,10 +133,8 @@ export class AppDiscord {
     return channel;
   }
 
-  public getChannelFromGame(gameAddress: string) {
-    if (!this.isReady) {
-      throw new Error('Instance nor ready');
-    }
+  public async getChannelFromGame(gameAddress: string): Promise<TextChannel | undefined> {
+    await this.waitReady();
     return this._channelGames.get(gameAddress);
   }
 
@@ -153,7 +151,7 @@ export class AppDiscord {
     await this.waitReady();
     await this._client.guilds.fetch(GUILD_ID).then(async guild => {
       try {
-        // guild.addMember(userId, { accessToken });
+        guild.addMember(userId, { accessToken });
       } catch (e) {
         // do not complain, it happens when the member is already in the guild
       }

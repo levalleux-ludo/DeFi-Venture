@@ -9,6 +9,7 @@ const DISCORD_URL_SUFFIX = '/discord';
 const LOGIN_SUFFIX = '/login';
 const WAIT_SUFFIX = '/wait';
 const USER_SUFFIX = '/user';
+const GAME_SUFFIX = '/game';
 const GUILD_ID = '773475946597842954';
 const CHANNELS_ID = {
   general: '773475946597842956',
@@ -24,6 +25,7 @@ export class DiscordService {
   protected isReady = false;
   protected readySubject = new Subject<void>();
   protected userSubject = new BehaviorSubject<DiscordUserData>(undefined);
+  protected channelSubject = new BehaviorSubject<string>(undefined);
 
   constructor(
     @Inject(DOCUMENT) readonly document: Document,
@@ -66,6 +68,29 @@ export class DiscordService {
 
   public get userData(): Observable<DiscordUserData> {
     return this.userSubject.asObservable();
+  }
+
+  public get currentChannel(): Observable<string> {
+    return this.channelSubject.asObservable();
+  }
+
+  public async getChannelFromGame(gameAddress: string): Promise<string> {
+    return new Promise<string>( (resolve, reject) => {
+      this.ready.then(() => {
+        const urlUser = `${this.hostApiUrl}${DISCORD_URL_SUFFIX}${GAME_SUFFIX}/${gameAddress}`;
+        const sub = this.http.get<any>(urlUser).subscribe(({id}) => {
+          sub.unsubscribe();
+          if (id) {
+            this.channelSubject.next(id);
+            resolve(id);
+          } else {
+            resolve(undefined);
+          }
+        }, err => {
+          reject(err);
+        });
+      });
+    });
   }
 
   public async getUserData(account: string): Promise<DiscordUserData | undefined> {
