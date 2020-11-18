@@ -19,7 +19,8 @@ export interface IContracts {
 
 export const environment = {
   production: false,
-  botServerUrl: 'http://localhost:8899',
+  // botServerUrl: 'http://localhost:8899',
+  botServerUrl: 'https://defibot.levalleux.online',
   networks: {
     l1: { name: 'L1 (Goerli)', portisId: 'goerli', chainId: 5, nodeUrl: `https://goerli.infura.io/v3/833d4fef573b4c429e7f283dac2ba507`,
      gasPrice: '100000000', gasLimit: 400000, explorer: 'https://goerli.etherscan.io/'  },
