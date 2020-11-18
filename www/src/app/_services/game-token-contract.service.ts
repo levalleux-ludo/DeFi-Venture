@@ -46,6 +46,11 @@ export class GameTokenContractService extends AbstractContractService<ITokenData
     });
   }
 
+
+  protected unsubscribeToEvents() {
+    this._contract.removeAllListeners({topics: ['Transfer', 'Approval']});
+  }
+
   protected async refreshData() {
     console.log("token contract refreshData");
     const decimals = await this._contract.decimals();

@@ -42,7 +42,7 @@ export class PortisL1Service {
   private _network: INetwork;
   private portis: Portis;
   // private web3: Web3;
-  private ethersProvider: ethers.providers.Web3Provider;
+  private ethersProvider: ethers.providers.BaseProvider;
   private ethersSigner;
   private _accounts;
   private _account;
@@ -81,8 +81,12 @@ export class PortisL1Service {
     return this._accounts;
   }
 
-  public signer() {
+  public get signer() {
     return this.ethersSigner;
+  }
+
+  public get provider() {
+    return this.ethersProvider;
   }
 
   public get onConnect(): Observable<{network: INetwork, account: string}> {
@@ -95,13 +99,19 @@ export class PortisL1Service {
 
   private async initEthers(network: INetwork) {
     // this.portis.provider.isMetaMask = true; // https://github.com/portis-project/web-sdk/issues/8
-    this.ethersProvider = new ethers.providers.Web3Provider(
-      this.portis.provider,
+    this.ethersProvider = new ethers.providers.StaticJsonRpcProvider(
+      {
+        timeout: 20000,
+        url: network.nodeUrl
+      },
       network
     );
     // this.ethersProvider = new ethers.providers.Web3Provider((window as any).ethereum);
-    this.ethersProvider.pollingInterval = 40000;
+    this.ethersProvider.pollingInterval = 10000;
     this.ethersProvider.polling = false;
+    this.ethersProvider.on('poll', () => {
+      console.log((new Date()).toLocaleTimeString(), 'ethersProvider polling ...');
+    });
     console.log('pollingInterval', this.ethersProvider.pollingInterval);
     const ethersNetwork = await this.ethersProvider.getNetwork();
     console.log('ETHERS network', ethersNetwork);
@@ -113,7 +123,16 @@ export class PortisL1Service {
     // display to the user in gwei (giga-wei, or 1e9 wei)
     console.log('ETHERS gas price', ethers.utils.formatUnits(gasPrice, 'gwei'));
 
-    this.ethersSigner = this.ethersProvider.getSigner();
+    const portisEthersProvider = new ethers.providers.Web3Provider(
+      this.portis.provider,
+      network
+    );
+    portisEthersProvider.polling = false;
+    portisEthersProvider.pollingInterval = 600000;
+    portisEthersProvider.on('poll', () => {
+      console.log((new Date()).toLocaleTimeString(), 'portisEthersProvider polling ...');
+    });
+    this.ethersSigner = portisEthersProvider.getSigner();
     this._account = await this.ethersSigner.getAddress();
     this._accounts = [this._account];
     console.log('ETHERS signer', this.ethersSigner.getAddress());
@@ -206,7 +225,7 @@ export class PortisL1Service {
     return new Promise(async (resolve, reject) => {
       await this.greeter.estimateGas.setGreeting(message).then(async (gas) => {
         console.log('estimatedGas:', gas.toString());
-        await this.ethersProvider.getSigner().getGasPrice().then(async (gasPrice) => {
+        await this.ethersProvider.getGasPrice().then(async (gasPrice) => {
           console.log('gasPrice:', gasPrice.toString());
 
           await this.greeter.setGreeting(
@@ -250,7 +269,7 @@ export class PortisL1Service {
     return new ethers.Contract(
       contractAddress,
       contractAbi,
-      this.ethersProvider.getSigner()
+      this.ethersProvider
     );
   }
 

@@ -91,7 +91,7 @@ export class ToolbarComponent implements OnInit {
           this.balanceEth = Utils.getBalanceAsNumber(balanceETH, Utils.ETH_decimals, 0.00001).toString();
         });
       }
-    }, 5000);
+    }, 30000);
     this.discordService.userData.subscribe((userData) => {
       if (userData) {
         this.discordUsername = userData.username;

@@ -101,6 +101,7 @@ export interface IGameData {
 export class GameMasterContractService extends AbstractContractService<IGameData> {
 
   onRolledDices: (player, dice1, dice2, cardId, newPosition, options) => void;
+  protected contracts = new Map<string, GameMaster>();
 
   constructor(
     protected sessionStorageService: SessionStorageService,
@@ -111,36 +112,74 @@ export class GameMasterContractService extends AbstractContractService<IGameData
 
    public async rollDices(): Promise<{dice1: number, dice2: number, newPosition: number}> {
      return new Promise((resolve, reject) => {
+      // let interval;
+      const pollingInterval1 = this.portisL1Service.provider.pollingInterval;
+      const pollingInterval2 = (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval;
       // wait for the event
       this.onRolledDices = (player, dice1, dice2, cardId, newPosition, options) => {
         console.log('rollDices event', player, dice1, dice2, newPosition);
+        // if (interval) {
+        //   console.log('clear interval');
+        //   clearInterval(interval);
+        // }
+        this.portisL1Service.provider.pollingInterval = pollingInterval1;
+        (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
         if (player !== this.portisL1Service.accounts[0]) {
           console.error('Unexpected RolledDices event from another player', player);
           reject(`Unexpected RolledDices event from another player ${player}`);
         } else {
+          this.refreshData();
           resolve({dice1, dice2, newPosition});
         }
       };
-      this._contract.estimateGas.rollDices().then((gas) => {
-        this._contract.rollDices({gasLimit: gas.mul(2).toString()}).then((response) => {
+      this._contractWithSigner.estimateGas.rollDices().then((gas) => {
+        this._contractWithSigner.rollDices({gasLimit: gas.mul(2).toString()}).then((response) => {
           response.wait().then(() => {
             console.log('rollDices succeed');
           }).catch(e => reject(e));
           console.log('rollDices called');
-        }).catch((e) => {
+          this.portisL1Service.provider.pollingInterval = 1000;
+          (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
+          // interval = setInterval(() => {
+          //   (this._contractWithSigner.provider as ethers.providers.Web3Provider).poll();
+          //   this.portisL1Service.provider.poll();
+          // }, 1000);
+      }).catch((e) => {
           reject(e);
         });
-      })
+      });
     });
    }
   public play(option: number) {
     return new Promise((resolve, reject) => {
-      this._contract.play(option).then((response) => {
+      // let interval;
+      const pollingInterval1 = this.portisL1Service.provider.pollingInterval;
+      const pollingInterval2 = (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval;
+      this._contractWithSigner.play(option).then((response) => {
       response.wait().then(() => {
         console.log('play succeed');
+        // if (interval) {
+        //   clearInterval(interval);
+        // }
+        this.portisL1Service.provider.pollingInterval = pollingInterval1;
+        (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+        this.refreshData();
         resolve();
-      }).catch(e => reject(e));
+      }).catch(e => {
+        // if (interval) {
+        //   clearInterval(interval);
+        // }
+        this.portisL1Service.provider.pollingInterval = pollingInterval1;
+        (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+        reject(e);
+      });
       console.log('play called');
+      this.portisL1Service.provider.pollingInterval = 1000;
+      (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
+      // interval = setInterval(() => {
+      //   (this._contractWithSigner.provider as ethers.providers.Web3Provider).poll();
+      //   this.portisL1Service.provider.poll();
+      // }, 1000);
   }).catch((e) => {
       reject(e);
     });
@@ -262,8 +301,17 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     });
   }
 
+  protected unsubscribeToEvents() {
+    this._contract.removeAllListeners({topics: ['StatusChanged', 'PlayerRegistered', 'PlayPerformed', 'RolledDices']});
+  }
+
   getContract(game: string) {
-    return new GameMaster(game, this.portisL1Service.signer());
+    let contract = this.contracts.get(game);
+    if (!contract) {
+      contract = new GameMaster(game, this.portisL1Service.provider);
+      this.contracts.set(game, contract);
+    }
+    return contract;
   }
 
   protected async buildPlayground(nbSpaces: number): Promise<ISpace[]> {

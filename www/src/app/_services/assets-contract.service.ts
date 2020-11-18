@@ -48,6 +48,10 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
     });
   }
 
+  protected unsubscribeToEvents() {
+    this._contract.removeAllListeners({topics: ['Transfer']});
+  }
+
   protected async refreshData() {
     console.log("assets contract refreshData");
     const totalSupply = await this._contract.totalSupply();

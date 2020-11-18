@@ -6,6 +6,7 @@ export abstract class AbstractContractService<T> {
 
   protected _address: string;
   protected _contract: Contract;
+  protected _contractWithSigner: Contract;
   protected isReady = false;
   protected readySubject = new Subject<void>();
   protected _events = [];
@@ -46,17 +47,26 @@ export abstract class AbstractContractService<T> {
   public async setAddress(address: string) {
     this._address = address;
     if ((this._address !== undefined) && (this._address !== null) && (this._address !== '')) {
-        await (new Contract(address, this.contractJSON.abi, this.portisL1Service?.signer())).deployed().then(async (contract) => {
-        this._contract = contract;
-        this.subscribeToEvents();
-        this.isReady = true;
-        await this.refreshData();
-      }).catch(e => {
-        console.error(e);
+      if (this._contract && (this._contract.address !== address)) {
+        this.unsubscribeToEvents();
         this._contract = undefined;
-      });
+      } else if (!this._contract) {
+        await (new Contract(address, this.contractJSON.abi, this.portisL1Service?.provider)).deployed().then(async (contract) => {
+          this._contract = contract;
+          // We use a separate instance of contract to send signed transaction
+          this._contractWithSigner = contract.connect(this.portisL1Service.signer);
+          this.subscribeToEvents();
+          this.isReady = true;
+          await this.refreshData();
+        }).catch(e => {
+          console.error(e);
+          this._contract = undefined;
+          this._contractWithSigner = undefined;
+        });
+      }
     } else {
       this._contract = undefined;
+      this._contractWithSigner = undefined;
     }
     this.isReady = true;
     this.readySubject.next();
@@ -75,6 +85,7 @@ export abstract class AbstractContractService<T> {
   }
 
   protected abstract subscribeToEvents();
+  protected abstract unsubscribeToEvents();
 
   protected recordEvent(event: any) {
     this._events.push(event);

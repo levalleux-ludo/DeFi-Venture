@@ -12,12 +12,12 @@ export enum eGameStatus {
 }
 
 export class GameMaster {
-  contract: ethers.Contract;
-  constructor(address: string, signer: ethers.Signer) {
+  private contract: ethers.Contract;
+  constructor(address: string, signerOrProvider: ethers.Signer | ethers.providers.Provider) {
     this.contract = new ethers.Contract(
       address,
       gameMasterABI.abi,
-      signer
+      signerOrProvider
     );
   }
 
