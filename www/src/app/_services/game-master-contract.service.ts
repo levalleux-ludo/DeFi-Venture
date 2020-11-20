@@ -308,7 +308,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
   getContract(game: string) {
     let contract = this.contracts.get(game);
     if (!contract) {
-      contract = new GameMaster(game, this.portisL1Service.provider);
+      contract = new GameMaster(game, this.portisL1Service.provider, this.portisL1Service.signer);
       this.contracts.set(game, contract);
     }
     return contract;

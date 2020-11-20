@@ -23,9 +23,7 @@ export class GamesListComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.portisService.connect(
-      environment.networks.l2
-    ).then((account) => {
+    this.portisService.connect().then((account) => {
       this.refresh();
       this.discordService.getUserData(account).then((discordUserData) => {
         if (!discordUserData) {

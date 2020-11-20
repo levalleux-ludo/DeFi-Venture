@@ -33,6 +33,9 @@ export class BotFactory {
       await bot.initialize(this._gameFactory.games);
       this._bots.push(bot);
     }
+    if (this._bots.length === 0) {
+      throw new Error('no bot deployed !');
+    }
   }
 
   public check() {

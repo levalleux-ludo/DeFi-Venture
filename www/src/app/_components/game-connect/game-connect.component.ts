@@ -134,9 +134,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
     this.gameMaster = this.route.snapshot.paramMap.get('id');
-    this.portisService.connect(
-      environment.networks.l2
-    ).then(() => {
+    this.portisService.connect().then(() => {
       this.network = this.portisService.network;
       this.gameMasterContractService.setAddress(this.gameMaster).then(() => {
         this.gameMasterContractService.onEvent.subscribe((event) => {

@@ -1,3 +1,4 @@
+import { ApiServer } from './api/api.server';
 import { config as dotenvConfig } from 'dotenv';
 import { resolve } from 'path';
 const res = dotenvConfig({
@@ -20,21 +21,42 @@ if (!process.env.MATICVIGIL_API_KEY) {
 
 export const config = {
   api_port: 8899,
-  bots: [
-    { name: 'R1D1', address: '0xC3B4546E1De027148B40F2A1efC15E5A69d6a031' },
-    { name: 'R2D2', address: '0xC30f79BD67F29A0795f522BCc847e8314caD613c' },
-    { name: 'R3D3', address: '0x92954dbe27fA0020b2463960E1b901D01C13B297' },
-    { name: 'R4D4', address: '0xcDf09FBc9Ad0C754c5280DceDe2247A6527a17b2' },
-    { name: 'R5D5', address: '0x28C847BC633cdCbe5883E1095CbD106345027296' },
-  ],
-  gameFactory: '0x2dD64d434f96f6e33Df89982F4143CBF83E2e6eD',
-  network: {
-    chainId: 80001,
-    name: 'L2 (Mumbai)',
-    // nodeUrl: 'https://rpc-mumbai.maticvigil.com',
-    nodeUrl: `https://rpc-mumbai.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
-    wssUrl: `wss://rpc-mumbai.maticvigil.com/ws/v1/${process.env.MATICVIGIL_API_KEY}`,
-    portisId: 'maticMumbai',
+  bots: {
+    80001: [ // mumbai
+      { name: 'R1D1', address: '0xC3B4546E1De027148B40F2A1efC15E5A69d6a031' },
+      { name: 'R2D2', address: '0xC30f79BD67F29A0795f522BCc847e8314caD613c' },
+      { name: 'R3D3', address: '0x92954dbe27fA0020b2463960E1b901D01C13B297' },
+      { name: 'R4D4', address: '0xcDf09FBc9Ad0C754c5280DceDe2247A6527a17b2' },
+      { name: 'R5D5', address: '0x28C847BC633cdCbe5883E1095CbD106345027296' },
+    ],
+    1337: [
+      { name: 'R1D1', address: '0x0C32239339ad7FE0Bd4ED891082bEECbF9e96a49'},
+      { name: 'R2D2', address: '0x3b86a58C6D665423CF38aC54C06127254F929BF0'},
+      { name: 'R3D3', address: '0x253866f4baC67B45c2E7A1d5c0D8959A6277f836'},
+      { name: 'R4D4', address: '0x4171f3147e150eC5549996eAaeeaBcdB4eE776c0'},
+      { name: 'R5D5', address: '0x1094c5146D39Cb59955bB8cB58c6255487143e3E'},
+    ]
+  },
+  gameFactory: {
+    80001: '0x2dD64d434f96f6e33Df89982F4143CBF83E2e6eD', // mumbai
+    1337: '0x05D95Bca0fF39c5F3e347D37502A8B7b813AF0Bf', // ganache
+  },
+  networks: {
+    ganache: {
+      chainId: 1337,
+      name: 'local (Ganache)',
+      nodeUrl: `http://127.0.0.1:7545`,
+      portisId: 'unknown',
+      wssUrl: 'unknown',
+    },
+    mumbai: {
+      chainId: 80001,
+      name: 'L2 (Mumbai)',
+      // nodeUrl: 'https://rpc-mumbai.maticvigil.com',
+      nodeUrl: `https://rpc-mumbai.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
+      portisId: 'maticMumbai',
+      wssUrl: `wss://rpc-mumbai.maticvigil.com/ws/v1/${process.env.MATICVIGIL_API_KEY}`,
+    },
   },
   schedule: '0/20 * * * * *', // every 20 seconds
 };

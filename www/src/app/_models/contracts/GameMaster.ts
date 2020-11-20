@@ -13,11 +13,17 @@ export enum eGameStatus {
 
 export class GameMaster {
   private contract: ethers.Contract;
-  constructor(address: string, signerOrProvider: ethers.Signer | ethers.providers.Provider) {
+  private contractWithSigner: ethers.Contract;
+  constructor(address: string, provider: ethers.providers.Provider, signer: ethers.Signer) {
     this.contract = new ethers.Contract(
       address,
       gameMasterABI.abi,
-      signerOrProvider
+      provider
+    );
+    this.contractWithSigner = new ethers.Contract(
+      address,
+      gameMasterABI.abi,
+      signer
     );
   }
 
@@ -68,16 +74,41 @@ public removeAllListeners(eventName: string): GameMaster {
 }
 
 public async register(username: string, avatar: number): Promise<void> {
+  const pollingInterval1 = (this.contract.provider as ethers.providers.Web3Provider).pollingInterval;
+  const pollingInterval2 = (this.contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval;
+  const account = await this.contractWithSigner.signer.getAddress();
+  const waitRegisterEvent = new Promise<void>((resolve2, reject2) => {
+    const onPlayerRegistered = (player: string, nbPlayers: number) => {
+      if (player === account) {
+        this.contractWithSigner.off('PlayerRegistered', onPlayerRegistered);
+        (this.contract.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval1;
+        (this.contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+        resolve2();
+      }
+    }
+    this.contractWithSigner.on('PlayerRegistered', onPlayerRegistered);
+  });
   return new Promise(async (resolve, reject) => {
     const tokenAddress = await this.getTokenAddress();
-    await (new GameToken(tokenAddress, this.contract.signer)).approveMax(this.contract.address);
-    this.contract.register(ethers.utils.formatBytes32String(username), avatar).then(async(response) => {
-      console.log('Tx sent', response.hash);
-      await response.wait().then(async(receipt) => {
-        console.log('Tx validated', receipt.transactionHash);
-        resolve();
-      }).catch(e => reject(e));
-    }).catch(e => reject(e));
+    (this.contract.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
+    (this.contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
+    try {
+      await (new GameToken(tokenAddress, this.contractWithSigner.signer)).approveMax(this.contract.address);
+      await this.contractWithSigner.register(ethers.utils.formatBytes32String(username), avatar).then(async(response) => {
+        console.log('Tx sent', response.hash);
+        (this.contract.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
+        (this.contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
+        await response.wait().then(async(receipt) => {
+          console.log('Tx validated', receipt.transactionHash);
+          await waitRegisterEvent;
+          resolve();
+        });
+      });
+    } catch (e) {
+      (this.contract.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval1;
+      (this.contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+      reject(e);
+    }
   });
   }
 

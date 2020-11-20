@@ -139,6 +139,7 @@ export class Bot {
   }
 
   public async initialize(allGames: IGame[]) {
+    await this._contract.deployed();
     this._games = [];
     for (const game of allGames) {
       const isRegistered = await game

@@ -1,3 +1,4 @@
+import { NetworkService } from './network.service';
 import { Utils } from 'src/app/_utils/utils';
 import { IGame } from './../_models/IGame';
 import { async } from '@angular/core/testing';
@@ -50,7 +51,9 @@ export class PortisL1Service {
   private greeter;
   private gameFactory;
 
-  constructor() {
+  constructor(
+    private networkService: NetworkService
+  ) {
     this.initialize().then(() => {
       this.isReady = true;
       this.readySubject.next();
@@ -138,36 +141,46 @@ export class PortisL1Service {
     console.log('ETHERS signer', this.ethersSigner.getAddress());
   }
 
-  public async connect(network: INetwork): Promise<string> {
-    return new Promise<string>(async (resolve) => {
-      if (!this.portis) {
-        this.portis = new Portis(PORTIS_API_KEY, network as any);
-        this.portis.provider.stop();
-        // this.web3 = new Web3(this.portis.provider);
-        await this.initEthers(network);
+  public async connect(network?: INetwork): Promise<string> {
+    return new Promise<string>(async (resolve, reject) => {
+      if (network === undefined) {
+        this.networkService.network.asObservable().subscribe((theNetwork) => {
+          if (theNetwork !== undefined) {
+            this.connect(theNetwork).then((account) => {
+              resolve(account);
+            }).catch(e => reject(e));
+          }
+        });
       } else {
-        if (this._network === network) {
-          resolve(this._accounts ? this._accounts[0] : undefined);
-          return;
+        if (!this.portis) {
+          this.portis = new Portis(PORTIS_API_KEY, network as any);
+          this.portis.provider.stop();
+          // this.web3 = new Web3(this.portis.provider);
+          await this.initEthers(network);
+        } else {
+          if (this._network === network) {
+            resolve(this._accounts ? this._accounts[0] : undefined);
+            return;
+          }
+          this.reset();
+          this.portis.changeNetwork(network as any);
+          await this.initEthers(network);
         }
-        this.reset();
-        this.portis.changeNetwork(network as any);
-        await this.initEthers(network);
+        this._network = network;
+        this._contracts = environment.contracts[this._network.chainId];
+        resolve(this._account);
+        this.connectSubject.next({network: this._network, account: this._account});
+        // this.web3.eth.getAccounts((error, accounts) => {
+        //   console.log(accounts);
+        //   this._accounts = accounts;
+        //   const etheresGameFactory = this.getEthersContract(gameFactoryABI.abi, this.contracts.gameFactory);
+        //   etheresGameFactory.on('GameCreated', (gameMaster: string, index: BigNumber) => {
+        //     this.gameCreatedSubject.next(gameMaster);
+        //   });
+        //   resolve(accounts[0]);
+        //   this.connectSubject.next({network: this._network, account: accounts[0]});
+        // });
       }
-      this._network = network;
-      this._contracts = environment.contracts[this._network.chainId];
-      resolve(this._account);
-      this.connectSubject.next({network: this._network, account: this._account});
-      // this.web3.eth.getAccounts((error, accounts) => {
-      //   console.log(accounts);
-      //   this._accounts = accounts;
-      //   const etheresGameFactory = this.getEthersContract(gameFactoryABI.abi, this.contracts.gameFactory);
-      //   etheresGameFactory.on('GameCreated', (gameMaster: string, index: BigNumber) => {
-      //     this.gameCreatedSubject.next(gameMaster);
-      //   });
-      //   resolve(accounts[0]);
-      //   this.connectSubject.next({network: this._network, account: accounts[0]});
-      // });
     });
   }
   public async logout() {
@@ -300,16 +313,38 @@ export class PortisL1Service {
       //   console.error(error, receipt);
       //   reject();
       // });
-      this.gameFactory.create(
+      const contractWithSigner = this.gameFactory.connect(this.signer);
+      const pollingInterval1 = this.provider.pollingInterval;
+      const pollingInterval2 = (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval;
+
+      const waitCreatedGame = new Promise<string>((resolve2, reject2) => {
+        contractWithSigner.once('GameCreated', (gameMasterAddress: string, index: BigNumber) => {
+          resolve2(gameMasterAddress);
+        });
+      });
+      contractWithSigner.createGameMaster(
         NB_MAX_PLAYERS,
         NB_POSITIONS,
         ethers.BigNumber.from(INITIAL_BALANCE).toString(),
         getSpaces(NB_POSITIONS),
         getChances(NB_CHANCES, NB_POSITIONS)
       ).then((response) => {
-        response.wait(() => {
-          resolve();
-        }).catch(e => reject(e));
+        this.provider.pollingInterval = 1000;
+        (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
+        response.wait().then(() => {
+          waitCreatedGame.then(async (gameMasterAddress) => {
+            await contractWithSigner.createGameToken(gameMasterAddress);
+            await contractWithSigner.createGameAssets(gameMasterAddress);
+            await contractWithSigner.createMarketplace(gameMasterAddress);
+            this.provider.pollingInterval = pollingInterval1;
+            (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+            resolve();
+          })
+        }).catch(e => {
+          this.provider.pollingInterval = pollingInterval1;
+          (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+          reject(e);
+        });
       }).catch(e => reject(e));
     });
   }

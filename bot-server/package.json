@@ -31,7 +31,8 @@
         "test": "jest",
         "coverage": "jest --coverage",
         "watch": "npx nodemon",
-        "start": "npx ts-node ./src/index.ts",
+        "start": "npx node -r ts-node/register ./src/index.ts --unhandled-rejections=strict",
+        "start:test:maticvigil": "npx node -r ts-node/register ./src/test_maticvigil.ts --unhandled-rejections=strict",
         "watch:test": "jest --watch",
         "docker:build": "docker build --rm -f Dockerfile -t local/defiventure/defibot:latest .",
         "docker:run": "docker run -p 8899:8899 --env PORT=8899 --env-file ./.env local/defiventure/defibot",
@@ -43,13 +44,15 @@
         "abab": "^2.0.5",
         "body-parser": "^1.19.0",
         "btoa": "^1.2.1",
+        "command-line-args": "^5.1.1",
         "cors": "^2.8.5",
         "discord.js": "^12.4.1",
         "dotenv": "^8.2.0",
         "ethers": "^5.0.19",
         "express": "^4.17.1",
         "node-fetch": "^2.6.1",
-        "node-schedule": "^1.3.2"
+        "node-schedule": "^1.3.2",
+        "ts-command-line-args": "^1.7.0"
     },
     "devDependencies": {
         "@types/body-parser": "^1.19.0",
