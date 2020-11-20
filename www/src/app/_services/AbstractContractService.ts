@@ -44,32 +44,48 @@ export abstract class AbstractContractService<T> {
     return this._onUpdate.value;
   }
 
-  public async setAddress(address: string) {
-    this._address = address;
-    if ((this._address !== undefined) && (this._address !== null) && (this._address !== '')) {
-      if (this._contract && (this._contract.address !== address)) {
-        this.unsubscribeToEvents();
+  public async setAddress(address: string): Promise<T> {
+    return new Promise(async(resolve, reject) => {
+      this._address = address;
+      if ((this._address !== undefined) && (this._address !== null) && (this._address !== '')) {
+        if (!(this._contract) || (this._contract.address !== address)) {
+          if (this._contract) {
+            this.unsubscribeToEvents();
+            this._contract = undefined;
+            this.isReady = false;
+          }
+          await this.resetData();
+          await (new Contract(address, this.contractJSON.abi, this.portisL1Service?.provider)).deployed().then(async (contract) => {
+            this._contract = contract;
+            // We use a separate instance of contract to send signed transaction
+            this._contractWithSigner = contract.connect(this.portisL1Service.signer);
+            this.subscribeToEvents();
+            this.isReady = true;
+            this.readySubject.next();
+            const {data, hasChanged} = await this.refreshData();
+            if (hasChanged) {
+              this._onUpdate.next(data);
+            }
+            resolve(data);
+          }).catch(e => {
+            console.error(e);
+            this._contract = undefined;
+            this._contractWithSigner = undefined;
+            this.isReady = false;
+            this._onUpdate.next(undefined);
+            reject(e);
+          });
+        } else {
+          resolve(this.data);
+        }
+      } else {
         this._contract = undefined;
-      } else if (!this._contract) {
-        await (new Contract(address, this.contractJSON.abi, this.portisL1Service?.provider)).deployed().then(async (contract) => {
-          this._contract = contract;
-          // We use a separate instance of contract to send signed transaction
-          this._contractWithSigner = contract.connect(this.portisL1Service.signer);
-          this.subscribeToEvents();
-          this.isReady = true;
-          await this.refreshData();
-        }).catch(e => {
-          console.error(e);
-          this._contract = undefined;
-          this._contractWithSigner = undefined;
-        });
+        this._contractWithSigner = undefined;
+        this.isReady = false;
+        this._onUpdate.next(undefined);
+        resolve(undefined);
       }
-    } else {
-      this._contract = undefined;
-      this._contractWithSigner = undefined;
-    }
-    this.isReady = true;
-    this.readySubject.next();
+    });
   }
 
   public get contract(): Contract {
@@ -87,12 +103,16 @@ export abstract class AbstractContractService<T> {
   protected abstract subscribeToEvents();
   protected abstract unsubscribeToEvents();
 
-  protected recordEvent(event: any) {
+  protected async recordEvent(event: any) {
     this._events.push(event);
     this._eventsSubject.next(event);
-    this.refreshData();
+    const {data, hasChanged} = await this.refreshData();
+    if (hasChanged) {
+      this._onUpdate.next(data);
+    }
   }
 
-  protected abstract async refreshData();
+  protected abstract async resetData();
+  protected abstract async refreshData(): Promise<{data: T, hasChanged: boolean}>;
 
 }

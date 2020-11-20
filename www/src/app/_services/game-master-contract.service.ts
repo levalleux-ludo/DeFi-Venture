@@ -1,4 +1,4 @@
-import { GameMaster } from './../_models/contracts/GameMaster';
+import { GameMaster, eGameStatus } from './../_models/contracts/GameMaster';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { SessionStorageService, StorageKeys } from './session-storage.service';
@@ -83,6 +83,7 @@ export interface ISpace {
   owner: string;
 }
 export interface IGameData {
+  gameMaster: string;
   status: string;
   players: IPlayer[];
   playersPosition: Map<string, number>;
@@ -110,7 +111,86 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     super(GameMasterJSON, portisL1Service);
    }
 
+   callWithSigner<T>(
+     contractMethodName: string,
+     contractMethod: Promise<ethers.providers.TransactionResponse>,
+     eventName: string,
+     eventHandler: (...args: any[]) => Promise<T>
+     ): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const pollingInterval1 = this.portisL1Service.provider.pollingInterval;
+      const pollingInterval2 = (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval;
+      // wait for the event
+      const waitEvent = new Promise<T>((resolve2, reject2) => {
+        const onEvent = (...args) => {
+          console.log(`event ${eventName} received`, args);
+          this.portisL1Service.provider.pollingInterval = pollingInterval1;
+          (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+          eventHandler(...args).then((result: T) => {
+            this._contractWithSigner.off(eventName, onEvent);
+            resolve2(result);
+          }).catch(reject2);
+        };
+        this._contract.on(eventName, onEvent);
+      });
+      this.portisL1Service.provider.pollingInterval = 1000;
+      (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
+      contractMethod.then((response) => {
+        response.wait().then((receipt) => {
+          console.log(`${contractMethodName} call succeed`, receipt.transactionHash);
+          waitEvent.then((result: T) => {
+            this.portisL1Service.provider.pollingInterval = pollingInterval1;
+            (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+            resolve(result);
+          }).catch(reject);
+        }).catch(e => reject(e));
+      }).catch(e => {
+        console.error(`Error while calling method ${contractMethodName}`);
+        this.portisL1Service.provider.pollingInterval = pollingInterval1;
+        (this._contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+        reject(e);
+      });
+    });
+   }
+
+   public async start(): Promise<void> {
+     return this.callWithSigner<void>(
+       'start',
+      this._contractWithSigner.start(),
+      'StatusChanged',
+      (newStatus: eGameStatus) => {
+        return new Promise<void>((resolve, reject) => {
+          if (newStatus === eGameStatus.STARTED) {
+            resolve();
+          } else {
+            reject(new Error(`Unexpected game status changed to ${GAME_STATUS[newStatus]}`));
+          }
+        });
+      }
+     );
+   }
+
    public async rollDices(): Promise<{dice1: number, dice2: number, newPosition: number}> {
+    return this.callWithSigner<{dice1: number, dice2: number, newPosition: number}>(
+      'rollDices',
+     new Promise<ethers.providers.TransactionResponse>((resolve, reject) => {
+      this._contractWithSigner.estimateGas.rollDices().then((gas) => {
+        resolve(this._contractWithSigner.rollDices({gasLimit: gas.mul(2).toString()}));
+      });
+     }),
+     'RolledDices',
+     (player: string, dice1: number, dice2: number, cardId: number, newPosition: number, options: number) => {
+       return new Promise<{dice1: number, dice2: number, newPosition: number}>((resolve, reject) => {
+        if (player === this.portisL1Service.accounts[0]) {
+          resolve({dice1, dice2, newPosition});
+        } else {
+          reject(new Error(`Unexpected PlayPerformed event from player ${player}`));
+        }
+      });
+    });
+   }
+
+   public async rollDices_old(): Promise<{dice1: number, dice2: number, newPosition: number}> {
      return new Promise((resolve, reject) => {
       // let interval;
       const pollingInterval1 = this.portisL1Service.provider.pollingInterval;
@@ -150,7 +230,27 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       });
     });
    }
-  public play(option: number) {
+
+
+   public async play(option: number): Promise<void> {
+    return this.callWithSigner<void>(
+      'play',
+     this._contractWithSigner.play(option),
+     'PlayPerformed',
+     (player: string, option2: number, cardId: number, newPosition: number) => {
+       return new Promise<void>((resolve, reject) => {
+         if (player === this.portisL1Service.accounts[0]) {
+           resolve();
+         } else {
+           reject(new Error(`Unexpected PlayPerformed event from player ${player}`));
+         }
+       });
+     }
+    );
+  }
+
+
+  public play_old(option: number) {
     return new Promise((resolve, reject) => {
       // let interval;
       const pollingInterval1 = this.portisL1Service.provider.pollingInterval;
@@ -180,13 +280,15 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       //   (this._contractWithSigner.provider as ethers.providers.Web3Provider).poll();
       //   this.portisL1Service.provider.poll();
       // }, 1000);
-  }).catch((e) => {
-      reject(e);
+    }).catch((e) => {
+        reject(e);
+      });
     });
-  });
-}
+  }
 
-   protected async refreshData() {
+  protected async resetData() {
+  }
+  protected async refreshData(): Promise<{data: IGameData, hasChanged: boolean}> {
     let gameData = this.data;
     const status = await this._contract.getStatus();
     const nbPlayers = await this._contract.getNbPlayers();
@@ -195,14 +297,15 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     const currentPlayer = await this._contract.getCurrentPlayer();
     const currentOptions = await this._contract.getCurrentOptions();
     const chanceCardId = await this._contract.getCurrentCardId();
-    let isChanged = false;
+    const players = await this.getPlayers(nbPlayers);
+    let hasChanged = false;
     if (!gameData) {
-      const players = await this.getPlayers(nbPlayers);
       const tokenAddress = await this._contract.getToken();
       const assetsAddress = await this._contract.getAssets();
       const nbSpaces = await this._contract.getNbPositions();
       const playground = await this.buildPlayground(nbSpaces);
       gameData = {
+        gameMaster: this.address,
         status: GAME_STATUS[status],
         players,
         playersPosition: (await this.refreshPositions(players)).positions,
@@ -214,41 +317,50 @@ export class GameMasterContractService extends AbstractContractService<IGameData
         assetsAddress,
         playground
       };
-      isChanged = true;
+      hasChanged = true;
     } else {
+
       if (status !== gameData.status) {
         gameData.status = GAME_STATUS[status];
-        isChanged = true;
+        hasChanged = true;
       }
-      if (nbPlayers !== gameData.players.length) {
-        const players = await this.getPlayers(nbPlayers);
+      if ((nbPlayers !== gameData.players.length) || (gameData.gameMaster !== this.address)) {
         gameData.players = players;
         await this.refreshPositions(players, gameData.playersPosition);
-        isChanged = true;
+        hasChanged = true;
       } else {
-        isChanged
+        hasChanged
          = (await this.refreshPositions(gameData.players, gameData.playersPosition)).isChanged;
       }
       if (nextPlayer !== gameData.nextPlayer) {
         gameData.nextPlayer = nextPlayer;
-        isChanged = true;
+        hasChanged = true;
       }
       if (currentPlayer !== gameData.currentPlayer) {
         gameData.currentPlayer = currentPlayer;
-        isChanged = true;
+        hasChanged = true;
       }
       if (currentOptions !== gameData.currentOptions) {
         gameData.currentOptions = currentOptions;
-        isChanged = true;
+        hasChanged = true;
       }
       if (chanceCardId !== gameData.chanceCardId) {
         gameData.chanceCardId = chanceCardId;
-        isChanged = true;
+        hasChanged = true;
+      }
+      if (gameData.gameMaster !== this.address) {
+        const tokenAddress = await this._contract.getToken();
+        const assetsAddress = await this._contract.getAssets();
+        const nbSpaces = await this._contract.getNbPositions();
+        const playground = await this.buildPlayground(nbSpaces);
+        gameData.gameMaster = this.address;
+        gameData.tokenAddress = tokenAddress;
+        gameData.assetsAddress = assetsAddress;
+        gameData.playground = playground;
+        hasChanged = true;
       }
     }
-    if (isChanged) {
-      this._onUpdate.next(gameData);
-    }
+    return {data: gameData, hasChanged};
   }
 
   private async refreshPositions(players: IPlayer[], positions?: Map<string, number>):
@@ -257,12 +369,20 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     if (!positions) {
       positions = new Map<string, number>();
     }
+    const keysToRemove = Array.from(positions.keys());
     for (const player of players) {
+      if (positions.has(player.address)) {
+        keysToRemove.splice(keysToRemove.indexOf(player.address), 1);
+      }
       const position = await this._contract.getPositionOf(player.address);
       if (!positions.has(player.address) || (positions.get(player.address) !== position)) {
         isChanged = true;
         positions.set(player.address, position);
       }
+    }
+    for (const key of keysToRemove) {
+      positions.delete(key);
+      isChanged = true;
     }
     return {positions, isChanged};
   }

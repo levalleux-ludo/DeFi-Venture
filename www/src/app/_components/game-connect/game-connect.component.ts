@@ -16,8 +16,8 @@ import { environment } from 'src/environments/environment';
 import { DicesComponent } from '../dices/dices.component';
 import { TestCanvasComponent } from '../test-canvas/test-canvas.component';
 import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
-import { fromEvent, Observable, Subscription } from 'rxjs';
-import { first, map, shareReplay } from 'rxjs/operators';
+import { Observable, Subscription, Subject, fromEvent } from 'rxjs';
+import { first, map, shareReplay, takeUntil } from 'rxjs/operators';
 import { element } from 'protractor';
 import { BigNumber } from 'ethers';
 import {MatSnackBar} from '@angular/material/snack-bar';
@@ -38,6 +38,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     shareReplay()
   );
 
+  private unsubscribe$ = new Subject<void>();
+
   username: string = '';
   gameMaster;
   network;
@@ -48,10 +50,10 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   events = [];
   position = 0;
   owner;
-  assets;
+  assets = [];
   tokenDecimals: number;
   balances: Map<string, BigNumber>;
-  playground;
+  playground = [];
   isValidating = false;
   isPlaying = false;
   isStarting = false;
@@ -113,13 +115,19 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy(): void {
     this.resizeSubscription$.unsubscribe();
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 
   ngOnInit(): void {
-    this.gameService.getUsername().subscribe((username) => {
+    console.log("reset component values");
+    this.gameData = undefined;
+    this.tokenData = undefined;
+    this.assetsData = undefined;
+    this.gameService.getUsername().pipe(takeUntil(this.unsubscribe$)).subscribe((username) => {
       this.username = username;
     });
-    this.portisService.onConnect.subscribe(({network, account}) => {
+    this.portisService.onConnect.pipe(takeUntil(this.unsubscribe$)).subscribe(({network, account}) => {
       this.network = network;
       this.currentAccount = account;
       console.log('set currentAccount', this.currentAccount);
@@ -136,36 +144,36 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     this.gameMaster = this.route.snapshot.paramMap.get('id');
     this.portisService.connect().then(() => {
       this.network = this.portisService.network;
-      this.gameMasterContractService.setAddress(this.gameMaster).then(() => {
-        this.gameMasterContractService.onEvent.subscribe((event) => {
+      this.gameMasterContractService.setAddress(this.gameMaster).then((gameData) => {
+        this.gameMasterContractService.onEvent.pipe(takeUntil(this.unsubscribe$)).subscribe((event) => {
           const message = this.translatorService.event2message('gameMaster', event);
           this.events.push({log: message});
           this.showInfo(message);
         });
-        const tokenAddress = this.gameMasterContractService.data.tokenAddress;
+        const tokenAddress = gameData.tokenAddress;
         this.tokenContractService.setAddress(tokenAddress).then(() => {
-          this.tokenContractService.onEvent.subscribe((event) => {
+          this.tokenContractService.onEvent.pipe(takeUntil(this.unsubscribe$)).subscribe((event) => {
             const message = this.translatorService.event2message('token', event);
             this.events.push({log: message});
             this.showInfo(message);
           })
-          this.tokenContractService.onUpdate.subscribe((tokenData) => {
+          this.tokenContractService.onUpdate.pipe(takeUntil(this.unsubscribe$)).subscribe((tokenData) => {
             this.refreshTokenData(tokenData);
           });
         });
-        const assetsAddress = this.gameMasterContractService.data.assetsAddress;
+        const assetsAddress = gameData.assetsAddress;
         this.assetsContractService.setAddress(assetsAddress).then(() => {
-          this.assetsContractService.onEvent.subscribe((event) => {
+          this.assetsContractService.onEvent.pipe(takeUntil(this.unsubscribe$)).subscribe((event) => {
             const message = this.translatorService.event2message('assets', event);
             this.events.push({log: message});
             this.showInfo(message);
           })
+          this.assetsContractService.onUpdate.pipe(takeUntil(this.unsubscribe$)).subscribe((assetsData) => {
+            this.refreshAssetsData(assetsData);
+          });
         });
-        this.assetsContractService.onUpdate.subscribe((assetsData) => {
-          this.refreshAssetsData(assetsData);
-        });
-        this.gameMasterContractService.onUpdate.subscribe((gameData) => {
-          this.refreshGameData(gameData);
+        this.gameMasterContractService.onUpdate.pipe(takeUntil(this.unsubscribe$)).subscribe((gameData2) => {
+          this.refreshGameData(gameData2);
         });
       });
     }).catch(e => console.error(e));
@@ -174,10 +182,10 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     // this.board_height = this.content.nativeElement.clientHeight;
     // this.board_height = Math.min(this.content.nativeElement.clientHeight, this.board_width);
     this.resizeObservable$ = fromEvent(window, 'resize');
-    this.clickObservable$ = fromEvent(this.content.nativeElement, 'click');
-    this.clickObservable$.subscribe(evt => {
-      console.log('click', evt);
-    });
+    // this.clickObservable$ = fromEvent(this.content.nativeElement, 'click');
+    // this.clickObservable$.subscribe(evt => {
+    //   console.log('click', evt);
+    // });
     this.resizeSubscription$ = this.resizeObservable$.subscribe(evt => {
       console.log('resize', evt);
       this.board_width = this.content.nativeElement.clientWidth;
@@ -204,7 +212,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         this.tokenContractService.observeAccount(player.address);
         this.assetsContractService.observeAccount(player.address);
       });
-      if (!this.playground) {
+      if (!this.playground || !this.playground.length) {
         this.playground = gameData.playground;
       }
       const newPosition = this.gameData.playersPosition.get(this.currentAccount);
@@ -292,7 +300,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
 
   start() {
     this.isStarting = true;
-    this.gameMasterContractService.contract.start().then(() => {
+    this.gameMasterContractService.start().then(() => {
       console.log('start called');
     }).catch((e) => {
       console.error(e);

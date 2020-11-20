@@ -52,7 +52,11 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
     this._contract.removeAllListeners({topics: ['Transfer']});
   }
 
-  protected async refreshData() {
+  protected async resetData() {
+    this.portfolios = new Map<string, number[]>();
+    this.owners = new Map<number, string>();  }
+
+  protected async refreshData(): Promise<{data: IAssetsData, hasChanged: boolean}> {
     console.log("assets contract refreshData");
     const totalSupply = await this._contract.totalSupply();
     for (const address of this.portfolios.keys()) {
@@ -62,7 +66,8 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
       portfolios: this.portfolios,
       owners: this.owners
     };
-    this._onUpdate.next(assetsData);
+    // this._onUpdate.next(assetsData);
+    return {data: assetsData, hasChanged: true};
   }
 
   public async getOwner(assetId: number): Promise<string> {

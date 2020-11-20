@@ -78,6 +78,7 @@ export class TestCanvasPageComponent implements OnInit, AfterContentInit, AfterV
     ];
 
     this.canvas.gameData = {
+      gameMaster: '0xaaaaaaaaaaaaa',
       players: [
         {address: 'aaaaaaa', avatar: 1, username: 'toto'},
         {address: 'bbbbbbb', avatar: 2, username: 'titi'},

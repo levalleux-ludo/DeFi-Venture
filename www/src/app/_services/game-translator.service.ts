@@ -161,7 +161,7 @@ export class GameTranslatorService {
       if (space) {
         if (this.assetsLibrary.isAsset(space)) {
           const asset = this.assetsLibrary.getAssetFromId(space.assetId);
-          return `startup ${asset.name}`;
+          return `startup ${asset?.name}`;
         } else {
           switch (space.type) {
             case eSpaceType.GENESIS: {
