@@ -23,23 +23,37 @@ async function main() {
     // console.log("Greeter deployed to:", greeter.address);
 
     const GameFactoryFactory = await ethers.getContractFactory("GameFactory");
+    const GameMasterFactoryFactory = await ethers.getContractFactory("GameMasterFactory");
     const TokenFactoryFactory = await ethers.getContractFactory("TokenFactory");
     const AssetsFactoryFactory = await ethers.getContractFactory("AssetsFactory");
     const MarketplaceFactoryFactory = await ethers.getContractFactory("MarketplaceFactory");
 
+    console.log('deploy gameMasterFactory');
+    const gameMasterFactory = await GameMasterFactoryFactory.deploy();
+    await gameMasterFactory.deployed();
+    console.log('deploy tokenFactory');
     const tokenFactory = await TokenFactoryFactory.deploy();
-    const assetsFactory = await AssetsFactoryFactory.deploy();
-    const marketplaceFactory = await MarketplaceFactoryFactory.deploy();
     await tokenFactory.deployed();
+    console.log('deploy assetsFactory');
+    const assetsFactory = await AssetsFactoryFactory.deploy();
     await assetsFactory.deployed();
+    console.log('deploy marketplaceFactory');
+    const marketplaceFactory = await MarketplaceFactoryFactory.deploy();
     await marketplaceFactory.deployed();
+    console.log('deploy gameFactory');
     gameFactory = await GameFactoryFactory.deploy(
+        gameMasterFactory.address,
         tokenFactory.address,
         assetsFactory.address,
-        marketplaceFactory.address
-    );
+        marketplaceFactory.address,
+        // { gasLimit: 6700000 }
+    ).catch(e => {
+        // console.error(e);
+        throw new Error('Unable to deploy gameFactory' + e.toString());
+    });
     await gameFactory.deployed();
     console.log("gameFactory deployed to:", gameFactory.address);
+    console.log('hash', gameFactory.deployTransaction.hash, 'gasLimit', gameFactory.deployTransaction.gasLimit.toString());
 
     const Greeter = await ethers.getContractFactory("Greeter");
     const greeter = await Greeter.deploy('Contract deployed on ' + bre.network.name);

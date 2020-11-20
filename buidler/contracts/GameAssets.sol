@@ -4,8 +4,9 @@ pragma solidity >=0.6.0 <0.7.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
+import { IGameAssets } from "./IGameAssets.sol";
 
-contract GameAssets is ERC721, Ownable {
+contract GameAssets is ERC721, Ownable, IGameAssets {
     using EnumerableSet for EnumerableSet.UintSet;
 
     EnumerableSet.UintSet private tokenIdsSet;
@@ -13,7 +14,7 @@ contract GameAssets is ERC721, Ownable {
     constructor() ERC721("Startups", "AST") public Ownable() {
     }
 
-    function exists(uint256 tokenId) public view returns (bool) {
+    function exists(uint256 tokenId) external override view returns (bool) {
         return _exists(tokenId);
     }
 
@@ -24,12 +25,12 @@ contract GameAssets is ERC721, Ownable {
     *
     * - d* - tokenId must not exist
     */
-    function safeMint(address to, uint256 tokenId) public onlyOwner  {
+    function safeMint(address to, uint256 tokenId) external override onlyOwner  {
         _safeMint(to, tokenId);
         tokenIdsSet.add(tokenId);
     }
 
-    function reset() public onlyOwner {
+    function reset() external override onlyOwner {
         uint256 totalTokens = totalSupply();
         for (uint i = 0; i < totalTokens; i++) {
             uint256 tokenId = tokenByIndex(i);

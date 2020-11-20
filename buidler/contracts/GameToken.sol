@@ -26,11 +26,11 @@ contract GameToken is ERC20Burnable, Ownable, IGameToken {
     *
     * - the caller must have the `MINTER_ROLE`.
     */
-    function mint(address to, uint256 amount) public onlyOwner  {
+    function mint(address to, uint256 amount) external override onlyOwner  {
         _mint(to, amount);
     }
 
-    function reset() public onlyOwner {
+    function reset() public override onlyOwner {
         for (uint i = 0; i < accountsSet.length(); i++) {
             address account = accountsSet.at(i);
             uint256 balance = balanceOf(account);
@@ -45,7 +45,7 @@ contract GameToken is ERC20Burnable, Ownable, IGameToken {
         }
     }
     
-    function burnFrom(address account, uint256 amount) public override {
+    function burnTokensFrom(address account, uint256 amount) external override {
         console.log('allowance');
         console.log("account");
         console.logAddress(account);

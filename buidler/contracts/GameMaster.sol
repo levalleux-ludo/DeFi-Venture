@@ -5,18 +5,18 @@ import "@nomiclabs/buidler/console.sol";
 
 import "./GameScheduler.sol";
 import "./IGameMaster.sol";
-import "./GameToken.sol";
-import "./GameAssets.sol";
-import "./Marketplace.sol";
+import "./IGameToken.sol";
+import "./IGameAssets.sol";
+import "./IMarketplace.sol";
 contract GameMaster is GameScheduler, IGameMaster {
     uint256 constant public MAX_UINT256 = 2**256 - 1;
 
-    GameToken private token;
+    IGameToken private token;
     address private tokenAddress;
-    GameAssets private assets;
+    IGameAssets private assets;
     address private assetsAddress;
     address private marketplaceAddress;
-    Marketplace private marketplace;
+    IMarketplace private marketplace;
     uint256 initialAmount;
     address currentPlayer;
     uint256 internal nonce;
@@ -45,7 +45,7 @@ contract GameMaster is GameScheduler, IGameMaster {
     
     function setToken(address _token) external override onlyOwner {
         tokenAddress = _token;
-        token = GameToken(_token);
+        token = IGameToken(_token);
         if (marketplaceAddress != address(0)) {
             marketplace.setToken(_token);
         }
@@ -53,7 +53,7 @@ contract GameMaster is GameScheduler, IGameMaster {
 
     function setAssets(address _assets) external override onlyOwner {
         assetsAddress = _assets;
-        assets = GameAssets(_assets);
+        assets = IGameAssets(_assets);
         if (marketplaceAddress != address(0)) {
             marketplace.setAssets(_assets);
         }
@@ -61,7 +61,7 @@ contract GameMaster is GameScheduler, IGameMaster {
 
     function setMarketplace(address _marketplace) external override onlyOwner {
         marketplaceAddress = _marketplace;
-        marketplace = Marketplace(_marketplace);
+        marketplace = IMarketplace(_marketplace);
         marketplace.setToken(tokenAddress);
         marketplace.setAssets(assetsAddress);
     }
@@ -107,7 +107,66 @@ contract GameMaster is GameScheduler, IGameMaster {
         return playground;
     }
 
-     function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
+    function getGameData() external view returns (
+        uint8 _status,
+        uint8 _nbPlayers,
+        uint8 _nbPositions,
+        address _token,
+        address _assets,
+        address _marketplace,
+        address _nextPlayer,
+        address _currentPlayer,
+        uint8 _currentOptions,
+        uint8 _currentCardId
+    ) {
+        _status = status;
+        _nbPlayers = nbPlayers;
+        _nbPositions = nbPositions;
+        _token = tokenAddress;
+        _assets = assetsAddress;
+        _marketplace = marketplaceAddress;
+        _nextPlayer = nextPlayer;
+        _currentPlayer = currentPlayer;
+        _currentOptions = currentOptions;
+        _currentCardId = currentCardId;
+    }
+
+    function getPlayerData(address player) external view returns (
+        bytes32 _username,
+        uint8 _avatar,
+        uint8 _position
+    ) {
+        _username = this.getUsername(player);
+        _avatar = this.getAvatar(player);
+        _position = this.getPositionOf(player);
+    }
+
+    function getPlayersPositions(address[] calldata players) external view returns (
+        uint8[] memory _positions
+    ) {
+        _positions = new uint8[](players.length);
+        for (uint i = 0; i < players.length; i++) {
+            _positions[i] = this.getPositionOf(players[i]);
+        }
+    }
+
+    function getPlayersData(uint8[] calldata indexes) external view returns (
+        bytes32[] memory _usernames,
+        uint8[] memory _avatars,
+        uint8[] memory _positions
+    ) {
+        _usernames = new bytes32[](indexes.length);
+        _avatars = new uint8[](indexes.length);
+        _positions = new uint8[](indexes.length);
+        for (uint i = 0; i < indexes.length; i++) {
+            address player = playersSet[i];
+            _usernames[i] = this.getUsername(player);
+            _avatars[i] = this.getAvatar(player);
+            _positions[i] = this.getPositionOf(player);
+        }
+    }
+
+    function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
         require(spaceId < nbPositions, "INVALID_ARGUMENT");
         uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
         spaceType = spaceCode & 0x7;
@@ -250,26 +309,41 @@ contract GameMaster is GameScheduler, IGameMaster {
 
         } else if ((option & 2) != 0) { // BUY_ASSET
             if((tokenAddress != address(0)) && assetsAddress != address(0)) {
+                // TODO: if (checkBalance(assetPrice)) {
                 console.log("perform BUY_ASSET");
                 console.log("this");
                 console.logAddress(address(this));
                 console.log("sender");
                 console.logAddress(msg.sender);
                 console.logUint(token.allowance(msg.sender, address(this)));
-                token.burnFrom(msg.sender, assetPrice);
+                token.burnTokensFrom(msg.sender, assetPrice);
                 assets.safeMint(msg.sender, assetId);
             }
         } else if ((option & 4) != 0) { // PAY_BILL
             if((tokenAddress != address(0)) && assetsAddress != address(0)) {
+                // TODO: if (checkBalance(productPrice)) {
                 address owner = assets.ownerOf(uint256(assetId));
                 token.transferFrom(msg.sender, owner, productPrice);
             }
         } else if ((option & 8) != 0) { // CHANCE
             // TODO: perform chance for currentCardId (delegated to ChanceContrat ?)
-            // cardId -> chanceType (Pay|Receive|Move_N ...), chanceParam
-            // chanceType -> contract
+            performChance(currentCardId);
         } else if ((option & 16) != 0) { // QUARANTINE
             // TODO: set player in Quarantine
         }
+    }
+
+    function performChance(uint8 cardId) internal {
+        // TODO: compute requiredCash (if chance means paying something)
+        // if (checkBalance(requiredCash)) {
+            // cardId -> chanceType (Pay|Receive|Move_N ...), chanceParam
+            // chanceType -> contract
+    }
+
+    function checkBalance(uint256 requiredCash) internal returns(bool) {
+        // TODO: if (token.balanceOf(msg.sender) < requiredCash) {
+        //  set player lost
+        //  return false
+        return true;
     }
 }

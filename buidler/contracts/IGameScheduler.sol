@@ -2,6 +2,8 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 interface IGameScheduler {
+    event StatusChanged(uint8 newStatus);
+    event PlayerRegistered(address newPlayer, uint8 nbPlayers);
     function getStatus() view external returns (uint8);
     function getNbPlayers() view external returns (uint8);
     function getNextPlayer() view external returns (address);

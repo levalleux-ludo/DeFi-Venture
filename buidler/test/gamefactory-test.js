@@ -75,6 +75,7 @@ describe("GameFactory", function() {
     before('before tests', async() => {
         [owner, addr1, addr2] = await ethers.getSigners();
         const GameFactoryFactory = await ethers.getContractFactory("GameFactory");
+        const GameMasterFactoryFactory = await ethers.getContractFactory("GameMasterFactory");
         const TokenFactoryFactory = await ethers.getContractFactory("TokenFactory");
         const AssetsFactoryFactory = await ethers.getContractFactory("AssetsFactory");
         const MarketplaceFactoryFactory = await ethers.getContractFactory("MarketplaceFactory");
@@ -83,13 +84,16 @@ describe("GameFactory", function() {
         AssetsFactory = await ethers.getContractFactory("GameAssets");
         MarketplaceFactory = await ethers.getContractFactory("Marketplace");
 
+        const gameMasterFactory = await GameMasterFactoryFactory.deploy();
         const tokenFactory = await TokenFactoryFactory.deploy();
         const assetsFactory = await AssetsFactoryFactory.deploy();
         const marketplaceFactory = await MarketplaceFactoryFactory.deploy();
+        await gameMasterFactory.deployed();
         await tokenFactory.deployed();
         await assetsFactory.deployed();
         await marketplaceFactory.deployed();
         gameFactory = await GameFactoryFactory.deploy(
+            gameMasterFactory.address,
             tokenFactory.address,
             assetsFactory.address,
             marketplaceFactory.address
@@ -104,7 +108,7 @@ describe("GameFactory", function() {
     it('Should create one game', async function() {
         const spaces = getSpaces(NB_POSITIONS);
         const chances = getChances(NB_CHANCES, NB_POSITIONS);
-        await expect(gameFactory.create(
+        await expect(gameFactory.createGameMaster(
             NB_MAX_PLAYERS,
             NB_POSITIONS,
             ethers.BigNumber.from(INITIAL_BALANCE),
@@ -115,6 +119,8 @@ describe("GameFactory", function() {
         console.log('nbGames', nbGames, nbGames.toString());
         expect(nbGames.toNumber()).to.equal(1);
         const gameMasterAddress = await gameFactory.getGameAt(0);
+        await gameFactory.createGameToken(gameMasterAddress);
+        await gameFactory.createGameAssets(gameMasterAddress);
         await gameFactory.createMarketplace(gameMasterAddress);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
