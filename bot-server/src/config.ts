@@ -49,6 +49,13 @@ export const config = {
       portisId: 'unknown',
       wssUrl: 'unknown',
     },
+    ganache_docker: {
+      chainId: 1337,
+      name: 'local (Ganache)',
+      nodeUrl: `http://host.docker.internal:7545`,
+      portisId: 'unknown',
+      wssUrl: 'unknown',
+    },
     mumbai: {
       chainId: 80001,
       name: 'L2 (Mumbai)',

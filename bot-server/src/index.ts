@@ -19,7 +19,7 @@ interface ICLArguments {
 }
 
 const args = parse<ICLArguments>({
-  network: { type: String, defaultValue: 'mumbai' }
+  network: { type: String, defaultValue: process.env.BLOCKCHAIN_NETWORK || 'mumbai' }
   // 'unhandled-rejections': { type: String, optional: true }
 }, {
   partial:true

@@ -22,4 +22,4 @@ RUN npm install -y
 COPY --chown=defibot . .
 
 ENV NODE_ENV production
-CMD npm run start
+CMD npm run start:indocker
