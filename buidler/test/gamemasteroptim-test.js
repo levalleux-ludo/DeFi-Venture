@@ -39,6 +39,7 @@ let GAME_DATA_FIELDS = {}; {
 let USER_DATA_FIELDS = {}; {
     let index = 0;
     let keys = [
+        'address',
         'username',
         'avatar',
         'position'
@@ -186,6 +187,7 @@ describe("GameMaster optimised", function() {
         const avatar = await gameMaster.getAvatar(addr1Address);
         const playerData = await gameMaster.getPlayerData(addr1Address);
         expect(playerData !== undefined).to.equal(true);
+        expect(playerData[USER_DATA_FIELDS.address]).to.equal(addr1Address);
         expect(playerData[USER_DATA_FIELDS.username]).to.equal(username);
         expect(playerData[USER_DATA_FIELDS.avatar]).to.equal(avatar);
         expect(playerData[USER_DATA_FIELDS.position]).to.equal(position);
@@ -238,6 +240,8 @@ describe("GameMaster optimised", function() {
         expect(playersData[USER_DATA_FIELDS.username].length).to.equal(indexes.length);
         expect(playersData[USER_DATA_FIELDS.avatar].length).to.equal(indexes.length);
         expect(playersData[USER_DATA_FIELDS.position].length).to.equal(indexes.length);
+        expect(playersData[USER_DATA_FIELDS.address][0]).to.equal(addr1Address);
+        expect(playersData[USER_DATA_FIELDS.address][1]).to.equal(addr2Address);
         expect(playersData[USER_DATA_FIELDS.username][0]).to.equal(username1);
         expect(playersData[USER_DATA_FIELDS.username][1]).to.equal(username2);
         expect(playersData[USER_DATA_FIELDS.avatar][0]).to.equal(avatar1);

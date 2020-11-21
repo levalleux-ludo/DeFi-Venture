@@ -241,17 +241,17 @@ export class AppDiscord {
     parentCategoryId
   ): Promise<TextChannel> {
     return new Promise((resolve, reject) => {
-      console.log('find channel with name', channelName);
-      console.log(
-        'nb channels in cache:',
-        this._client.channels.cache.array().length
-      );
+      // console.log('find channel with name', channelName);
+      // console.log(
+      //   'nb channels in cache:',
+      //   this._client.channels.cache.array().length
+      // );
       const found = this._client.channels.cache
         .array()
         .find(
           child => (child as TextChannel).name === channelName
         ) as TextChannel;
-      console.log('found', found !== undefined);
+      // console.log('found', found !== undefined);
       resolve(found);
     });
     // const parentCategory = await this._client.channels.fetch(parentCategoryId);
@@ -292,13 +292,13 @@ export class AppDiscord {
           response
             .json()
             .then(async channels => {
-              console.log('channels', channels.length);
+              // console.log('channels', channels.length);
               const children = channels.filter(
                 channel => channel.parent_id === parentId
               );
-              console.log('children', children.length);
+              // console.log('children', children.length);
               for (const child of children) {
-                console.log('child', child);
+                // console.log('child', child);
                 const channel = await this._client.channels.fetch(child.id);
                 if (channel !== undefined && channel !== null) {
                   gameChannels.push(channel);

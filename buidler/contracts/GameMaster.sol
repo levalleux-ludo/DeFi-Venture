@@ -132,10 +132,12 @@ contract GameMaster is GameScheduler, IGameMaster {
     }
 
     function getPlayerData(address player) external view returns (
+        address _address,
         bytes32 _username,
         uint8 _avatar,
         uint8 _position
     ) {
+        _address = player;
         _username = this.getUsername(player);
         _avatar = this.getAvatar(player);
         _position = this.getPositionOf(player);
@@ -151,15 +153,18 @@ contract GameMaster is GameScheduler, IGameMaster {
     }
 
     function getPlayersData(uint8[] calldata indexes) external view returns (
+        address[] memory _addresses,
         bytes32[] memory _usernames,
         uint8[] memory _avatars,
         uint8[] memory _positions
     ) {
+        _addresses = new address[](indexes.length);
         _usernames = new bytes32[](indexes.length);
         _avatars = new uint8[](indexes.length);
         _positions = new uint8[](indexes.length);
         for (uint i = 0; i < indexes.length; i++) {
             address player = playersSet[i];
+            _addresses[i] = player;
             _usernames[i] = this.getUsername(player);
             _avatars[i] = this.getAvatar(player);
             _positions[i] = this.getPositionOf(player);

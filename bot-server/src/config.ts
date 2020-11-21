@@ -38,8 +38,8 @@ export const config = {
     ]
   },
   gameFactory: {
-    80001: '0x2dD64d434f96f6e33Df89982F4143CBF83E2e6eD', // mumbai
-    1337: '0x05D95Bca0fF39c5F3e347D37502A8B7b813AF0Bf', // ganache
+    80001: '0x780780761Bdb9e26b697A74F631ed33a332faa3c', // mumbai
+    1337: '0x37242Ddb89511f1Eaef07Eb2e5383A877b66BEF8', // ganache
   },
   networks: {
     ganache: {

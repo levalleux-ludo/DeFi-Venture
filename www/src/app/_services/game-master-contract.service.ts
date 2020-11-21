@@ -13,6 +13,26 @@ export const GAME_STATUS = [
   'ENDED'
 ];
 
+const GAME_DATA_FIELDS = {
+  status: 0,
+  nbPlayers: 1,
+  nbPositions: 2,
+  token: 3,
+  assets: 4,
+  marketplace: 5,
+  nextPlayer: 6,
+  currentPlayer: 7,
+  currentOptions: 8,
+  currentCardId: 9
+};
+
+const USER_DATA_FIELDS = {
+  address: 0,
+  username: 1,
+  avatar: 2,
+  position: 3
+};
+
 import GameMasterJSON from '../../../../buidler/artifacts/GameMaster.json';
 import { throwToolbarMixedModesError } from '@angular/material/toolbar';
 import { AbstractContractService } from './AbstractContractService';
@@ -290,25 +310,26 @@ export class GameMasterContractService extends AbstractContractService<IGameData
   }
   protected async refreshData(): Promise<{data: IGameData, hasChanged: boolean}> {
     let gameData = this.data;
-    const status = await this._contract.getStatus();
-    const nbPlayers = await this._contract.getNbPlayers();
-    const nextPlayer = await this._contract.getNextPlayer();
+    const contractGameData = await this._contract.getGameData();
+    const status = contractGameData[GAME_DATA_FIELDS.status];
+    const nbPlayers = contractGameData[GAME_DATA_FIELDS.nbPlayers];
+    const nextPlayer = contractGameData[GAME_DATA_FIELDS.nextPlayer];
     console.log('Update GameData, nextPlayer:', nextPlayer);
-    const currentPlayer = await this._contract.getCurrentPlayer();
-    const currentOptions = await this._contract.getCurrentOptions();
-    const chanceCardId = await this._contract.getCurrentCardId();
-    const players = await this.getPlayers(nbPlayers);
+    const currentPlayer = contractGameData[GAME_DATA_FIELDS.currentPlayer];
+    const currentOptions = contractGameData[GAME_DATA_FIELDS.currentOptions];
+    const chanceCardId = contractGameData[GAME_DATA_FIELDS.currentCardId];
+    const {players, positions: playersPosition, isChanged: positionsChanged} = await this.getPlayersData(nbPlayers);
+    const tokenAddress = contractGameData[GAME_DATA_FIELDS.token];
+    const assetsAddress = contractGameData[GAME_DATA_FIELDS.assets];
+    const nbSpaces = contractGameData[GAME_DATA_FIELDS.nbPositions];
     let hasChanged = false;
     if (!gameData) {
-      const tokenAddress = await this._contract.getToken();
-      const assetsAddress = await this._contract.getAssets();
-      const nbSpaces = await this._contract.getNbPositions();
       const playground = await this.buildPlayground(nbSpaces);
       gameData = {
         gameMaster: this.address,
         status: GAME_STATUS[status],
         players,
-        playersPosition: (await this.refreshPositions(players)).positions,
+        playersPosition,
         nextPlayer,
         currentPlayer,
         currentOptions,
@@ -326,11 +347,11 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       }
       if ((nbPlayers !== gameData.players.length) || (gameData.gameMaster !== this.address)) {
         gameData.players = players;
-        await this.refreshPositions(players, gameData.playersPosition);
+        gameData.playersPosition = playersPosition;
         hasChanged = true;
-      } else {
-        hasChanged
-         = (await this.refreshPositions(gameData.players, gameData.playersPosition)).isChanged;
+      } else if (positionsChanged) {
+        gameData.playersPosition = playersPosition;
+        hasChanged = true;
       }
       if (nextPlayer !== gameData.nextPlayer) {
         gameData.nextPlayer = nextPlayer;
@@ -349,9 +370,6 @@ export class GameMasterContractService extends AbstractContractService<IGameData
         hasChanged = true;
       }
       if (gameData.gameMaster !== this.address) {
-        const tokenAddress = await this._contract.getToken();
-        const assetsAddress = await this._contract.getAssets();
-        const nbSpaces = await this._contract.getNbPositions();
         const playground = await this.buildPlayground(nbSpaces);
         gameData.gameMaster = this.address;
         gameData.tokenAddress = tokenAddress;
@@ -387,12 +405,55 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     return {positions, isChanged};
   }
 
+  private async getPlayersData(nbPlayers: number, positions?: Map<string, number>)
+  : Promise<{players: IPlayer[], positions: Map<string, number>, isChanged: boolean}> {
+    const players = [];
+    const indexes = [];
+    for (let i = 0; i < nbPlayers; i++) {
+      indexes.push(i);
+    }
+    const playersData = await this._contract.getPlayersData(indexes);
+    let isChanged = false;
+    if (!positions) {
+      positions = new Map<string, number>();
+    }
+    const keysToRemove = Array.from(positions.keys());
+    for (let i = 0; i < nbPlayers; i++) {
+      const playerAddress = playersData[USER_DATA_FIELDS.address][i];
+      const username = playersData[USER_DATA_FIELDS.username][i];
+      const avatar = playersData[USER_DATA_FIELDS.avatar][i];
+      players.push({
+        address: playerAddress,
+        username: ethers.utils.parseBytes32String(username),
+        avatar
+      });
+      if (positions.has(playerAddress)) {
+        keysToRemove.splice(keysToRemove.indexOf(playerAddress), 1);
+      }
+      const position = playersData[USER_DATA_FIELDS.position][i];
+      if (!positions.has(playerAddress) || (positions.get(playerAddress) !== position)) {
+        isChanged = true;
+        positions.set(playerAddress, position);
+      }
+    }
+    for (const key of keysToRemove) {
+      positions.delete(key);
+      isChanged = true;
+    }
+    return {players, positions, isChanged};
+  }
+
   private async getPlayers(nbPlayers: number): Promise<IPlayer[]> {
     const players = [];
+    const indexes = [];
     for (let i = 0; i < nbPlayers; i++) {
-      const playerAddress = await this._contract.getPlayerAtIndex(i);
-      const username = await this._contract.getUsername(playerAddress);
-      const avatar = await this._contract.getAvatar(playerAddress);
+      indexes.push(i);
+    }
+    const playersData = await this._contract.getPlayersData(indexes);
+    for (let i = 0; i < nbPlayers; i++) {
+      const playerAddress = playersData[USER_DATA_FIELDS.address][i];
+      const username = playersData[USER_DATA_FIELDS.username][i];
+      const avatar = playersData[USER_DATA_FIELDS.avatar][i];
       players.push({
         address: playerAddress,
         username: ethers.utils.parseBytes32String(username),
