@@ -66,4 +66,18 @@ export const config = {
     },
   },
   schedule: '0/20 * * * * *', // every 20 seconds
+  discord: {
+    test: {
+      GUILD_ID: '780374571689312266',
+      GENERAL: '780374571689312271',
+      GAME_CHANNELS_CATEGORY_ID: '780376434110758915',
+      TEST_USER_ID: 'yvalek#7395'
+    },
+    prod: {
+      GUILD_ID: '773475946597842954',
+      GENERAL: '773475946597842956',
+      GAME_CHANNELS_CATEGORY_ID: '773477314125758465',
+      TEST_USER_ID: 'yvalek#7395'
+    }
+  }
 };

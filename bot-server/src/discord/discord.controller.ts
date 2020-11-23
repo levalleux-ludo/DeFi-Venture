@@ -1,4 +1,4 @@
-import { AppDiscord } from './discord';
+import { AppDiscord, GUILD_ID } from './discord';
 import { btoa } from 'abab';
 import express from 'express';
 import fetch from 'node-fetch';
@@ -34,6 +34,9 @@ export class DiscordController {
     this._router.get('/wait/:account', this.wait);
     this._router.get('/user/:account', this.user);
     this._router.get('/game/:game', this.gameChannel);
+    this._router.get('/general', this.getGeneralChannel);
+    this._router.get('/guild', this.getGuild);
+    this._router.post('/deleteAll', this.deleteAll);
   }
 
   public get router(): express.Router {
@@ -93,6 +96,33 @@ export class DiscordController {
   private gameChannel = (req: express.Request, res: express.Response) => {
     this.appDiscord.getChannelFromGame(req.params.game).then((channel) => {
       res.send(channel);
+    }).catch(e => {
+      console.error(e);
+      res.status(400).send(e);
+    });
+  };
+
+  private getGuild = (req: express.Request, res: express.Response) => {
+    this.appDiscord.getGuild().then((guildId) => {
+      res.send(guildId);
+    }).catch(e => {
+      console.error(e);
+      res.status(400).send(e);
+    });
+  };
+
+  private getGeneralChannel = (req: express.Request, res: express.Response) => {
+    this.appDiscord.getGeneralChannel().then((channel) => {
+      res.send(channel);
+    }).catch(e => {
+      console.error(e);
+      res.status(400).send(e);
+    });
+  };
+
+  private deleteAll = (req: express.Request, res: express.Response) => {
+    this.appDiscord.deleteAll().then(() => {
+      res.send('OK');
     }).catch(e => {
       console.error(e);
       res.status(400).send(e);
@@ -171,7 +201,7 @@ export class DiscordController {
                       /// TODO: redirect to the original URL given by the client at login request
 
                       res.redirect(
-                        `https://discord.com/channels/773475946597842954`
+                        `https://discord.com/channels/${GUILD_ID}`
                       );
                     })
                     .catch(e => {

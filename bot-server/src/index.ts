@@ -25,6 +25,8 @@ const args = parse<ICLArguments>({
   partial:true
 });
 
+console.log('NODE_ENV', process.env.NODE_ENV);
+
 const main = async () => {
   // Initialize web3 provider
   const web3 = new Web3Provider(config.networks[args.network]);

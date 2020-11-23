@@ -1,3 +1,4 @@
+import { config } from './../config';
 // import {
 //   ArgsOf,
 //   Client,
@@ -26,11 +27,15 @@ import { GameObserver } from './game.observer';
 
 const COMMAND_PREFIX = '!';
 
-const GUILD_ID = '773475946597842954';
+const discord_config = config.discord[(process.env.NODE_ENV === "production") ? 'prod' : 'test'];
 
-const GAME_CHANNELS_CATEGORY_ID = '773477314125758465';
+export const GUILD_ID = discord_config.GUILD_ID;
 
-const TEST_USER_ID = 'yvalek#7395';
+export const GAME_CHANNELS_CATEGORY_ID = discord_config.GAME_CHANNELS_CATEGORY_ID;
+
+export const GENERAL_CHANNEL_ID = discord_config.GENERAL;
+
+export const TEST_USER_ID = discord_config.TEST_USER_ID;
 
 // Decorate the class with the @Discord decorator
 // @Discord(COMMAND_PREFIX)
@@ -88,6 +93,17 @@ export class AppDiscord {
     });
   }
 
+  public async deleteAll() {
+    await this.waitReady();
+    await this.getAllGameChannels(GUILD_ID, GAME_CHANNELS_CATEGORY_ID).then(
+      async channels => {
+        console.log('Delete all game channels:', channels.length);
+        for (const channel of channels) {await channel.delete();}
+        // throw new Error('STOP');
+      }
+    );
+  }
+
   public async createObservers() {
     await this.waitReady();
     await this.getGameChannelsCategory(GAME_CHANNELS_CATEGORY_ID);
@@ -132,6 +148,19 @@ export class AppDiscord {
     }
     this._channelGames.set(game.address, channel);
     return channel;
+  }
+
+  public async getGuild(): Promise<string> {
+    return GUILD_ID;
+  }
+
+  public async getGeneralChannel(): Promise<TextChannel> {
+    await this.waitReady();
+    return new Promise((resolve, reject) => {
+      this._client.channels.fetch(GENERAL_CHANNEL_ID).then((channel) => {
+        resolve(channel as TextChannel);
+      }).catch (e => reject(e));
+    });
   }
 
   public async getChannelFromGame(gameAddress: string): Promise<TextChannel | undefined> {
@@ -251,7 +280,7 @@ export class AppDiscord {
         .find(
           child => (child as TextChannel).name === channelName
         ) as TextChannel;
-      // console.log('found', found !== undefined);
+      console.log(channelName, 'found', found !== undefined);
       resolve(found);
     });
     // const parentCategory = await this._client.channels.fetch(parentCategoryId);
