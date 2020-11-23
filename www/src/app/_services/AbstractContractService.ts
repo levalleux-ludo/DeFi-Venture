@@ -51,12 +51,12 @@ export abstract class AbstractContractService<T> {
         if (!(this._contract) || (this._contract.address !== address)) {
           if (this._contract) {
             this.unsubscribeToEvents();
-            this._contract = undefined;
+            await this.setContract(undefined);
             this.isReady = false;
           }
           await this.resetData();
           await (new Contract(address, this.contractJSON.abi, this.portisL1Service?.provider)).deployed().then(async (contract) => {
-            this._contract = contract;
+            await this.setContract(contract);
             // We use a separate instance of contract to send signed transaction
             this._contractWithSigner = contract.connect(this.portisL1Service.signer);
             this.subscribeToEvents();
@@ -67,9 +67,9 @@ export abstract class AbstractContractService<T> {
               this._onUpdate.next(data);
             }
             resolve(data);
-          }).catch(e => {
+          }).catch(async(e) => {
             console.error(e);
-            this._contract = undefined;
+            await this.setContract(undefined);
             this._contractWithSigner = undefined;
             this.isReady = false;
             this._onUpdate.next(undefined);
@@ -79,13 +79,18 @@ export abstract class AbstractContractService<T> {
           resolve(this.data);
         }
       } else {
-        this._contract = undefined;
+        await this.setContract(undefined);
         this._contractWithSigner = undefined;
         this.isReady = false;
         this._onUpdate.next(undefined);
         resolve(undefined);
       }
     });
+  }
+
+  public async setContract(value: Contract) {
+    this._contract = value;
+    await this._onContractSet(value);
   }
 
   public get contract(): Contract {
@@ -102,6 +107,7 @@ export abstract class AbstractContractService<T> {
 
   protected abstract subscribeToEvents();
   protected abstract unsubscribeToEvents();
+  protected abstract async _onContractSet(value: Contract);
 
   protected async recordEvent(event: any) {
     this._events.push(event);

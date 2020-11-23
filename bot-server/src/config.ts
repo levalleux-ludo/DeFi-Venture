@@ -29,17 +29,17 @@ export const config = {
       { name: 'R4D4', address: '0xcDf09FBc9Ad0C754c5280DceDe2247A6527a17b2' },
       { name: 'R5D5', address: '0x28C847BC633cdCbe5883E1095CbD106345027296' },
     ],
-    1337: [
-      { name: 'R1D1', address: '0x0C32239339ad7FE0Bd4ED891082bEECbF9e96a49'},
-      { name: 'R2D2', address: '0x3b86a58C6D665423CF38aC54C06127254F929BF0'},
-      { name: 'R3D3', address: '0x253866f4baC67B45c2E7A1d5c0D8959A6277f836'},
-      { name: 'R4D4', address: '0x4171f3147e150eC5549996eAaeeaBcdB4eE776c0'},
-      { name: 'R5D5', address: '0x1094c5146D39Cb59955bB8cB58c6255487143e3E'},
+    1337: [ // ganache
+      { name: 'R1D1', address: '0x242a40c862D1311BD21C38933681aA4a95246281'},
+      { name: 'R2D2', address: '0x38144D30C304151e52AC7cAf117DF7927ad340BE'},
+      { name: 'R3D3', address: '0x771A1385cE601D04D6aD8598B0E657b972BC6d49'},
+      { name: 'R4D4', address: '0x78fCB7e9Ddc94aBA69a3b4E280F98A5A01ce8B4C'},
+      { name: 'R5D5', address: '0xc26a63ED134340f2452817AfD39Cd94dE24343a6'},
     ]
   },
   gameFactory: {
     80001: '0x780780761Bdb9e26b697A74F631ed33a332faa3c', // mumbai
-    1337: '0x37242Ddb89511f1Eaef07Eb2e5383A877b66BEF8', // ganache
+    1337: '0x201CE6aC40afD5736423537ea0197C8a4DED8937', // ganache
   },
   networks: {
     ganache: {

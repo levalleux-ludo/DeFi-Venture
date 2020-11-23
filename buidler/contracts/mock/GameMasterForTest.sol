@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0 <0.7.0;
 
-import "../GameMaster.sol";
+import { GameMaster } from "../GameMaster.sol";
+import { IPlayground } from '../IPlayground.sol';
 
 contract GameMasterForTest is GameMaster {
 
@@ -18,7 +19,7 @@ contract GameMasterForTest is GameMaster {
     }
 
     function setPlayerPosition(address player, uint8 newPosition) public onlyOwner {
-        playground.setPlayerPosition(player, newPosition);
+        IPlayground(playgroundAddress).setPlayerPosition(player, newPosition);
     }
 
     function setCardId(uint8 cardId) public onlyOwner {

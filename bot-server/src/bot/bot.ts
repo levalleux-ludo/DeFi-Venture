@@ -45,9 +45,10 @@ export class Bot {
   }
 
   public async check(game: IGame) {
-    const nextPlayer = await game.getNextPlayer().catch(e => console.error(e));
-    const currentPlayer = await game.getCurrentPlayer().catch(e => console.error(e));
-    const gameStatus = await game.getStatus().catch(e => console.error(e));
+    const gameData = await game.getGameData();
+    const gameStatus = gameData.status;
+    const nextPlayer = gameData.nextPlayer;
+    const currentPlayer = gameData.currentPlayer;
     if (
       gameStatus === eGameStatus.CREATED ||
       gameStatus === eGameStatus.FROZEN
@@ -118,8 +119,7 @@ export class Bot {
         // I'm the current player and I didn't play yet --> I must send the play transaction with the chosen option
         this._playStatus[game.address] = ePlayStatus.PLAYING;
         console.log('bot', this._username, `must play now`);
-        const options = await game.getCurrentOptions().catch(e => console.error(e));
-        await this.play(game, options)
+        await this.play(game, gameData.currentOptions)
           .then(() => {
             console.log(
               'bot',
@@ -281,9 +281,10 @@ export class Bot {
 
   private async addGame(game: IGame) {
     this._games.push(game);
-    const gameStatus = await game.getStatus().catch(e => console.error(e));
-    const nextPlayer = await game.getNextPlayer().catch(e => console.error(e));
-    const currentPlayer = await game.getCurrentPlayer().catch(e => console.error(e));
+    const gameData = await game.getGameData();
+    const gameStatus = gameData.status;
+    const nextPlayer = gameData.nextPlayer;
+    const currentPlayer = gameData.currentPlayer;
     this._playStatus[game.address] =
       gameStatus === eGameStatus.STARTED && currentPlayer === this._address
         ? ePlayStatus.MUST_PLAY

@@ -13,7 +13,7 @@ export const GAME_STATUS = [
   'ENDED'
 ];
 
-const GAME_DATA_FIELDS = {
+export const GAME_DATA_FIELDS = {
   status: 0,
   nbPlayers: 1,
   nbPositions: 2,
@@ -26,14 +26,16 @@ const GAME_DATA_FIELDS = {
   currentCardId: 9
 };
 
-const USER_DATA_FIELDS = {
+export const USER_DATA_FIELDS = {
   address: 0,
   username: 1,
   avatar: 2,
-  position: 3
+  position: 3,
+  hasLost: 4
 };
 
 import GameMasterJSON from '../../../../buidler/artifacts/GameMaster.json';
+import PlaygroundJSON from '../../../../buidler/artifacts/Playground.json';
 import { throwToolbarMixedModesError } from '@angular/material/toolbar';
 import { AbstractContractService } from './AbstractContractService';
 import { ConnectedPositionStrategy } from '@angular/cdk/overlay';
@@ -123,6 +125,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
 
   onRolledDices: (player, dice1, dice2, cardId, newPosition, options) => void;
   protected contracts = new Map<string, GameMaster>();
+  protected _playgroundContract: ethers.Contract;
 
   constructor(
     protected sessionStorageService: SessionStorageService,
@@ -392,7 +395,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       if (positions.has(player.address)) {
         keysToRemove.splice(keysToRemove.indexOf(player.address), 1);
       }
-      const position = await this._contract.getPositionOf(player.address);
+      const position = await this._contract.positions(player.address);
       if (!positions.has(player.address) || (positions.get(player.address) !== position)) {
         isChanged = true;
         positions.set(player.address, position);
@@ -497,8 +500,12 @@ export class GameMasterContractService extends AbstractContractService<IGameData
 
   protected async buildPlayground(nbSpaces: number): Promise<ISpace[]> {
     const spaces = [];
+    if (!this._playgroundContract) {
+      console.error('Unable to get playground. The contract is not instanciated')
+      return spaces;
+    }
     // Optim:
-    const playground = await this._contract.getPlayground(); // bytes32 array
+    const playground = await this._playgroundContract.playground(); // bytes32 array
 
     for (let spaceId = 0; spaceId < nbSpaces; spaceId++) {
       const spaceCodeStr = '0x' + playground.slice(2 + 64 - 2 * (spaceId + 1), 2 + 64 - 2 * spaceId);
@@ -525,6 +532,24 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       console.log('Space', spaceId, eSpaceType[type], assetId, assetPrice);
     }
     return spaces;
+  }
+
+  protected async createPlaygroundContract(gameMaster: Contract) {
+    await gameMaster.playgroundAddress().then(async (playgroundAddress: string) => {
+      await (new Contract(playgroundAddress, PlaygroundJSON.abi, this.portisL1Service?.provider)).deployed().then((contract) => {
+        this._playgroundContract = contract;
+      }).catch(e => {
+        console.error('Unable to create playground contract', e);
+      });
+    });
+  }
+
+  protected async _onContractSet(value: ethers.Contract) {
+    if (value) {
+      await this.createPlaygroundContract(value);
+    } else {
+      this._playgroundContract = undefined;
+    }
   }
 
 }

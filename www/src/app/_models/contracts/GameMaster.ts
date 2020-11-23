@@ -1,4 +1,4 @@
-import { IPlayer } from './../../_services/game-master-contract.service';
+import { IPlayer, USER_DATA_FIELDS } from './../../_services/game-master-contract.service';
 import { GameToken } from './GameToken';
 import { async } from '@angular/core/testing';
 import { ethers } from 'ethers';
@@ -28,20 +28,25 @@ export class GameMaster {
   }
 
   public async getStatus(): Promise<eGameStatus> {
-    return this.contract.getStatus();
+    return this.contract.status();
   }
 
 public async getNbPlayers(): Promise<number> {
-  return this.contract.getNbPlayers();
+  return this.contract.nbPlayers();
 }
 
 public async getPlayers(): Promise<IPlayer[]> {
-  const nbPlayers = await this.contract.getNbPlayers();
   const players = [];
+  const indexes = [];
+  const nbPlayers = await this.contract.nbPlayers();
   for (let i = 0; i < nbPlayers; i++) {
-    const playerAddress = await this.contract.getPlayerAtIndex(i);
-    const username = await this.contract.getUsername(playerAddress);
-    const avatar = await this.contract.getAvatar(playerAddress);
+    indexes.push(i);
+  }
+  const playersData = await this.contract.getPlayersData(indexes);
+  for (let i = 0; i < nbPlayers; i++) {
+    const playerAddress = playersData[USER_DATA_FIELDS.address][i];
+    const username = playersData[USER_DATA_FIELDS.username][i];
+    const avatar = playersData[USER_DATA_FIELDS.avatar][i];
     players.push({
       username: ethers.utils.parseBytes32String(username),
       address: playerAddress,
@@ -52,7 +57,7 @@ public async getPlayers(): Promise<IPlayer[]> {
 }
 
 public async getNextPlayer(): Promise<string> {
-  return this.contract.getNextPlayer();
+  return this.contract.nextPlayer();
 }
 
 public async isPlayerRegistered(playerAddress: string): Promise<boolean> {
@@ -60,7 +65,7 @@ public async isPlayerRegistered(playerAddress: string): Promise<boolean> {
 }
 
 public async getTokenAddress(): Promise<string> {
-  return this.contract.getToken();
+  return this.contract.tokenAddress();
 }
 
 public on(eventName: string, callback: ethers.providers.Listener): GameMaster {

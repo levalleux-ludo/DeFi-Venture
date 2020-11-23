@@ -69,4 +69,8 @@ export class GameTokenContractService extends AbstractContractService<ITokenData
     return {data: tokenData, hasChanged: true};
 
   }
+
+  protected async _onContractSet(value: ethers.Contract) {
+  }
+
 }

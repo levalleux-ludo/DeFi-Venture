@@ -13,13 +13,13 @@ export class GameObserver {
       onRolledDices: this.onRolledDices,
       onStatusChanged: this.onStatusChanged,
     });
-    _game.getStatus().then(status => this.onStatusChanged(status));
-    _game.getPlayers().then(players => {
-      this.listPlayers(players);
-      _game.getNextPlayer().then(nextPlayer => {
-        this.tellNextPlayer(nextPlayer, players);
+    _game.getGameData().then((gameData) => {
+      this.onStatusChanged(gameData.status);
+      _game.getPlayers().then(players => {
+        this.listPlayers(players);
+        this.tellNextPlayer(gameData.nextPlayer, players);
       });
-    });
+    })
   }
 
   private displayPlayer(address: string): string {

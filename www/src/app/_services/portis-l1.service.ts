@@ -25,7 +25,7 @@ import { ethers, BigNumber } from 'ethers';
 
 const PORTIS_API_KEY = '9e5dce20-042d-456f-bfca-4850e23555c8';
 const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
+const INITIAL_BALANCE = 100;
 const NB_POSITIONS = 24;
 const NB_CHANCES = 32;
 

@@ -33,7 +33,7 @@ async function main() {
     }
     console.log(JSON.stringify({ bots }, (key, value) => `${key}: "${value}"`));
     console.log('artifacts', bre.config.paths.artifacts);
-    fs.writeFileSync(bre.config.paths.artifacts + '/bots.json', JSON.stringify({ bots }), err => console.error(err));
+    // fs.writeFileSync(bre.config.paths.artifacts + '/bots.json', JSON.stringify({ bots }), err => console.error(err));
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -42,7 +42,7 @@ export const environment = {
       gasRelay: 'tbd'
     },
     1337: { // ganache
-      gameFactory: '0x37242Ddb89511f1Eaef07Eb2e5383A877b66BEF8',
+      gameFactory: '0x201CE6aC40afD5736423537ea0197C8a4DED8937',
       greeter: '0xe9c1fFc3E73C549c3061363ba2aa5D3522c49355',
       gasRelay: 'tbd'
     }

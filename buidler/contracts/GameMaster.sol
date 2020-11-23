@@ -3,24 +3,21 @@ pragma solidity >=0.6.0 <0.7.0;
 
 // import "@nomiclabs/buidler/console.sol";
 
-import "./GameScheduler.sol";
-import "./GameMasterStorage.sol";
-import "./IGameMaster.sol";
-import "./IGameToken.sol";
-import "./IGameAssets.sol";
-import "./IMarketplace.sol";
-
-import './IPlayground.sol';
-
-import './IChance.sol';
-
-import './IRandomGenerator.sol';
+import { GameScheduler } from "./GameScheduler.sol";
+import { GameMasterStorage } from "./GameMasterStorage.sol";
+import { IGameMaster } from "./IGameMaster.sol";
+import { IGameToken } from "./IGameToken.sol";
+import { IGameAssets } from "./IGameAssets.sol";
+import { IMarketplace } from "./IMarketplace.sol";
+import { IPlayground } from './IPlayground.sol';
+import { IChance } from './IChance.sol';
+import { IRandomGenerator } from './IRandomGenerator.sol';
 
 contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
     uint256 constant public MAX_UINT256 = 2**256 - 1;
-    IPlayground internal playground;
-    IChance internal chances;
-    IRandomGenerator internal randomGenerator;
+    address public playgroundAddress;
+    address public chancesAddress;
+    address randomGeneratorAddress;
 
     event RolledDices(address indexed player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
     event PlayPerformed(address indexed player, uint8 option, uint8 cardId, uint8 newPosition);
@@ -33,9 +30,11 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         address _randomGenerator
         ) public GameScheduler(nbMaxPlayers) {
         initialAmount = _initialAmount;
-        playground = IPlayground(_playground);
-        chances = IChance(_chances);
-        randomGenerator = IRandomGenerator(_randomGenerator);
+        playgroundAddress = _playground;
+        // playground = IPlayground(_playground);
+        chancesAddress = _chances;
+        // chances = IChance(_chances);
+        randomGeneratorAddress = _randomGenerator;
     }
     
     // function getToken() external override view returns (address) {
@@ -93,7 +92,7 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
     ) {
         _status = status;
         _nbPlayers = nbPlayers;
-        _nbPositions = playground.getNbPositions();
+        _nbPositions = IPlayground(playgroundAddress).getNbPositions();
         _token = tokenAddress;
         _assets = assetsAddress;
         _marketplace = marketplaceAddress;
@@ -112,7 +111,7 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         _address = player;
         _username = usernames[player];
         _avatar = players[player];
-        _position = playground.getPlayerPosition(player);
+        _position = IPlayground(playgroundAddress).getPlayerPosition(player);
     }
 
     function getPlayersPositions(address[] calldata players) external view returns (
@@ -120,7 +119,7 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
     ) {
         _positions = new uint8[](players.length);
         for (uint i = 0; i < players.length; i++) {
-            _positions[i] = playground.getPlayerPosition(players[i]);
+            _positions[i] = IPlayground(playgroundAddress).getPlayerPosition(players[i]);
         }
     }
 
@@ -141,13 +140,13 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
             _addresses[i] = player;
             _usernames[i] = usernames[player];
             _avatars[i] = players[player];
-            _positions[i] = playground.getPlayerPosition(player);
+            _positions[i] = IPlayground(playgroundAddress).getPlayerPosition(player);
             _hasLost[i] = lostPlayers[player];
         }
     }
 
     function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
-        return playground.getSpaceDetails(spaceId);
+        return IPlayground(playgroundAddress).getSpaceDetails(spaceId);
     }
     // function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
     //     require(spaceId < nbPositions, "INVALID_ARGUMENT");
@@ -166,7 +165,7 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
     // }
 
     function getChanceDetails(uint8 chanceId) external override view returns (uint8 chanceType, uint8 chanceParam) {
-        return chances.getChanceDetails(chanceId);
+        return IChance(chancesAddress).getChanceDetails(chanceId);
     }
 
     function getOptionsAt(address player, uint8 position) external override view returns (uint8 options) {
@@ -184,8 +183,8 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
             options = 8; // 8 = CHANCE
         } else { // ASSETS
             if (assetsAddress != address(0)) {
-                if (assets.exists(uint256(assetId))) {
-                    address owner = assets.ownerOf(uint256(assetId));
+                if (IGameAssets(assetsAddress).exists(uint256(assetId))) {
+                    address owner = IGameAssets(assetsAddress).ownerOf(uint256(assetId));
                     if (owner != player) {
                         options = 4; // 4 = PAY_BILL
                     } else {
@@ -205,9 +204,9 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
         require(currentPlayer == address(0), "NOT_AUTHORIZED");
         currentPlayer = msg.sender;
-        (uint8 dice1, uint8 dice2, uint8 cardId) = randomGenerator.getRandom();
-        playground.incrementPlayerPosition(msg.sender, dice1 + dice2);
-        uint8 newPosition = playground.getPlayerPosition(msg.sender);
+        (uint8 dice1, uint8 dice2, uint8 cardId) = IRandomGenerator(randomGeneratorAddress).getRandom();
+        IPlayground(playgroundAddress).incrementPlayerPosition(msg.sender, dice1 + dice2);
+        uint8 newPosition = IPlayground(playgroundAddress).getPlayerPosition(msg.sender);
         uint8 options = this.getOptionsAt(msg.sender, newPosition);
         currentOptions = options;
         currentCardId = cardId;
@@ -221,14 +220,14 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         require(msg.sender == currentPlayer, "NOT_AUTHORIZED");
         require((option & currentOptions) != 0, "OPTION_NOT_ALLOWED");
         require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
-        performOption(playground.getPlayerPosition(msg.sender), option);
+        performOption(IPlayground(playgroundAddress).getPlayerPosition(msg.sender), option);
         chooseNextPlayer();
         uint8 eventCardId = currentCardId;
         currentPlayer = address(0);
         currentOptions = 0;
         currentCardId = 0;
         // emit event at the end
-        emit PlayPerformed(msg.sender, option, eventCardId, playground.getPlayerPosition(msg.sender));
+        emit PlayPerformed(msg.sender, option, eventCardId, IPlayground(playgroundAddress).getPlayerPosition(msg.sender));
     }
 
 
@@ -237,20 +236,20 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         for (uint i = 0; i < nbPlayers; i++) {
             address player = playersSet[i];
             if (tokenAddress != address(0)) {
-                token.mint(player, initialAmount);
+                IGameToken(tokenAddress).mint(player, initialAmount);
             }
         }
     }
     function _end() internal override {
         super._end();
         if (tokenAddress != address(0)) {
-            token.reset();
+            IGameToken(tokenAddress).reset();
         }
     }
 
     function _register(bytes32 username, uint8 avatar) internal override {
         if (tokenAddress != address(0)) {
-            require(token.allowance(msg.sender, address(this)) == MAX_UINT256, "SENDER_MUST_APPROVE_GAME_MASTER");
+            require(IGameToken(tokenAddress).allowance(msg.sender, address(this)) == MAX_UINT256, "SENDER_MUST_APPROVE_GAME_MASTER");
         }
         super._register(username, avatar);
     }
@@ -291,21 +290,21 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
                     // console.logAddress(address(this));
                     // console.log("sender");
                     // console.logAddress(msg.sender);
-                    // console.logUint(token.allowance(msg.sender, address(this)));
-                    token.burnTokensFrom(msg.sender, assetPrice);
-                    assets.safeMint(msg.sender, assetId);
+                    // console.logUint(IGameToken(tokenAddress).allowance(msg.sender, address(this)));
+                    IGameToken(tokenAddress).burnTokensFrom(msg.sender, assetPrice);
+                    IGameAssets(assetsAddress).safeMint(msg.sender, assetId);
                 }
             }
         } else if ((option & 4) != 0) { // PAY_BILL
             if((tokenAddress != address(0)) && assetsAddress != address(0)) {
                 if (checkBalance(productPrice)) {
-                    address owner = assets.ownerOf(uint256(assetId));
-                    token.transferFrom(msg.sender, owner, productPrice);
+                    address owner = IGameAssets(assetsAddress).ownerOf(uint256(assetId));
+                    IGameToken(tokenAddress).transferFrom(msg.sender, owner, productPrice);
                 }
             }
         } else if ((option & 8) != 0) { // CHANCE
             // TODO: perform chance for currentCardId (delegated to ChanceContrat ?)
-            chances.performChance(currentCardId);
+            IChance(chancesAddress).performChance(currentCardId);
         } else if ((option & 16) != 0) { // QUARANTINE
             // TODO: set player in Quarantine
         }
@@ -319,7 +318,7 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
     // }
 
     function checkBalance(uint256 requiredCash) internal returns(bool) {
-        if (token.balanceOf(msg.sender) < requiredCash) {
+        if (IGameToken(tokenAddress).balanceOf(msg.sender) < requiredCash) {
             _playerLost(msg.sender);
             return false;
         }

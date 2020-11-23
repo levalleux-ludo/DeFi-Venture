@@ -14,7 +14,6 @@ export interface IAssetsData {
   providedIn: 'root'
 })
 export class AssetsContractService extends AbstractContractService<IAssetsData> {
-
   protected portfolios = new Map<string, number[]>();
   protected owners = new Map<number, string>();
 
@@ -76,6 +75,9 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
       return await this._contract.ownerOf(tokenId);
     }
     return undefined;
+  }
+
+  protected async _onContractSet(value: ethers.Contract) {
   }
 
 }
