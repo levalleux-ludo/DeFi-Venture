@@ -7,18 +7,18 @@ contract GameMasterForTest is GameMaster {
 
     constructor (
         uint8 nbMaxPlayers,
-        uint8 _nbPositions,
         uint256 _initialAmount,
-        bytes32 _playground,
-        bytes32 _chances
-        ) public GameMaster(nbMaxPlayers, _nbPositions, _initialAmount, _playground, _chances) {
+        address _playground,
+        address _chances,
+        address _randomGenerator
+        ) public GameMaster(nbMaxPlayers, _initialAmount, _playground, _chances, _randomGenerator) {
     }
     function setOptions(uint8 options) public onlyOwner {
         currentOptions = options;
     }
 
     function setPlayerPosition(address player, uint8 newPosition) public onlyOwner {
-        positions[player] = newPosition;
+        playground.setPlayerPosition(player, newPosition);
     }
 
     function setCardId(uint8 cardId) public onlyOwner {

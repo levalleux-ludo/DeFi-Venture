@@ -1,6 +1,9 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 const { getSpaces, getChances } = require("../db/playground");
+const bre = require("@nomiclabs/buidler");
+const playground = require("../db/playground");
+const ethers = bre.ethers;
 
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 1000;
@@ -33,15 +36,25 @@ function revertMessage(error) {
 
 async function createGameMaster() {
     const GameMaster = await ethers.getContractFactory("GameMasterForTest");
+    const Playground = await ethers.getContractFactory("Playground");
+    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
+    await playgroundContract.deployed();
+    const Chance = await ethers.getContractFactory("Chance");
+    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
+    await chance.deployed();
+    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
+    const randomContract = await RandomGenerator.deploy();
+    await randomContract.deployed();
     const gameMaster = await GameMaster.deploy(
         NB_MAX_PLAYERS,
-        NB_POSITIONS,
         ethers.BigNumber.from(INITIAL_BALANCE),
-        // getSpaces(NB_POSITIONS),
-        PLAYGROUND,
-        getChances(NB_CHANCES, NB_POSITIONS)
+        playgroundContract.address,
+        chance.address,
+        randomContract.address
     );
     await gameMaster.deployed();
+    gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
+    gameMaster.getPlayground = () => playgroundContract.playground();
     return gameMaster;
 }
 
@@ -87,24 +100,24 @@ describe("GameMaster", function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         expect(await gameMaster.getStatus()).to.equal(STATUS.created);
-        expect(await gameMaster.getNbPlayers()).to.equal(0);
+        expect(await gameMaster.nbPlayers()).to.equal(0);
     });
     it("Should allow to register", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         const addr1Address = await addr1.getAddress();
         await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
-        expect(await gameMaster.getNbPlayers()).to.equal(1);
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address);
+        expect(await gameMaster.nbPlayers()).to.equal(1);
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address);
         const addr2Address = await addr2.getAddress();
         await expect(gameMaster.connect(addr2).register(utils.formatBytes32String('titi'), 2)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
-        expect(await gameMaster.getNbPlayers()).to.equal(2);
+        expect(await gameMaster.nbPlayers()).to.equal(2);
     });
     it("Should not allow to register same player twice", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         await gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1);
-        expect(await gameMaster.getNbPlayers()).to.equal(1);
+        expect(await gameMaster.nbPlayers()).to.equal(1);
         await gameMaster.connect(addr1).register(utils.formatBytes32String('titi'), 2).then(shouldFail.then).catch(shouldFail.catch);
     });
     it("Should not allow to start game if less than 2 players", async function() {
@@ -200,7 +213,7 @@ describe("GameMaster", function() {
         const position = await gameMaster.getPositionOf(addr1Address);
         await expect(gameMaster.connect(addr1).play(1)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, 1, 12, position);
         const addr2Address = await addr2.getAddress();
-        expect(await gameMaster.getNextPlayer()).to.equal(addr2Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "next player shall be changed");
     });
     // it("Should not allow someone else than the nextPlayer", async function() {
     //     const [owner, addr1, addr2] = await ethers.getSigners();
@@ -211,7 +224,7 @@ describe("GameMaster", function() {
     //     await expect(gameMaster.connect(addr1).play()).to.be.revertedWith(revertMessage("NOT_AUTHORIZED"));
     //     await gameMaster.connect(addr2).play();
     //     const addr1Address = await addr1.getAddress();
-    //     expect(await gameMaster.getNextPlayer()).to.equal(addr1Address, "next player shall be changed");
+    //     expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
     // });
 
 });
@@ -245,14 +258,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        expect(await gameMaster.getNextPlayer()).to.equal(addr2Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "next player shall be changed");
         newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
         newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
@@ -262,7 +275,7 @@ describe('GameMaster play phases', () => {
         let position2 = await gameMaster.getPositionOf(addr2Address);
         let dices = [];
         let newPosition;
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
@@ -283,7 +296,7 @@ describe('GameMaster play phases', () => {
         let position2 = await gameMaster.getPositionOf(addr2Address);
         let dices = [];
         let newPosition;
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
@@ -304,7 +317,7 @@ describe('GameMaster play phases', () => {
         let position2 = await gameMaster.getPositionOf(addr2Address);
         let dices = [];
         let newPosition;
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
@@ -325,7 +338,7 @@ describe('GameMaster play phases', () => {
         let position2 = await gameMaster.getPositionOf(addr2Address);
         let dices = [];
         let newPosition;
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
@@ -346,7 +359,7 @@ describe('GameMaster play phases', () => {
         let position2 = await gameMaster.getPositionOf(addr2Address);
         let dices = [];
         let newPosition;
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
@@ -367,7 +380,7 @@ describe('GameMaster play phases', () => {
         let position2 = await gameMaster.getPositionOf(addr2Address);
         let dices = [];
         let newPosition;
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address, "next player shall be changed");
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
@@ -460,7 +473,7 @@ describe('Game play options', () => {
     });
     it('play at GENESIS', async() => {
         await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
-        expect(await gameMaster.getCurrentPlayer()).to.equal(addr1Address, "current player shall be changed");
+        expect(await gameMaster.currentPlayer()).to.equal(addr1Address, "current player shall be changed");
         await gameMaster.setPlayerPosition(addr1Address, 0); // GENESIS
         await gameMaster.setOptions(1);
         await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -475,7 +488,7 @@ describe('Game play options', () => {
     })
     it('play NOTHING at ASSET 0', async() => {
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
-        expect(await gameMaster.getCurrentPlayer()).to.equal(addr2Address, "current player shall be changed");
+        expect(await gameMaster.currentPlayer()).to.equal(addr2Address, "current player shall be changed");
         await gameMaster.setPlayerPosition(addr2Address, 1); // ASSET id 0
         await gameMaster.setOptions(3);
         await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -489,7 +502,7 @@ describe('Game play options', () => {
     })
     it('play BUY_ASSET at ASSET 1', async() => {
         await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
-        expect(await gameMaster.getCurrentPlayer()).to.equal(addr1Address, "current player shall be changed");
+        expect(await gameMaster.currentPlayer()).to.equal(addr1Address, "current player shall be changed");
         await gameMaster.setPlayerPosition(addr1Address, 3); // ASSET id 1
         await gameMaster.setOptions(3);
         await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -503,7 +516,7 @@ describe('Game play options', () => {
     })
     it('play CHANCE', async() => {
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
-        expect(await gameMaster.getCurrentPlayer()).to.equal(addr2Address, "current player shall be changed");
+        expect(await gameMaster.currentPlayer()).to.equal(addr2Address, "current player shall be changed");
         await gameMaster.setPlayerPosition(addr2Address, 2); // CHANCE
         await gameMaster.setOptions(8);
         await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));

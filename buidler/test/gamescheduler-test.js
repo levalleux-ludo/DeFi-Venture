@@ -36,9 +36,9 @@ describe('GameScheduler', () => {
         expect(await gameScheduler.isPlayerRegistered(addr1Address)).to.equal(true);
         expect(await gameScheduler.isUsernameTaken(toto)).to.equal(true);
         expect(await gameScheduler.isAvatarTaken(1)).to.equal(true);
-        expect(await gameScheduler.getNbPlayers()).to.equal(1);
-        expect(await gameScheduler.getAvatar(addr1Address)).to.equal(1);
-        expect(await gameScheduler.getUsername(addr1Address)).to.equal(toto);
+        expect(await gameScheduler.nbPlayers()).to.equal(1);
+        expect(await gameScheduler.players(addr1Address)).to.equal(1);
+        expect(await gameScheduler.usernames(addr1Address)).to.equal(toto);
     })
     it('register same avatar', async() => {
         await expect(gameScheduler.register(titi, 1)).to.be.revertedWith(revertMessage("AVATAR_ALREADY_TAKEN"));
@@ -54,9 +54,9 @@ describe('GameScheduler', () => {
         expect(await gameScheduler.isPlayerRegistered(addr2Address)).to.equal(true);
         expect(await gameScheduler.isUsernameTaken(titi)).to.equal(true);
         expect(await gameScheduler.isAvatarTaken(7)).to.equal(true);
-        expect(await gameScheduler.getNbPlayers()).to.equal(2);
-        expect(await gameScheduler.getAvatar(addr2Address)).to.equal(7);
-        expect(await gameScheduler.getUsername(addr2Address)).to.equal(titi);
+        expect(await gameScheduler.nbPlayers()).to.equal(2);
+        expect(await gameScheduler.players(addr2Address)).to.equal(7);
+        expect(await gameScheduler.usernames(addr2Address)).to.equal(titi);
     })
 
 })

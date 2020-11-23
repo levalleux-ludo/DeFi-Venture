@@ -3,6 +3,7 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@nomiclabs/buidler/console.sol";
 import { IGameMaster } from './IGameMaster.sol';
+import { GameMasterStorage } from './GameMasterStorage.sol';
 // import { GameToken } from './GameToken.sol';
 // import { GameAssets } from './GameAssets.sol';
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
@@ -11,6 +12,9 @@ import "./IGameStatus.sol";
 import { IContractFactory } from "./IContractFactory.sol";
 import { IMarketplace } from "./IMarketplace.sol";
 import { IGameMasterFactory } from "./IGameMasterFactory.sol";
+
+import { GameContractsFactory } from "./GameContractsFactory.sol";
+
 
 contract GameFactory is IGameStatus {
     // Add the library methods
@@ -42,7 +46,8 @@ contract GameFactory is IGameStatus {
 
         // GameToken gameToken = new GameToken();
         // GameAssets gameAssets = new GameAssets();
-        address gameMasterAddress = IGameMasterFactory(gameMasterFactory).create(_nbMaxPlayers, _nbPositions, _initialAmount, _playground, _chances);
+        GameContractsFactory gameContractsFActory = new GameContractsFactory();
+        address gameMasterAddress = IGameMasterFactory(gameMasterFactory).create(_nbMaxPlayers, _nbPositions, _initialAmount, _playground, _chances, address(gameContractsFActory));
         IGameMaster gameMaster = IGameMaster(gameMasterAddress);
         // GameMaster gameMaster = new GameMaster(_nbMaxPlayers, _nbPositions, _initialAmount, _playground, _chances);
         // address tokenAddress = IContractFactory(tokenFactory).create(gameMasterAddress);
@@ -57,22 +62,22 @@ contract GameFactory is IGameStatus {
     }
 
     function createGameToken(address gameMasterAddress) external {
-        IGameMaster gameMaster = IGameMaster(gameMasterAddress);
-        require(gameMaster.getToken() == address(0), "GAME_TOKEN_ALREADY_DEFINED");
+        GameMasterStorage gameMaster = GameMasterStorage(gameMasterAddress);
+        require(gameMaster.tokenAddress() == address(0), "GAME_TOKEN_ALREADY_DEFINED");
         address tokenAddress = IContractFactory(tokenFactory).create(gameMasterAddress);
         gameMaster.setToken(tokenAddress);
     }
 
     function createGameAssets(address gameMasterAddress) external {
-        IGameMaster gameMaster = IGameMaster(gameMasterAddress);
-        require(gameMaster.getAssets() == address(0), "GAME_ASSETS_ALREADY_DEFINED");
+        GameMasterStorage gameMaster = GameMasterStorage(gameMasterAddress);
+        require(gameMaster.assetsAddress() == address(0), "GAME_ASSETS_ALREADY_DEFINED");
         address assetsAddress = IContractFactory(assetsFactory).create(gameMasterAddress);
         gameMaster.setAssets(assetsAddress);
     }
 
     function createMarketplace(address gameMasterAddress) external {
-        IGameMaster gameMaster = IGameMaster(gameMasterAddress);
-        require(gameMaster.getMarketplace() == address(0), "MARKETPLACE_ALREADY_DEFINED");
+        GameMasterStorage gameMaster = GameMasterStorage(gameMasterAddress);
+        require(gameMaster.marketplaceAddress() == address(0), "MARKETPLACE_ALREADY_DEFINED");
         address marketplaceAddress = IContractFactory(marketplaceFactory).create(gameMasterAddress);
         // IMarketplace marketplace = IMarketplace(marketplaceAddress);
         // marketplace.setToken(gameMaster.getToken());
@@ -81,8 +86,8 @@ contract GameFactory is IGameStatus {
     }
 
     function assignContracts(address gameMaster, address token, address assets) public {
-        IGameMaster(gameMaster).setToken(token);
-        IGameMaster(gameMaster).setAssets(assets);
+        GameMasterStorage(gameMaster).setToken(token);
+        GameMasterStorage(gameMaster).setAssets(assets);
     }
 
     function cleanEndedGames() public {

@@ -18,13 +18,13 @@ contract Marketplace is Ownable, IMarketplace {
         uint256 minPrice;
     }
 
-    mapping (uint256 => Asset) private assetsPerId;
+    mapping (uint256 => Asset) public assetsPerId;
     uint256[] public assetsForSale;
     EnumerableSet.UintSet private assetsSet;
     GameToken private token;
-    address private tokenAddress;
+    address public tokenAddress;
     GameAssets private assets;
-    address private assetsAddress;
+    address public assetsAddress;
 
     event AssetForSale(uint256 assetId, uint256 fairPrice);
 
@@ -41,13 +41,13 @@ contract Marketplace is Ownable, IMarketplace {
         assets = GameAssets(_assets);
     }
 
-    function getToken() external override view returns (address) {
-        return tokenAddress;
-    }
+    // function getToken() external override view returns (address) {
+    //     return tokenAddress;
+    // }
 
-    function getAssets() external override view returns (address) {
-        return assetsAddress;
-    }
+    // function getAssets() external override view returns (address) {
+    //     return assetsAddress;
+    // }
 
     function bidAttempt(uint256 assetId, uint256 bidPrice) external override view returns (bool accepted) {
         require(this.isAssetForSale(assetId), "ASSET_IS_NOT_FOR_SALE");

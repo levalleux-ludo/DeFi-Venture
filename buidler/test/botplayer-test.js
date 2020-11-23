@@ -27,15 +27,25 @@ var ownerAddress, addr1Address, addr1Address;
 
 async function createGameMaster() {
     const GameMaster = await ethers.getContractFactory("GameMasterForTest");
+    const Playground = await ethers.getContractFactory("Playground");
+    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
+    await playgroundContract.deployed();
+    const Chance = await ethers.getContractFactory("Chance");
+    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
+    await chance.deployed();
+    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
+    const randomContract = await RandomGenerator.deploy();
+    await randomContract.deployed();
     const gameMaster = await GameMaster.deploy(
         NB_MAX_PLAYERS,
-        NB_POSITIONS,
         ethers.BigNumber.from(INITIAL_BALANCE),
-        // getSpaces(NB_POSITIONS),
-        PLAYGROUND,
-        getChances(NB_CHANCES, NB_POSITIONS)
+        playgroundContract.address,
+        chance.address,
+        randomContract.address
     );
     await gameMaster.deployed();
+    gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
+    gameMaster.getPlayground = () => playgroundContract.playground();
     return gameMaster;
 }
 
@@ -92,7 +102,7 @@ describe('BotPlayer', () => {
             botPlayer1.connect(owner).register(gameMaster1.address, utils.formatBytes32String('R1D1'), 1)
         ).to.emit(gameMaster1, 'PlayerRegistered').withArgs(botPlayer1.address, 1);
         expect(await gameMaster1.isPlayerRegistered(botPlayer1.address)).to.equal(true);
-        expect(await gameMaster1.getNbPlayers()).to.equal(1);
+        expect(await gameMaster1.nbPlayers()).to.equal(1);
     })
     it('Should not allow to register if not called by owner', async() => {
         expect(await gameMaster2.isPlayerRegistered(botPlayer1.address)).to.equal(false);
@@ -107,7 +117,7 @@ describe('BotPlayer', () => {
             botPlayer1.connect(owner).register(gameMaster2.address, utils.formatBytes32String('R1D1'), 1)
         ).to.emit(gameMaster2, 'PlayerRegistered').withArgs(botPlayer1.address, 1);
         expect(await gameMaster2.isPlayerRegistered(botPlayer1.address)).to.equal(true);
-        expect(await gameMaster2.getNbPlayers()).to.equal(1);
+        expect(await gameMaster2.nbPlayers()).to.equal(1);
     })
     it('Register Bot2 to Game1 and Game2', async() => {
         expect(await gameMaster1.isPlayerRegistered(botPlayer2.address)).to.equal(false);
@@ -120,8 +130,8 @@ describe('BotPlayer', () => {
         ).to.emit(gameMaster2, 'PlayerRegistered').withArgs(botPlayer2.address, 2);
         expect(await gameMaster1.isPlayerRegistered(botPlayer2.address)).to.equal(true);
         expect(await gameMaster2.isPlayerRegistered(botPlayer2.address)).to.equal(true);
-        expect(await gameMaster1.getNbPlayers()).to.equal(2);
-        expect(await gameMaster2.getNbPlayers()).to.equal(2);
+        expect(await gameMaster1.nbPlayers()).to.equal(2);
+        expect(await gameMaster2.nbPlayers()).to.equal(2);
     })
     it('Start games', async() => {
         expect(await gameMaster1.getStatus()).to.equal(STATUS.created);
@@ -133,15 +143,15 @@ describe('BotPlayer', () => {
     })
     it('Bot1 plays on both games', async() => {
         await playTurn(botPlayer1, gameMaster1, owner);
-        expect(await gameMaster1.getNextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
+        expect(await gameMaster1.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
         await playTurn(botPlayer1, gameMaster2, owner);
-        expect(await gameMaster2.getNextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
+        expect(await gameMaster2.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
     })
     it('Bot2 plays on both games', async() => {
         await playTurn(botPlayer2, gameMaster1, owner);
-        expect(await gameMaster1.getNextPlayer()).to.equal(botPlayer1.address, "next player shall be changed");
+        expect(await gameMaster1.nextPlayer()).to.equal(botPlayer1.address, "next player shall be changed");
         await playTurn(botPlayer2, gameMaster2, owner);
-        expect(await gameMaster2.getNextPlayer()).to.equal(botPlayer1.address, "next player shall be changed");
+        expect(await gameMaster2.nextPlayer()).to.equal(botPlayer1.address, "next player shall be changed");
     })
 
 })

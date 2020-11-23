@@ -42,7 +42,8 @@ let USER_DATA_FIELDS = {}; {
         'address',
         'username',
         'avatar',
-        'position'
+        'position',
+        'hasLost'
     ];
     for (let key of keys) {
         USER_DATA_FIELDS[key] = index++;
@@ -65,15 +66,30 @@ function revertMessage(error) {
 
 async function createGameMaster() {
     const GameMaster = await ethers.getContractFactory("GameMasterForTest");
+    const Playground = await ethers.getContractFactory("Playground");
+    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
+    await playgroundContract.deployed();
+    const Chance = await ethers.getContractFactory("Chance");
+    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
+    await chance.deployed();
+    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
+    const randomContract = await RandomGenerator.deploy();
+    await randomContract.deployed();
     const gameMaster = await GameMaster.deploy(
         NB_MAX_PLAYERS,
-        NB_POSITIONS,
         ethers.BigNumber.from(INITIAL_BALANCE),
-        // getSpaces(NB_POSITIONS),
-        PLAYGROUND,
-        getChances(NB_CHANCES, NB_POSITIONS)
+        playgroundContract.address,
+        chance.address,
+        randomContract.address
     );
     await gameMaster.deployed();
+    gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
+    gameMaster.getPlayground = () => playgroundContract.playground();
+    gameMaster.getUsername = (player) => gameMaster.usernames(player);
+    gameMaster.getAvatar = (player) => gameMaster.players(player);
+    gameMaster.getCurrentOptions = () => gameMaster.currentOptions();
+    gameMaster.getCurrentCardId = () => gameMaster.currentCardId();
+    gameMaster.getNbPositions = () => playgroundContract.nbPositions();
     return gameMaster;
 }
 
@@ -119,18 +135,18 @@ describe("GameMaster optimised", function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         expect(await gameMaster.getStatus()).to.equal(STATUS.created);
-        expect(await gameMaster.getNbPlayers()).to.equal(0);
+        expect(await gameMaster.nbPlayers()).to.equal(0);
     });
     it("Should allow to register", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
         const gameMaster = await createGameMaster();
         const addr1Address = await addr1.getAddress();
         await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
-        expect(await gameMaster.getNbPlayers()).to.equal(1);
-        expect(await gameMaster.getNextPlayer()).to.equal(addr1Address);
+        expect(await gameMaster.nbPlayers()).to.equal(1);
+        expect(await gameMaster.nextPlayer()).to.equal(addr1Address);
         const addr2Address = await addr2.getAddress();
         await expect(gameMaster.connect(addr2).register(utils.formatBytes32String('titi'), 2)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
-        expect(await gameMaster.getNbPlayers()).to.equal(2);
+        expect(await gameMaster.nbPlayers()).to.equal(2);
     });
     it("Should allow to start game", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
@@ -157,9 +173,9 @@ describe("GameMaster optimised", function() {
         await gameMaster.setOptions(255);
         await gameMaster.setCardId(12);
         const status = await gameMaster.getStatus();
-        const nbPlayers = await gameMaster.getNbPlayers();
-        const nextPlayer = await gameMaster.getNextPlayer();
-        const currentPlayer = await gameMaster.getCurrentPlayer();
+        const nbPlayers = await gameMaster.nbPlayers();
+        const nextPlayer = await gameMaster.nextPlayer();
+        const currentPlayer = await gameMaster.currentPlayer();
         const currentOptions = await gameMaster.getCurrentOptions();
         const cardId = await gameMaster.getCurrentCardId();
         const nbSpaces = await gameMaster.getNbPositions();
@@ -227,7 +243,7 @@ describe("GameMaster optimised", function() {
         const username2 = await gameMaster.getUsername(addr2Address);
         const avatar1 = await gameMaster.getAvatar(addr1Address);
         const avatar2 = await gameMaster.getAvatar(addr2Address);
-        const nbPlayers = await gameMaster.getNbPlayers();
+        const nbPlayers = await gameMaster.nbPlayers();
         const indexes = [];
         for (let index = 0; index < nbPlayers; index++) {
             indexes.push(index);

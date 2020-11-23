@@ -1,24 +1,27 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@nomiclabs/buidler/console.sol";
-import "./IGameStatus.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+// import "@nomiclabs/buidler/console.sol";
+import { IGameStatus } from  "./IGameStatus.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IGameScheduler} from "./IGameScheduler.sol";
 
 contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
-    uint8 status = CREATED;
-    uint8 nbPlayers = 0;
-    uint8 nextPlayerIdx = 0;
-    address nextPlayer;
-    mapping(address => uint8) players;
-    mapping(address => bytes32) usernames;
-    address[] playersSet;
-    uint8 nbMaxPlayers;
+    uint8 public status = CREATED;
+    uint8 public nbPlayers = 0;
+    uint8 public nextPlayerIdx = 0;
+    address public nextPlayer;
+    mapping(address => uint8) public players;
+    mapping(address => bytes32) public usernames;
+    address[] public playersSet;
+    uint8 public nbMaxPlayers;
+    mapping (address => bool) public lostPlayers;
     
     event StatusChanged(uint8 newStatus);
     event PlayerRegistered(address newPlayer, uint8 nbPlayers);
+    event PlayerLost(address indexed player);
+    event PlayerWin(address indexed player);
     
     constructor(uint8 _nbMaxPlayers) public Ownable() {
         nbMaxPlayers = _nbMaxPlayers;
@@ -29,21 +32,40 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
         return status;
     }
 
-    function getNbPlayers() view external override returns (uint8) {
-        return nbPlayers;
-    }
+    // function getNbPlayers() view external override returns (uint8) {
+    //     return nbPlayers;
+    // }
 
-    function getNextPlayer() view external override returns (address) {
-        return nextPlayer;
-    }
+    // function getNextPlayer() view external override returns (address) {
+    //     return nextPlayer;
+    // }
 
     function isPlayerRegistered(address player) view external override returns (bool) {
         return (players[player] != 0);
     }
 
+    function hasPlayerLost(address player) view external returns (bool) {
+        return lostPlayers[player];
+    }
+
+    function getWinner() view external returns (address) {
+        address winner = address(0);
+        for (uint8 i = 0; i < nbPlayers; i++) {
+            address player = playersSet[i];
+            if (!lostPlayers[player]) {
+                if (winner != address(0)) {
+                    // mosre than 1 player has not lost yet -> no winner
+                    return address(0);
+                }
+                winner = player;
+            }
+        }
+        return winner;
+    }
+
     function isAvatarTaken(uint8 avatar) view external override returns (bool) {
         for (uint8 i = 0; i < nbPlayers; i++) {
-            address player = this.getPlayerAtIndex(i);
+            address player = playersSet[i];
             if (players[player] == avatar) {
                 return true;
             }
@@ -53,11 +75,11 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
 
     function isUsernameTaken(bytes32 username) view external override returns (bool) {
         for (uint8 i = 0; i < nbPlayers; i++) {
-            address player = this.getPlayerAtIndex(i);
-            console.log('compare');
-            console.logBytes32(username);
-            console.log('with');
-            console.logBytes32(usernames[player]);
+            address player = playersSet[i];
+            // console.log('compare');
+            // console.logBytes32(username);
+            // console.log('with');
+            // console.logBytes32(usernames[player]);
             if (usernames[player] == username) {
                 return true;
             }
@@ -65,22 +87,22 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
         return false;
     }
 
-    function getPlayerAtIndex(uint8 index) view external override returns (address) {
-        require(index <= nbPlayers, "index can not be more than the number of players");
-        return playersSet[index];
-    }
+    // function getPlayerAtIndex(uint8 index) view external override returns (address) {
+    //     require(index <= nbPlayers, "index can not be more than the number of players");
+    //     return playersSet[index];
+    // }
 
-    function getAvatar(address player) view external override returns (uint8) {
-        uint8 avatar = players[player];
-        require(avatar != 0, "PLAYER_NOT_REGISTERED");
-        return avatar;
-    }
+    // function getAvatar(address player) view external override returns (uint8) {
+    //     uint8 avatar = players[player];
+    //     require(avatar != 0, "PLAYER_NOT_REGISTERED");
+    //     return avatar;
+    // }
 
-    function getUsername(address player) view external override returns (bytes32 username) {
-        require(this.isPlayerRegistered(player), "PLAYER_NOT_REGISTERED");
-        username = usernames[player];
-        return username;
-    }
+    // function getUsername(address player) view external override returns (bytes32 username) {
+    //     require(this.isPlayerRegistered(player), "PLAYER_NOT_REGISTERED");
+    //     username = usernames[player];
+    //     return username;
+    // }
 
     function register(bytes32 username, uint8 avatar) external override payable {
         // TODO: deal with msg.value if not null
@@ -120,8 +142,6 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
 
     function _end() internal virtual {
         require((status == STARTED) || (status == FROZEN), "INVALID_GAME_STATE");
-        // TODO: which requirements to authorize someone to stop the current game ???
-
         setStatus(ENDED);
     }
 
@@ -133,6 +153,9 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
     function chooseNextPlayer() internal {
         nextPlayerIdx = (nextPlayerIdx + 1) % nbPlayers;
         nextPlayer = playersSet[nextPlayerIdx];
+        if (this.hasPlayerLost(nextPlayer)) {
+            chooseNextPlayer();
+        }
         // TODO: if player in quarantine, step over (and remove from quarantine for next time)
     }
 
@@ -140,5 +163,14 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
     return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 
+    function _playerLost(address player) internal virtual {
+        lostPlayers[player] = true;
+        address winner = this.getWinner();
+        emit PlayerLost(player);
+        if (winner != address(0)) {
+            emit PlayerWin(winner);
+            _end();
+        }
+    }
 
 }

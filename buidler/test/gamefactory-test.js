@@ -1,6 +1,8 @@
 const { expect } = require("chai");
 const { BigNumber, utils } = require("ethers");
 const { getSpaces, getChances } = require("../db/playground");
+const bre = require("@nomiclabs/buidler");
+const ethers = bre.ethers;
 
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 1000;
@@ -42,17 +44,17 @@ var avatarCount = 1;
 async function registerPlayers(gameMaster, players) {
     let tokenContract;
     let assetsContract;
-    const token = await gameMaster.getToken();
+    const token = await gameMaster.tokenAddress();
     if (token !== 0) {
         tokenContract = await TokenFactory.attach(token);
         await tokenContract.deployed();
     }
-    const assets = await gameMaster.getAssets();
+    const assets = await gameMaster.assetsAddress();
     if (assets !== 0) {
         assetsContract = await AssetsFactory.attach(assets);
         await assetsContract.deployed();
     }
-    const marketplaceAddr = await gameMaster.getMarketplace();
+    const marketplaceAddr = await gameMaster.marketplaceAddress();
     for (let player of players) {
         if (tokenContract) {
             await tokenContract.connect(player).approveMax(gameMaster.address);
@@ -131,7 +133,7 @@ describe("GameFactory", function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
-        const tokenAddr = await gameMaster.getToken();
+        const tokenAddr = await gameMaster.tokenAddress();
         expect(tokenAddr).to.not.equal(0);
         const token = TokenFactory.attach(tokenAddr);
         await token.deployed();
@@ -144,7 +146,7 @@ describe("GameFactory", function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
-        const assetsAddr = await gameMaster.getAssets();
+        const assetsAddr = await gameMaster.assetsAddress();
         expect(assetsAddr).to.not.equal(0);
         const assets = AssetsFactory.attach(assetsAddr);
         await assets.deployed();
@@ -157,7 +159,7 @@ describe("GameFactory", function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
-        const marketplaceAddr = await gameMaster.getMarketplace();
+        const marketplaceAddr = await gameMaster.marketplaceAddress();
         expect(marketplaceAddr).to.not.equal(0);
         const marketplace = MarketplaceFactory.attach(marketplaceAddr);
         await marketplace.deployed();
@@ -166,19 +168,19 @@ describe("GameFactory", function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
-        const marketplaceAddr = await gameMaster.getMarketplace();
+        const marketplaceAddr = await gameMaster.marketplaceAddress();
         expect(marketplaceAddr).to.not.equal(0);
         const marketplace = MarketplaceFactory.attach(marketplaceAddr);
         await marketplace.deployed();
-        const tokenAddr = await marketplace.getToken();
+        const tokenAddr = await marketplace.tokenAddress();
         expect(tokenAddr).to.not.equal(0);
-        expect(tokenAddr).to.equal(await gameMaster.getToken());
+        expect(tokenAddr).to.equal(await gameMaster.tokenAddress());
     });
     it('Registered users should have tokens when game starts', async function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
-        const tokenAddr = await gameMaster.getToken();
+        const tokenAddr = await gameMaster.tokenAddress();
         expect(tokenAddr).to.not.equal(0);
         const token = TokenFactory.attach(tokenAddr);
         await token.deployed();
@@ -193,7 +195,7 @@ describe("GameFactory", function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
-        const tokenAddr = await gameMaster.getToken();
+        const tokenAddr = await gameMaster.tokenAddress();
         expect(tokenAddr).to.not.equal(0);
         const token = TokenFactory.attach(tokenAddr);
         await token.deployed();
