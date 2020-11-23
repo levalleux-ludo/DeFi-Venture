@@ -57,7 +57,7 @@ export class GameTranslatorService {
           }
           case 'RolledDices': {
             const {player, dice1, dice2, newPosition, cardId, options} = event.value;
-            return `Player ${this.getUsername(player)} has rolled the dices, got ${dice1}+${dice2} and moved to block ${this.getBlockDescription(newPosition)}\n${this.describeOptions(newPosition, cardId, options)}`;
+            return `${this.getUsername(player)} has rolled the dices, got ${dice1}+${dice2} and moved to block ${this.getBlockDescription(newPosition)}\n${this.describeOptions(newPosition, cardId, options)}`;
             break;
           }
           default: {
@@ -70,11 +70,11 @@ export class GameTranslatorService {
         switch(event.type) {
           case 'Transfer': {
             if (event.value.from === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.to)} has received ${event.value.value.toString()} tokens`;
+              return `${this.getUsername(event.value.to)} has received ${event.value.value.toString()} tokens`;
             } else if (event.value.to === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.from)} has spent ${event.value.value.toString()} tokens`;
+              return `${this.getUsername(event.value.from)} has spent ${event.value.value.toString()} tokens`;
             } else {
-              return `Player ${this.getUsername(event.value.from)} has transferred ${event.value.value.toString()} tokens to account ${this.getUsername(event.value.to)}`;
+              return `${this.getUsername(event.value.from)} has transferred ${event.value.value.toString()} tokens to ${this.getUsername(event.value.to)}`;
             }
             break;
           }
@@ -92,11 +92,11 @@ export class GameTranslatorService {
         switch(event.type) {
           case 'Transfer': {
             if (event.value.from === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.to)} has received asset with id ${event.value.tokenId.toString()}`;
+              return `Player ${this.getUsername(event.value.to)} has founded startup ${this.getAssetName(event.value.tokenId)}`;
             } else if (event.value.to === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.from)} has released asset with id ${event.value.tokenId.toString()}`;
+              return `Player ${this.getUsername(event.value.from)} has released company ${this.getAssetName(event.value.tokenId)}`;
             } else {
-              return `Player ${this.getUsername(event.value.from)} has transferred asset with id ${event.value.tokenId.toString()} to account ${this.getUsername(event.value.to)}`;
+              return `Player ${this.getUsername(event.value.from)} has transferred company ${this.getAssetName(event.value.tokenId)} to ${this.getUsername(event.value.to)}`;
             }
             break;
           }

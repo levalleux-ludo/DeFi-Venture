@@ -29,7 +29,7 @@ export class TestCanvasComponent implements OnInit {
   set width(value: number) {
     this.canvas.nativeElement.width = value;
     // this._zoom = 1.2 + 1.2 * value / 2000;
-    this._zoom = 0.5 + value / 2000;
+    this._zoom = 0.8 + value / 2000;
     this.origin = {
       x: value / 2, // middle
       y: 50 // top
@@ -99,6 +99,7 @@ export class TestCanvasComponent implements OnInit {
     'assets/avatars/r5d5.png'
   ];
   avatarsPosition = new Map<number, number[]>();
+  owners = new Map<number, number>();
   blocks_geometry = [];
   nbSteps = 0;
   private ctx: CanvasRenderingContext2D;
@@ -159,6 +160,14 @@ export class TestCanvasComponent implements OnInit {
         resolve();
       }
     });
+  }
+
+  public setOwner(player: number, position: number) {
+    const avatarId = player - 1; // avatar 0 does not exist
+    this.owners.set(position, avatarId);
+    if (this.ctx) {
+      this.draw(this._currentAngle);
+    }
   }
 
   public setPlayerPosition(player: number, newPosition, animate = false) {
@@ -293,6 +302,16 @@ export class TestCanvasComponent implements OnInit {
             this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
           }
         }
+      }
+      if (this.owners.has(index)) {
+        const avatar = this.owners.get(index);
+        this.ctx.beginPath();
+        this.ctx.arc(posX + 0 * this.zoom, posY + 36*this.zoom, 15*this.zoom, 0, 2 * Math.PI);
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        this.ctx.fill();
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        this.ctx.stroke();
+        this.ctx.drawImage(this.loaded_avatars[avatar], posX - (12 * this.zoom), posY + 24*this.zoom, 24*this.zoom, 24*this.zoom);
       }
       this.ctx.restore();
     }

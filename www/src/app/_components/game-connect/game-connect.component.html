@@ -41,7 +41,7 @@
                                 <app-dices #dices class="dices-block"></app-dices>
                             </div>
                             <div *ngIf="(gameData.status == 'STARTED') && isNextPlayer && isCurrentPlayer">
-                                <app-space-image [spaceId]="position" [owner]="owner" [playground]="playground" [canValidate]="canValidate" [chanceCardId]="gameData.chanceCardId" (onValidate)="validate($event)"></app-space-image>
+                                <app-space-image [spaceId]="position" [owner]="translatorService.getUsername(owner)" [ownerAvatar]="getPlayerAvatar(owner)" [playground]="playground" [canValidate]="canValidate" [chanceCardId]="gameData.chanceCardId" (onValidate)="validate($event)"></app-space-image>
                             </div>
                         </div>
                         <!-- zone 2 -->

@@ -7,7 +7,7 @@ import { AssetsContractService, IAssetsData } from './../../_services/assets-con
 import { PlayersTableComponent } from './../players-table/players-table.component';
 import { Utils } from './../../_utils/utils';
 import { GameTokenContractService, ITokenData } from './../../_services/game-token-contract.service';
-import { GameMasterContractService, GAME_STATUS, IGameData, eSpaceType, eAvatar } from './../../_services/game-master-contract.service';
+import { GameMasterContractService, GAME_STATUS, IGameData, eSpaceType, eAvatar, ISpace } from './../../_services/game-master-contract.service';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { GameService } from './../../_services/game.service';
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, ViewChildren, QueryList } from '@angular/core';
@@ -53,7 +53,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   assets = [];
   tokenDecimals: number;
   balances: Map<string, BigNumber>;
-  playground = [];
+  playground: ISpace[] = [];
   isValidating = false;
   isPlaying = false;
   isStarting = false;
@@ -229,7 +229,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
           this.players.setPlayerPosition(player, position);
         }
         if (this.board !== undefined) {
-          this.board.setPlayerPosition(this.avatars.get(player), position, true);
+          this.board.setPlayerPosition(this.getPlayerAvatar(player), position, true);
         }
       });
       setTimeout(() => {
@@ -238,6 +238,10 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }, 500);
     }
+  }
+
+  getPlayerAvatar(player: string): number | undefined {
+    return this.avatars.get(player);
   }
 
   refreshTokenData(tokenData: ITokenData) {
@@ -266,6 +270,16 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       console.log(this.currentAccount, this.assets);
       if (this.otherPlayers !== undefined) {
         this.otherPlayers.portfolios = assetsData.portfolios;
+      }
+      if ((this.board !== undefined) && (this.playground !== undefined)) {
+        this.assetsData.owners.forEach((player, assetId) => {
+          const assetPosition = this.playground.findIndex(space => space.assetId === assetId);
+          if (assetPosition === -1) {
+            console.error('Unable to find assetPosition for assetId', assetId);
+          } else {
+            this.board.setOwner(this.getPlayerAvatar(player), assetPosition);
+          }
+        });
       }
     } else {
       this.assets = [];
@@ -336,16 +350,17 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       });
       return;
     }
-    this.board.lockAvatar(this.avatars.get(this.currentAccount));
+    this.board.lockAvatar(this.getPlayerAvatar(this.currentAccount));
     const oldPosition = this.position;
     const nbBlocks = this.board.nbBlocks;
     let offset = (oldPosition <= newPosition) ? newPosition - oldPosition : (newPosition + nbBlocks) - oldPosition;
     const revPosition = nbBlocks - newPosition % nbBlocks;
     const targetAngle = revPosition * 2 * Math.PI / nbBlocks;
     this.board.setTargetAngle(targetAngle, offset/nbBlocks).then(() => {
-      this.board.unlockAvatar(this.avatars.get(this.currentAccount), newPosition);
+      this.board.unlockAvatar(this.getPlayerAvatar(this.currentAccount), newPosition);
       this.position = newPosition;
       const space = this.playground[newPosition];
+      this.owner = undefined;
       if ((space.type >= eSpaceType.ASSET_CLASS_1) && (space.type <= eSpaceType.ASSET_CLASS_4)) {
         this.assetsContractService.ready.then(() => {
           this.assetsContractService.getOwner(space.assetId).then((owner) => {
