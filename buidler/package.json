@@ -20,6 +20,7 @@
         "@nomiclabs/buidler": "^1.4.7",
         "@nomiclabs/buidler-ethers": "^2.0.0",
         "@nomiclabs/buidler-waffle": "^2.1.0",
+        "buidler-contract-sizer": "^1.0.2",
         "chai": "^4.2.0",
         "command-line-args": "^5.1.1",
         "dotenv": "^8.2.0",
