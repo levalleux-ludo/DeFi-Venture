@@ -1,5 +1,5 @@
 <p *ngIf="(gameFactory != undefined)">Game Factory:
-    <app-blockchain-link [network]="network" [link]="gameFactory"></app-blockchain-link>
+    <app-blockchain-link [network]="network" [link]="gameFactory" [text]="shortAddress(gameFactory)"></app-blockchain-link>
 </p>
 <div *ngIf="balanceEth <= 0.02">
     <h2>Warning !</h2>
@@ -29,7 +29,7 @@
             <td>#{{i+1}}</td>
             <td>{{game.status}}</td>
             <td>
-                <app-blockchain-link [network]="network " [link]="game.gameMaster "></app-blockchain-link>
+                <app-blockchain-link [network]="network " [link]="game.gameMaster" [text]="shortAddress(game.gameMaster)"></app-blockchain-link>
             </td>
             <!-- <td>{{game.nbPlayers}}</td> -->
             <td *ngIf="!game.isCompleted ">Acquiring game information ...</td>

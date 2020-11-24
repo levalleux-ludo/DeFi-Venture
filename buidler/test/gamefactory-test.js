@@ -191,7 +191,7 @@ describe("GameFactory", function() {
         expect(balance1.toString()).to.equal(BigNumber.from(INITIAL_BALANCE).toString());
         expect((await token.totalSupply()).toString()).to.equal(BigNumber.from(INITIAL_BALANCE).mul(2).toString());
     });
-    it('End the game shall reset the balances', async function() {
+    it('End the game shall not reset the balances', async function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
@@ -205,8 +205,7 @@ describe("GameFactory", function() {
         expect(balance1.toString()).to.equal(BigNumber.from(INITIAL_BALANCE).toString());
         await gameMaster.end();
         const balance1after = await token.balanceOf(addr1Address);
-        expect(balance1after.toNumber()).to.equal(0);
-        expect((await token.totalSupply()).toNumber()).to.equal(0);
+        expect(balance1after.toNumber()).to.equal(balance1);
     })
 
 });

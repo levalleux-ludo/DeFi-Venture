@@ -40,6 +40,9 @@ export class GameFactoryComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private botServerService: BotServerService
   ) { }
+
+  shortAddress = Utils.shortAddress;
+
   _network;
   gameFactory;
   games: Array<{

@@ -106,12 +106,14 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         address _address,
         bytes32 _username,
         uint8 _avatar,
-        uint8 _position
+        uint8 _position,
+        bool _hasLost
     ) {
         _address = player;
         _username = usernames[player];
         _avatar = players[player];
         _position = IPlayground(playgroundAddress).getPlayerPosition(player);
+        _hasLost = lostPlayers[player];
     }
 
     function getPlayersPositions(address[] calldata players) external view returns (
@@ -242,9 +244,6 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
     }
     function _end() internal override {
         super._end();
-        if (tokenAddress != address(0)) {
-            IGameToken(tokenAddress).reset();
-        }
     }
 
     function _register(bytes32 username, uint8 avatar) internal override {

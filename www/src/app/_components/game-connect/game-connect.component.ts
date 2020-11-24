@@ -83,6 +83,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   board_width;
   board_height = 900;
 
+  shortAddress = Utils.shortAddress;
+
   constructor(
     private breakpointObserver: BreakpointObserver,
     private gameService: GameService,
@@ -226,17 +228,20 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         console.log('refresh position during refreshGameData', newPosition);
         this.refreshPosition(newPosition);
       }
-      this.gameData.players.forEach((player, playerAddress) => {
-        this.avatars.set(playerAddress, player.avatar);
+      this.gameData.players.forEach((aplayer, playerAddress) => {
+        this.avatars.set(playerAddress, aplayer.avatar);
       });
-      this.gameData.playersPosition.forEach((position, player) => {
+      this.gameData.playersPosition.forEach((position, aplayer) => {
         if (this.players !== undefined) {
-          this.players.setPlayerPosition(player, position);
+          this.players.setPlayerPosition(aplayer, position);
         }
         if (this.board !== undefined) {
-          this.board.setPlayerPosition(this.getPlayerAvatar(player), position, true);
+          this.board.setPlayerPosition(this.getPlayerAvatar(aplayer), position, true);
         }
       });
+      if (this.otherPlayers !== undefined) {
+        this.otherPlayers.gameData = gameData;
+      }
       setTimeout(() => {
         if (this.board !== undefined) {
           this.zoom = this.board.zoom;
@@ -463,14 +468,6 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   changeZoom(zoom: number) {
     this.zoom = zoom;
     this.board.zoom = zoom;
-  }
-
-  shortAddress(address: string, nbChars = 4) {
-    return `${address
-      .toLowerCase()
-      .substring(0, nbChars)}-${address
-      .toLowerCase()
-      .substring(address.length - nbChars)}`;
   }
 
   reconnectDiscord() {

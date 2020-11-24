@@ -23,23 +23,23 @@ export const config = {
   api_port: 8899,
   bots: {
     80001: [ // mumbai
-      { name: 'R1D1', address: '0xC3B4546E1De027148B40F2A1efC15E5A69d6a031' },
-      { name: 'R2D2', address: '0xC30f79BD67F29A0795f522BCc847e8314caD613c' },
-      { name: 'R3D3', address: '0x92954dbe27fA0020b2463960E1b901D01C13B297' },
-      { name: 'R4D4', address: '0xcDf09FBc9Ad0C754c5280DceDe2247A6527a17b2' },
-      { name: 'R5D5', address: '0x28C847BC633cdCbe5883E1095CbD106345027296' },
+      { name: 'R1D1', address: '0xf5ed59CE3698eB241dc490217c9FAbEAbE9b045a'},
+      { name: 'R2D2', address: '0x4e562B63AbCeb7016B2b825DAC983a69D7701009'},
+      { name: 'R3D3', address: '0x2334b578912446D3286c87B81503284632707225'},
+      { name: 'R4D4', address: '0xF44F095bFF344f1b3d936b98F167df17256662D9'},
+      { name: 'R5D5', address: '0xDC4598452478c44880910eC1ff453f806eC65388'},
     ],
     1337: [ // ganache
-      { name: 'R1D1', address: '0x242a40c862D1311BD21C38933681aA4a95246281'},
-      { name: 'R2D2', address: '0x38144D30C304151e52AC7cAf117DF7927ad340BE'},
-      { name: 'R3D3', address: '0x771A1385cE601D04D6aD8598B0E657b972BC6d49'},
-      { name: 'R4D4', address: '0x78fCB7e9Ddc94aBA69a3b4E280F98A5A01ce8B4C'},
-      { name: 'R5D5', address: '0xc26a63ED134340f2452817AfD39Cd94dE24343a6'},
+      { name: 'R1D1', address: '0x46a9E47B18Efc0655443CEA419e84b82866D76eb'},
+      { name: 'R2D2', address: '0xdAFACB0A2b5c8Be978e19F3268dF2305DDC76a08'},
+      { name: 'R3D3', address: '0x7F1fc6249c96090Dac9e206bF644ED6793F35229'},
+      { name: 'R4D4', address: '0xd0926e3FC3eD92C05527AA732057EDE85fde82B3'},
+      { name: 'R5D5', address: '0x2346764D5f5f8C9f2f7A532A80f493B6397a50f1'},
     ]
   },
   gameFactory: {
-    80001: '0x780780761Bdb9e26b697A74F631ed33a332faa3c', // mumbai
-    1337: '0x201CE6aC40afD5736423537ea0197C8a4DED8937', // ganache
+    80001: '0xb509029889B27bFCa71340f2B8ebF0cbe0295d07', // mumbai
+    1337: '0x520A3Fef8C677Be3B1e4a4665cA0355525B50fD9', // ganache
   },
   networks: {
     ganache: {

@@ -11,7 +11,7 @@
         </div>
         <div #content fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="sidenav-content">
             <div class="game-contract"><a routerLink="/games">All Games</a> &gt;
-                <app-blockchain-link [network]="network" [link]="gameMaster" [text]="'0x' + shortAddress(gameMaster.slice(2))"></app-blockchain-link>
+                <app-blockchain-link [network]="network" [link]="gameMaster" [text]="shortAddress(gameMaster)"></app-blockchain-link>
                 <div *ngIf="(gameData != undefined) && !isRegistered">
                     <h1>You're not registered to this game</h1>
                     <div *ngIf="gameData.status == 'CREATED'">
@@ -59,13 +59,18 @@
                                     </div>
                                 </div>
                             </div>
+                            <div *ngIf="gameData.status == 'ENDED'" class="mat-headline">
+                                <img src="assets/gameover.png" height="30">
+                                <div>This Game Session Has Ended.<br>Go back to <a routerLink="/games">All Games</a> to create or join another session
+                                </div>
+                            </div>
                             <div *ngIf="currentPlayer?.hasWon" class="mat-headline">
-                                <img src="assets/winner.png" height="200">
+                                <img src="assets/winner.png" height="160">
                                 <div> Congratulations! You have won this game.
                                 </div>
                             </div>
                             <div *ngIf="currentPlayer?.hasLost" class="mat-headline">
-                                <img src="assets/looser.png" height="200">
+                                <img src="assets/looser.png" height="160">
                                 <div>Shame on you! You have lost this game.
                                 </div>
                             </div>
@@ -107,5 +112,4 @@
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>
-<button (click)="reconnectDiscord()">reconnect Discord</button>
 <app-discord-widgetbot #discord [guildId]="discordService.GUILD_ID$ | async"></app-discord-widgetbot>
