@@ -11,6 +11,7 @@
 import {
   CategoryChannel,
   Channel,
+  ChannelManager,
   Client,
   Guild,
   GuildChannel,
@@ -38,6 +39,19 @@ export const GAME_CHANNELS_CATEGORY_ID =
 export const GENERAL_CHANNEL_ID = discordConfig.GENERAL;
 
 export const TEST_USER_ID = discordConfig.TEST_USER_ID;
+
+export function shortAddress(address: string, nbChars = 4) {
+  let prefix = '';
+  if (address.startsWith('0x')) {
+    prefix = '0x';
+    address = address.slice(2);
+  }
+  return `${prefix}${address
+    .toLowerCase()
+    .substring(0, nbChars)}-${address
+    .toLowerCase()
+    .substring(address.length - nbChars)}`;
+}
 
 // Decorate the class with the @Discord decorator
 // @Discord(COMMAND_PREFIX)
@@ -136,7 +150,7 @@ export class AppDiscord {
 
   public async createChannelForGame(game: IGame): Promise<TextChannel> {
     await this.waitReady();
-    const channelName = `game-${this.shortAddress(game.address)}`;
+    const channelName = `game-${shortAddress(game.address)}`;
     let channel = await this.findTextChannel(
       channelName,
       GAME_CHANNELS_CATEGORY_ID
@@ -195,6 +209,64 @@ export class AppDiscord {
       }
     });
   }
+
+  messagesPool = new Map<Channel, string>();
+
+  topics = new Map<string, string>();
+
+  public async sendMessageToChannel(channel: Channel, message: string) {
+    return new Promise((resolve, reject) => {
+      let messagePool = this.messagesPool.has(channel)
+        ? this.messagesPool.get(channel) + '\n'
+        : '';
+      messagePool += message;
+      this.messagesPool.set(channel, messagePool);
+    });
+  }
+
+  public async sendMessages(channel: TextChannel) {
+    const topic = this.topics.get(channel.id);
+    if (topic !== undefined) {
+      this.topics.delete(channel.id);
+      console.log('send topic:', topic);
+      return channel.setTopic(topic);
+    }
+    const messagePool = this.messagesPool.get(channel);
+    if (messagePool !== undefined) {
+      this.messagesPool.delete(channel);
+      return channel.send(messagePool as string);
+    }
+    return;
+  }
+
+  public async setChannelTopic(channelId: string, topic: string): Promise<any> {
+    this.topics.set(channelId, topic);
+    // return new Promise((resolve, reject) => {
+    //   fetch(`https://discord.com/api/channels/${channelId}`, {
+    //     body: JSON.stringify({
+    //       topic: encodeURIComponent(topic),
+    //     }),
+    //     headers: {
+    //       Authorization: `Bot ${process.env.DISCORD_TOKEN}`,
+    //       Accept: 'application/json, text/plain, */*',
+    //       'Content-Type': 'application/json',
+    //     },
+    //     method: 'PATCH',
+    //   }).then(response => {
+    //     if (response.ok) {
+    //       response
+    //         .json()
+    //         .then(channel => {
+    //           resolve(channel);
+    //         })
+    //         .catch(e => reject(e));
+    //     } else {
+    //       reject(response.statusText);
+    //     }
+    //   });
+    // });
+  }
+
   // When the "message" event is triggered, this method is called with a specific payload (related to the event)
   // @On('message')
   // private async onMessage([message]: ArgsOf<"message">, client: Client) {
@@ -349,18 +421,5 @@ export class AppDiscord {
         }
       });
     });
-  }
-
-  private shortAddress(address: string, nbChars = 4) {
-    let prefix = '';
-    if (address.startsWith('0x')) {
-      prefix = '0x';
-      address = address.slice(2);
-    }
-    return `${prefix}${address
-      .toLowerCase()
-      .substring(0, nbChars)}-${address
-      .toLowerCase()
-      .substring(address.length - nbChars)}`;
   }
 }

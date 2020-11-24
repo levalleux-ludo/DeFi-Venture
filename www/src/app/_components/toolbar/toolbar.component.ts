@@ -103,4 +103,15 @@ export class ToolbarComponent implements OnInit {
     this.portisService.logout();
   }
 
+  connectDiscord() {
+    this.discordService.jumpToLogin(this.portisService.accounts[0])
+    .then((userId) => {
+      console.log('User successfully logged on Discord', userId);
+    })
+    .catch((e) => {
+      console.error(e);
+    });
+  }
+
+
 }

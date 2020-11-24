@@ -29,7 +29,7 @@
   </button>
     <mat-menu #menuDiscord="matMenu" xPosition="before">
         <div class="mat-toolbar">
-            <a mat-raised-button href="http://localhost:8899/discord/login" target="_blank">Connect</a>
+            <button mat-raised-button (click)="connectDiscord()" target="_blank">Connect</button>
             <!-- <button mat-menu-item>Expand</button>
     <button mat-menu-item>Remove</button> -->
         </div>
