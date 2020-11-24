@@ -1,4 +1,3 @@
-import { config } from './../config';
 // import {
 //   ArgsOf,
 //   Client,
@@ -22,20 +21,23 @@ import {
 import fetch from 'node-fetch';
 import { REPL_MODE_SLOPPY } from 'repl';
 import { GameFactory } from '../game/game.factory';
+import { config } from './../config';
 import { IGame } from './../game/game';
 import { GameObserver } from './game.observer';
 
 const COMMAND_PREFIX = '!';
 
-const discord_config = config.discord[(process.env.NODE_ENV === "production") ? 'prod' : 'test'];
+const discordConfig =
+  config.discord[process.env.NODE_ENV === 'production' ? 'prod' : 'test'];
 
-export const GUILD_ID = discord_config.GUILD_ID;
+export const GUILD_ID = discordConfig.GUILD_ID;
 
-export const GAME_CHANNELS_CATEGORY_ID = discord_config.GAME_CHANNELS_CATEGORY_ID;
+export const GAME_CHANNELS_CATEGORY_ID =
+  discordConfig.GAME_CHANNELS_CATEGORY_ID;
 
-export const GENERAL_CHANNEL_ID = discord_config.GENERAL;
+export const GENERAL_CHANNEL_ID = discordConfig.GENERAL;
 
-export const TEST_USER_ID = discord_config.TEST_USER_ID;
+export const TEST_USER_ID = discordConfig.TEST_USER_ID;
 
 // Decorate the class with the @Discord decorator
 // @Discord(COMMAND_PREFIX)
@@ -67,10 +69,7 @@ export class AppDiscord {
     // In the login method, you must specify the glob string to load your classes (for the framework).
     // In this case that's not necessary because the entry point of your application is this file.
     this._client
-      .login(
-        process.env.DISCORD_TOKEN as string
-        //, `${__dirname}/*Discord.ts` // glob string to load the classes
-      )
+      .login(process.env.DISCORD_TOKEN as string)
       .then(() => {
         this.isReady = true;
         this._readyWaiters.forEach(callback => {
@@ -98,7 +97,9 @@ export class AppDiscord {
     await this.getAllGameChannels(GUILD_ID, GAME_CHANNELS_CATEGORY_ID).then(
       async channels => {
         console.log('Delete all game channels:', channels.length);
-        for (const channel of channels) {await channel.delete();}
+        for (const channel of channels) {
+          await channel.delete();
+        }
         // throw new Error('STOP');
       }
     );
@@ -157,13 +158,18 @@ export class AppDiscord {
   public async getGeneralChannel(): Promise<TextChannel> {
     await this.waitReady();
     return new Promise((resolve, reject) => {
-      this._client.channels.fetch(GENERAL_CHANNEL_ID).then((channel) => {
-        resolve(channel as TextChannel);
-      }).catch (e => reject(e));
+      this._client.channels
+        .fetch(GENERAL_CHANNEL_ID)
+        .then(channel => {
+          resolve(channel as TextChannel);
+        })
+        .catch(e => reject(e));
     });
   }
 
-  public async getChannelFromGame(gameAddress: string): Promise<TextChannel | undefined> {
+  public async getChannelFromGame(
+    gameAddress: string
+  ): Promise<TextChannel | undefined> {
     await this.waitReady();
     return this._channelGames.get(gameAddress);
   }
@@ -183,7 +189,7 @@ export class AppDiscord {
       try {
         guild.addMember(userId, { accessToken }).catch(e => {
           // do not complain, it happens when the member is already in the guild
-        })
+        });
       } catch (e) {
         // do not complain, it happens when the member is already in the guild
       }

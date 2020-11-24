@@ -1,7 +1,7 @@
-import { AppDiscord, GUILD_ID } from './discord';
 import { btoa } from 'abab';
 import express from 'express';
 import fetch from 'node-fetch';
+import { AppDiscord, GUILD_ID } from './discord';
 
 const DISCORD_AUTHORIZE = 'https://discordapp.com/api/oauth2/authorize';
 const DISCORD_GRANT = 'https://discordapp.com/api/oauth2/token';
@@ -94,39 +94,51 @@ export class DiscordController {
   };
 
   private gameChannel = (req: express.Request, res: express.Response) => {
-    this.appDiscord.getChannelFromGame(req.params.game).then((channel) => {
-      res.send(channel);
-    }).catch(e => {
-      console.error(e);
-      res.status(400).send(e);
-    });
+    this.appDiscord
+      .getChannelFromGame(req.params.game)
+      .then(channel => {
+        res.send(channel);
+      })
+      .catch(e => {
+        console.error(e);
+        res.status(400).send(e);
+      });
   };
 
   private getGuild = (req: express.Request, res: express.Response) => {
-    this.appDiscord.getGuild().then((guildId) => {
-      res.send(guildId);
-    }).catch(e => {
-      console.error(e);
-      res.status(400).send(e);
-    });
+    this.appDiscord
+      .getGuild()
+      .then(guildId => {
+        res.send(guildId);
+      })
+      .catch(e => {
+        console.error(e);
+        res.status(400).send(e);
+      });
   };
 
   private getGeneralChannel = (req: express.Request, res: express.Response) => {
-    this.appDiscord.getGeneralChannel().then((channel) => {
-      res.send(channel);
-    }).catch(e => {
-      console.error(e);
-      res.status(400).send(e);
-    });
+    this.appDiscord
+      .getGeneralChannel()
+      .then(channel => {
+        res.send(channel);
+      })
+      .catch(e => {
+        console.error(e);
+        res.status(400).send(e);
+      });
   };
 
   private deleteAll = (req: express.Request, res: express.Response) => {
-    this.appDiscord.deleteAll().then(() => {
-      res.send('OK');
-    }).catch(e => {
-      console.error(e);
-      res.status(400).send(e);
-    });
+    this.appDiscord
+      .deleteAll()
+      .then(() => {
+        res.send('OK');
+      })
+      .catch(e => {
+        console.error(e);
+        res.status(400).send(e);
+      });
   };
 
   private callback = (req: express.Request, res: express.Response) => {
@@ -200,9 +212,7 @@ export class DiscordController {
                       // res.send(`Hello ${profile.username} id ${profile.id}`);
                       /// TODO: redirect to the original URL given by the client at login request
 
-                      res.redirect(
-                        `https://discord.com/channels/${GUILD_ID}`
-                      );
+                      res.redirect(`https://discord.com/channels/${GUILD_ID}`);
                     })
                     .catch(e => {
                       console.error(e);
@@ -227,15 +237,17 @@ export class DiscordController {
   };
 
   private _encode(obj) {
-    let string = '';
+    let text = '';
 
     for (const [key, value] of Object.entries(obj)) {
-      if (!value) continue;
-      string += `&${encodeURIComponent(key)}=${encodeURIComponent(
+      if (!value) {
+        continue;
+      }
+      text += `&${encodeURIComponent(key)}=${encodeURIComponent(
         value as string
       )}`;
     }
 
-    return string.substring(1);
+    return text.substring(1);
   }
 }

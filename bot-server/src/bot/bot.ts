@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import { Game } from '../game/game';
 import { Web3Provider } from '../web3/web3.provider';
-import { eOption, IGame, eGameStatus } from './../game/game';
+import { eGameStatus, eOption, IGame } from './../game/game';
 
 enum ePlayStatus {
   WAITING,

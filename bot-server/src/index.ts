@@ -18,12 +18,18 @@ interface ICLArguments {
   // 'unhandled-rejections': string;
 }
 
-const args = parse<ICLArguments>({
-  network: { type: String, defaultValue: process.env.BLOCKCHAIN_NETWORK || 'mumbai' }
-  // 'unhandled-rejections': { type: String, optional: true }
-}, {
-  partial:true
-});
+const args = parse<ICLArguments>(
+  {
+    network: {
+      defaultValue: process.env.BLOCKCHAIN_NETWORK || 'mumbai',
+      type: String,
+    },
+    // 'unhandled-rejections': { type: String, optional: true }
+  },
+  {
+    partial: true,
+  }
+);
 
 console.log('NODE_ENV', process.env.NODE_ENV);
 
@@ -54,7 +60,11 @@ const main = async () => {
   // create BotFactory(provider)
   const botFactory = new BotFactory(gameFactory);
   // call botFactory.createBots(gameFactory.getGames)
-  await botFactory.createBots(config.bots[network.chainId], web3, botPlayerAbi.abi);
+  await botFactory.createBots(
+    config.bots[network.chainId],
+    web3,
+    botPlayerAbi.abi
+  );
   const botController = new BotController(botFactory);
   const appDiscord = new AppDiscord(gameFactory);
   const discordController = new DiscordController(appDiscord);

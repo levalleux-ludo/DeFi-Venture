@@ -79,13 +79,15 @@ export const GAME_STATUS = {
 export const USER_DATA_FIELDS = {
   address: 0,
   username: 1,
+  // tslint:disable-next-line: object-literal-sort-keys
   avatar: 2,
   position: 3,
-  hasLost: 4
+  hasLost: 4,
 };
 
 export const GAME_DATA_FIELDS = {
   status: 0,
+  // tslint:disable-next-line: object-literal-sort-keys
   nbPlayers: 1,
   nbPositions: 2,
   token: 3,
@@ -94,7 +96,7 @@ export const GAME_DATA_FIELDS = {
   nextPlayer: 6,
   currentPlayer: 7,
   currentOptions: 8,
-  currentCardId: 9
+  currentCardId: 9,
 };
 
 export class Game implements IGame {
@@ -160,11 +162,11 @@ export class Game implements IGame {
     const currentPlayer = contractGameData[GAME_DATA_FIELDS.currentPlayer];
     const currentOptions = contractGameData[GAME_DATA_FIELDS.currentOptions];
     return {
-      gameMaster: this.address,
-      status,
-      nextPlayer,
+      currentOptions,
       currentPlayer,
-      currentOptions
+      gameMaster: this.address,
+      nextPlayer,
+      status,
     };
   }
 
@@ -173,7 +175,9 @@ export class Game implements IGame {
       try {
         const players: IPlayer[] = [];
         const indexes: number[] = [];
-        const nbPlayers = await this._contract.nbPlayers().catch(e => console.error(e));
+        const nbPlayers = await this._contract
+          .nbPlayers()
+          .catch(e => console.error(e));
         for (let i = 0; i < nbPlayers; i++) {
           indexes.push(i);
         }

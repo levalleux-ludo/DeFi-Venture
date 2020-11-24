@@ -1,8 +1,8 @@
-import { DiscordController } from './../discord/discord.controller';
 import * as bodyParser from 'body-parser'; // pull information from HTML POST (express4)
 import cors from 'cors';
 import express from 'express';
 import { BotController } from './../bot/bot.controller';
+import { DiscordController } from './../discord/discord.controller';
 
 export class ApiServer {
   private _app: express.Express;

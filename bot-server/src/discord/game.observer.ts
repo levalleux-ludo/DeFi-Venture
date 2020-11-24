@@ -1,6 +1,6 @@
-import { AppDiscord } from './discord';
 import { TextChannel } from 'discord.js';
-import { IGame, IPlayer, GAME_STATUS, eGameStatus } from './../game/game';
+import { eGameStatus, GAME_STATUS, IGame, IPlayer } from './../game/game';
+import { AppDiscord } from './discord';
 export class GameObserver {
   public constructor(
     private _game: IGame,
@@ -13,13 +13,13 @@ export class GameObserver {
       onRolledDices: this.onRolledDices,
       onStatusChanged: this.onStatusChanged,
     });
-    _game.getGameData().then((gameData) => {
+    _game.getGameData().then(gameData => {
       this.onStatusChanged(gameData.status);
       _game.getPlayers().then(players => {
         this.listPlayers(players);
         this.tellNextPlayer(gameData.nextPlayer, players);
       });
-    })
+    });
   }
 
   private displayPlayer(address: string): string {

@@ -16,7 +16,7 @@ export class Web3Provider {
     this._provider = new ethers.providers.StaticJsonRpcProvider(
       {
         // timeout: 180000,
-        url: network.nodeUrl
+        url: network.nodeUrl,
       },
       network
     );
