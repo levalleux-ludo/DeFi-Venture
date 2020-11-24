@@ -46,7 +46,9 @@ export class DiscordWidgetbotComponent implements OnInit, AfterViewInit {
       this.elementRef.nativeElement.removeChild(this.scriptElement);
       this.scriptElement = undefined;
     }
-    this.addWidgetbot();
+    if ((this._channelId !== undefined) && (this._channelId !== '0') && (this._guildId !== undefined) && (this._guildId !== '0')) {
+      this.addWidgetbot();
+    }
   }
 
   addWidgetbot() {

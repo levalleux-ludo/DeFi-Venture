@@ -34,9 +34,11 @@
             <!-- <td>{{game.nbPlayers}}</td> -->
             <td *ngIf="!game.isCompleted ">Acquiring game information ...</td>
             <td *ngIf="game.isCompleted ">
-                <span *ngFor="let player of game.players ">
-                <img src="assets/avatars/{{avatarsImgs[player.avatar]}}.png " height="15 ">
-                {{player.username}}<span *ngIf="player.address==account ">(You)</span>&nbsp;
+                <span *ngFor="let player of game.players " style="position: relative;">
+                <img class="img-avatar" src="assets/avatars/{{avatarsImgs[player.avatar]}}.png " height="15 ">
+                <img class="img-badge" *ngIf="player.hasLost" src="assets/looser.png" width="20">
+                <img class="img-badge" *ngIf="player.hasWon" src="assets/winner.png" width="20">
+                        <span class="text-player">{{player.username}}<span *ngIf="player.address==account ">(You)</span>&nbsp;</span>
                 </span>
             </td>
             <td *ngIf="game.isCompleted ">

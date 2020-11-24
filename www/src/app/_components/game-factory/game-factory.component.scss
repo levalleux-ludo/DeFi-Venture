@@ -13,3 +13,41 @@
 td {
     text-align: center;
 }
+
+.img-badge {
+    position: relative;
+    top: 0px;
+    left: 0px;
+    z-index: 10;
+}
+
+.img-avatar {
+    position: absolute;
+    top: -15px;
+    left: calc(50% - 10px);
+    z-index: 10;
+}
+
+.text-player {
+    position: relative;
+    margin-top: 15px;
+    z-index: 5;
+}
+
+// .img-badge {
+//   position: absolute;
+//   top: -15px;
+//   left: 5px;
+//   z-index: 10;
+// }
+// .img-avatar {
+//   position: absolute;
+//   top: 5px;
+//   left: 0px;
+//   z-index: 10;
+// }
+// .text-player {
+//   position: relative;
+//   margin-left: 15px;
+//   z-index: 5;
+// }

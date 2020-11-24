@@ -18,7 +18,7 @@ export interface IAsset {
 export class AssetsLibraryService {
 
   playground: ISpace[];
-  portfolio;
+  // portfolio;
   assets = new Map<number, IAsset>();
 
   constructor(
@@ -33,12 +33,12 @@ export class AssetsLibraryService {
           this.refreshAssets();
         }
       });
-      this.assetsContractService.onUpdate.subscribe((assetData) => {
-        if (assetData) {
-          this.portfolio = assetData.portfolios.get(account);
-          this.refreshAssets();
-        }
-      });
+      // this.assetsContractService.onUpdate.subscribe((assetData) => {
+      //   if (assetData) {
+      //     this.portfolio = assetData.portfolios.get(account);
+      //     this.refreshAssets();
+      //   }
+      // });
     });
   }
 
@@ -55,14 +55,11 @@ export class AssetsLibraryService {
   }
 
   refreshAssets() {
-    if (this.portfolio && this.playground) {
+    if (this.playground) {
       this.assets = new Map();
-      for (const assetId of this.portfolio) {
-        const space
-         = this.playground.find(aspace =>
-           (this.isAsset(aspace)
-            && (aspace.assetId === assetId)));
-        if (space) {
+      for (const space of this.playground) {
+        if (this.isAsset(space)) {
+          const assetId = space.assetId
           const asset = startups.startups[assetId];
           this.assets.set(assetId, {
             assetId,

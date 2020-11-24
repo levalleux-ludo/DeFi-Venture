@@ -72,7 +72,7 @@ export class TestCanvasComponent implements OnInit {
   public set gameData(gameData: IGameData) {
     if (gameData) {
       gameData.playersPosition.forEach((position, player) => {
-        const avatar = gameData.players.find(aplayer => (aplayer.address === player)).avatar as any;
+        const avatar = gameData.players.get(player).avatar as any;
         this.setPlayerPosition(avatar, position);
       });
     }

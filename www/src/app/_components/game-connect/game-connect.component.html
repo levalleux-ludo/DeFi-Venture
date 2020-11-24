@@ -10,8 +10,8 @@
             <app-my-cash [showAssets]="true" [cash]="balances?.get(currentAccount)?.toString()" [assetIds]="assets" [playground]="playground" [debt]="0" [player]="getPlayer(currentAccount)"></app-my-cash>
         </div>
         <div #content fxFlex fxLayout="column" fxLayoutWrap fxLayoutAlign="start center" class="sidenav-content">
-            <div class="game-contract">Game Contract:
-                <app-blockchain-link [network]="network" [link]="gameMaster"></app-blockchain-link>
+            <div class="game-contract"><a routerLink="/games">All Games</a> &gt;
+                <app-blockchain-link [network]="network" [link]="gameMaster" [text]="'0x' + shortAddress(gameMaster.slice(2))"></app-blockchain-link>
                 <div *ngIf="(gameData != undefined) && !isRegistered">
                     <h1>You're not registered to this game</h1>
                     <div *ngIf="gameData.status == 'CREATED'">
@@ -59,13 +59,23 @@
                                     </div>
                                 </div>
                             </div>
+                            <div *ngIf="currentPlayer?.hasWon" class="mat-headline">
+                                <img src="assets/winner.png" height="200">
+                                <div> Congratulations! You have won this game.
+                                </div>
+                            </div>
+                            <div *ngIf="currentPlayer?.hasLost" class="mat-headline">
+                                <img src="assets/looser.png" height="200">
+                                <div>Shame on you! You have lost this game.
+                                </div>
+                            </div>
                             <div *ngIf="(gameData.status == 'STARTED') && !isNextPlayer" class="mat-headline">
                                 {{translatorService.getUsername(gameData.nextPlayer)}} is currently playing
                             </div>
                             <div *ngIf="gameData.status == 'CREATED'">
                                 <div class="mat-headline">
                                     <p>Game is not started yet.</p>
-                                    <p *ngIf="gameData.players.length < 2">Wait for players registering (2 minimum), then you can start</p>
+                                    <p *ngIf="gameData.players.size < 2">Wait for players registering (2 minimum), then you can start</p>
                                 </div>
                                 <button mat-raised-button color="primary" [disabled]="!canStart" (click)="start()">Start Game</button>
                             </div>
@@ -97,4 +107,5 @@
         </div>
     </mat-sidenav-content>
 </mat-sidenav-container>
+<button (click)="reconnectDiscord()">reconnect Discord</button>
 <app-discord-widgetbot #discord [guildId]="discordService.GUILD_ID$ | async"></app-discord-widgetbot>

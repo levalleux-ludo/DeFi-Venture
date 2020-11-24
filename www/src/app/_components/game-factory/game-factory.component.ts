@@ -2,7 +2,7 @@ import { BotServerService } from './../../_services/bot-server.service';
 import { eGameStatus, GameMaster } from './../../_models/contracts/GameMaster';
 import { GameTokenContractService } from './../../_services/game-token-contract.service';
 import { INetwork } from './../../../environments/environment';
-import { GameMasterContractService, GAME_STATUS } from './../../_services/game-master-contract.service';
+import { GameMasterContractService, GAME_STATUS, IPlayer } from './../../_services/game-master-contract.service';
 import { Component, Input, OnInit, ViewEncapsulation, OnDestroy } from '@angular/core';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
@@ -134,7 +134,7 @@ export class GameFactoryComponent implements OnInit, OnDestroy {
             };
             this.games.push(gameData);
           }
-          let gameMasterContract;
+          let gameMasterContract: GameMaster;
           if (this.gameContracts.has(gameMaster)) {
             gameMasterContract = this.gameContracts.get(gameMaster);
             toBeRemoved.splice(toBeRemoved.indexOf(gameMaster), 1);
@@ -168,7 +168,7 @@ export class GameFactoryComponent implements OnInit, OnDestroy {
           p = gameMasterContract.getPlayers();
           promises.push(p);
           p.then(players => {
-            gameData.players = players;
+            gameData.players = Array.from(players.values());
           }).catch(e => console.error(e));
           Promise.all(promises).then(() => {
             gameData.isCompleted = true;

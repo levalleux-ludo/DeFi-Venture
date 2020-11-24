@@ -79,11 +79,11 @@ export class TestCanvasPageComponent implements OnInit, AfterContentInit, AfterV
 
     this.canvas.gameData = {
       gameMaster: '0xaaaaaaaaaaaaa',
-      players: [
-        {address: 'aaaaaaa', avatar: 1, username: 'toto'},
-        {address: 'bbbbbbb', avatar: 2, username: 'titi'},
-        {address: 'ccccccc', avatar: 3, username: 'tata'},
-      ],
+      players: new Map([
+        ['aaaaaaa', {address: 'aaaaaaa', avatar: 1, username: 'toto', hasLost: false, hasWon: false}],
+        ['bbbbbbb', {address: 'bbbbbbb', avatar: 2, username: 'titi', hasLost: false, hasWon: false}],
+        ['ccccccc', {address: 'ccccccc', avatar: 3, username: 'tata', hasLost: false, hasWon: false}],
+      ]),
       playersPosition: new Map([
         ['aaaaaaa', 0],
         ['bbbbbbb', 3],

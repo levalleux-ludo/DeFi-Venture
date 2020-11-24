@@ -7,7 +7,9 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 export interface DiscordConnectFormData {}
 
 // tslint:disable-next-line: no-empty-interface
-export interface DiscordConnectResultData {}
+export interface DiscordConnectResultData {
+  userId?: string;
+}
 
 @Component({
   selector: 'app-discord-connect-dialog',
@@ -54,14 +56,12 @@ export class DiscordConnectDialogComponent implements OnInit, AfterViewInit {
     this.discord.jumpToLogin(this.portisL1Service.accounts[0])
     .then((userId) => {
       console.log('User successfully logged on Discord', userId);
+      this.dialogRef.close({userId});
     })
     .catch((e) => {
       console.error(e);
-    })
-    .finally(() => {
-      // TODO: close the popup
       this.dialogRef.close({});
-    });
+    })
   }
 
   close() {

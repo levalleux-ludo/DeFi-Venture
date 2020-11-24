@@ -28,7 +28,7 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
     if (!this.portfolios.has(address)) {
       this.portfolios.set(address, portfolio);
     }
-    if (this.isReady) {
+    await this.ready.then(async () => {
       const nbAssets = (await this._contract.balanceOf(address)).toNumber();
       for (let index = 0; index < nbAssets; index++) {
         const assetId = (await this._contract.tokenOfOwnerByIndex(address, index)).toNumber();
@@ -36,14 +36,15 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
         this.owners.set(assetId, address);
       }
       this.portfolios.set(address, portfolio);
-    }
+    });
     console.log('observeAccount', address, 'isReady', this.isReady, 'portfolio', portfolio);
     return portfolio;
   }
 
   protected subscribeToEvents() {
     this._contract.on('Transfer', (from: string, to: string, tokenId: BigNumber) => {
-      this.recordEvent({ type: 'Transfer', value: {from, to, tokenId} });
+      const assetId = tokenId.toNumber();
+      this.recordEvent({ type: 'Transfer', value: {from, to, assetId} });
     });
   }
 

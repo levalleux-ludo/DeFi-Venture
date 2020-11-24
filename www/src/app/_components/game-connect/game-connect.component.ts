@@ -1,3 +1,4 @@
+import { IPlayer } from 'src/app/_services/game-master-contract.service';
 import { DiscordWidgetbotComponent } from './../discord-widgetbot/discord-widgetbot.component';
 import { DiscordService } from './../../_services/discord.service';
 import { OtherPlayersComponent } from './../other-players/other-players.component';
@@ -60,6 +61,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   isRegistering = false;
   avatars = new Map<string, eAvatar>();
   zoom;
+  currentPlayer: IPlayer;
 
   @ViewChild('dices', {static: false})
   dices: DicesComponent;
@@ -102,15 +104,14 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     this.discordService.getChannelFromGame(this.gameMaster).then((channelId) => {
       if (channelId) {
         this.discordWidget.channelId = channelId;
+        // setTimeout(() => {
+        //   this.discordWidget.refreshChannel();
+        // },
+        // 1500);
       } else {
         console.error('UNable to get Discord channel for game', this.gameMaster);
       }
     });
-
-    setTimeout(() => {
-      this.discordWidget.refreshChannel();
-    },
-    500);
   }
 
   ngOnDestroy(): void {
@@ -202,18 +203,22 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   public get isRegistered(): boolean {
     return (!this.gameData)
      || (!this.currentAccount)
-     || (this.gameData.players.find((player) => (player.address === this.currentAccount)) !== undefined);
+     || (this.gameData.players.get(this.currentAccount) !== undefined);
   }
 
   refreshGameData(gameData: IGameData) {
     if (gameData) {
       this.gameData = gameData;
-      this.gameData.players.forEach(player => {
-        this.tokenContractService.observeAccount(player.address);
-        this.assetsContractService.observeAccount(player.address);
+      this.gameData.players.forEach((player, playerAddress) => {
+        this.tokenContractService.observeAccount(playerAddress);
+        this.assetsContractService.observeAccount(playerAddress);
       });
       if (!this.playground || !this.playground.length) {
         this.playground = gameData.playground;
+      }
+      const player = gameData.players.get(this.currentAccount);
+      if (player !== undefined) {
+        this.currentPlayer = player;
       }
       const newPosition = this.gameData.playersPosition.get(this.currentAccount);
       const oldPosition = this.position;
@@ -221,8 +226,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         console.log('refresh position during refreshGameData', newPosition);
         this.refreshPosition(newPosition);
       }
-      this.gameData.players.forEach(player => {
-        this.avatars.set(player.address, player.avatar);
+      this.gameData.players.forEach((player, playerAddress) => {
+        this.avatars.set(playerAddress, player.avatar);
       });
       this.gameData.playersPosition.forEach((position, player) => {
         if (this.players !== undefined) {
@@ -287,7 +292,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   public get canStart(): boolean {
-    return ((this.gameData) && (!this.isStarting) && (this.gameData.status === GAME_STATUS[0]) && (this.gameData.players.length >= 2));
+    return ((this.gameData) && (!this.isStarting) && (this.gameData.status === GAME_STATUS[0]) && (this.gameData.players.size >= 2));
   }
 
   public get canPlay(): boolean {
@@ -451,8 +456,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  getPlayer(address: string) {
-    return this.gameData?.players.find(player => player.address === address);
+  getPlayer(address: string): IPlayer {
+    return this.gameData?.players.get(address);
   }
 
   changeZoom(zoom: number) {
@@ -460,5 +465,18 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     this.board.zoom = zoom;
   }
 
+  shortAddress(address: string, nbChars = 4) {
+    return `${address
+      .toLowerCase()
+      .substring(0, nbChars)}-${address
+      .toLowerCase()
+      .substring(address.length - nbChars)}`;
+  }
+
+  reconnectDiscord() {
+    if (this.discordWidget) {
+      this.discordWidget.refreshChannel();
+    }
+  }
 
 }

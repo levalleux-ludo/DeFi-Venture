@@ -11,6 +11,8 @@ export class BlockchainLinkComponent implements OnInit {
   @Input()
   link: string;
   @Input()
+  text: string;
+  @Input()
   network: INetwork;
   @Input()
   type: 'address'|'tx' = 'address';

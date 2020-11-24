@@ -1,6 +1,5 @@
 import { IPlayer, USER_DATA_FIELDS } from './../../_services/game-master-contract.service';
 import { GameToken } from './GameToken';
-import { async } from '@angular/core/testing';
 import { ethers } from 'ethers';
 import gameMasterABI from '../../../../../buidler/artifacts/GameMaster.json';
 
@@ -35,22 +34,31 @@ public async getNbPlayers(): Promise<number> {
   return this.contract.nbPlayers();
 }
 
-public async getPlayers(): Promise<IPlayer[]> {
-  const players = [];
+public async getPlayers(): Promise<Map<string, IPlayer>> {
+  const players = new Map<string, IPlayer>();
   const indexes = [];
   const nbPlayers = await this.contract.nbPlayers();
   for (let i = 0; i < nbPlayers; i++) {
     indexes.push(i);
   }
   const playersData = await this.contract.getPlayersData(indexes);
+  const status = await this.contract.status();
+  let winner;
+  if (status === eGameStatus.ENDED) {
+    winner = await this.contract.getWinner();
+  }
   for (let i = 0; i < nbPlayers; i++) {
     const playerAddress = playersData[USER_DATA_FIELDS.address][i];
     const username = playersData[USER_DATA_FIELDS.username][i];
     const avatar = playersData[USER_DATA_FIELDS.avatar][i];
-    players.push({
+    const hasLost = playersData[USER_DATA_FIELDS.hasLost][i];
+    const hasWon = (status === eGameStatus.ENDED) && (winner === playerAddress);
+    players.set(playerAddress, {
       username: ethers.utils.parseBytes32String(username),
       address: playerAddress,
-      avatar
+      avatar,
+      hasLost,
+      hasWon
     });
   }
   return players;

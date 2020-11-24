@@ -51,8 +51,8 @@ export abstract class AbstractContractService<T> {
         if (!(this._contract) || (this._contract.address !== address)) {
           if (this._contract) {
             this.unsubscribeToEvents();
-            await this.setContract(undefined);
             this.isReady = false;
+            await this.setContract(undefined);
           }
           await this.resetData();
           await (new Contract(address, this.contractJSON.abi, this.portisL1Service?.provider)).deployed().then(async (contract) => {
@@ -69,9 +69,9 @@ export abstract class AbstractContractService<T> {
             resolve(data);
           }).catch(async(e) => {
             console.error(e);
+            this.isReady = false;
             await this.setContract(undefined);
             this._contractWithSigner = undefined;
-            this.isReady = false;
             this._onUpdate.next(undefined);
             reject(e);
           });
@@ -79,9 +79,9 @@ export abstract class AbstractContractService<T> {
           resolve(this.data);
         }
       } else {
+        this.isReady = false;
         await this.setContract(undefined);
         this._contractWithSigner = undefined;
-        this.isReady = false;
         this._onUpdate.next(undefined);
         resolve(undefined);
       }

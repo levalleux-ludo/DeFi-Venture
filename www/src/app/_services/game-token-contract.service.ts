@@ -29,10 +29,10 @@ export class GameTokenContractService extends AbstractContractService<ITokenData
     if (!this.balances.has(address)) {
       this.balances.set(address, balance);
     }
-    if (this.isReady) {
+    await this.ready.then(async () => {
       balance = await this._contract.balanceOf(address);
       this.balances.set(address, balance);
-    }
+    });
     console.log('observeAccount', address, 'isReady', this.isReady, 'balance', balance.toString());
     return balance;
   }

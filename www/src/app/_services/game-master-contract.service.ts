@@ -69,6 +69,8 @@ export interface IPlayer {
   address: string;
   username: string;
   avatar: eAvatar;
+  hasLost: boolean;
+  hasWon: boolean;
 }
 
 export enum eSpaceType {
@@ -107,7 +109,7 @@ export interface ISpace {
 export interface IGameData {
   gameMaster: string;
   status: string;
-  players: IPlayer[];
+  players: Map<string, IPlayer>;
   playersPosition: Map<string, number>;
   nextPlayer: string;
   currentPlayer: string;
@@ -321,7 +323,8 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     const currentPlayer = contractGameData[GAME_DATA_FIELDS.currentPlayer];
     const currentOptions = contractGameData[GAME_DATA_FIELDS.currentOptions];
     const chanceCardId = contractGameData[GAME_DATA_FIELDS.currentCardId];
-    const {players, positions: playersPosition, isChanged: positionsChanged} = await this.getPlayersData(nbPlayers);
+    const {players, positions: playersPosition, isChanged: playersDataChanged}
+     = await this.getPlayersData(nbPlayers, status, gameData?.players, gameData?.playersPosition);
     const tokenAddress = contractGameData[GAME_DATA_FIELDS.token];
     const assetsAddress = contractGameData[GAME_DATA_FIELDS.assets];
     const nbSpaces = contractGameData[GAME_DATA_FIELDS.nbPositions];
@@ -348,11 +351,12 @@ export class GameMasterContractService extends AbstractContractService<IGameData
         gameData.status = GAME_STATUS[status];
         hasChanged = true;
       }
-      if ((nbPlayers !== gameData.players.length) || (gameData.gameMaster !== this.address)) {
+      if ((nbPlayers !== gameData.players.size) || (gameData.gameMaster !== this.address)) {
         gameData.players = players;
         gameData.playersPosition = playersPosition;
         hasChanged = true;
-      } else if (positionsChanged) {
+      } else if (playersDataChanged) {
+        gameData.players = players;
         gameData.playersPosition = playersPosition;
         hasChanged = true;
       }
@@ -408,28 +412,49 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     return {positions, isChanged};
   }
 
-  private async getPlayersData(nbPlayers: number, positions?: Map<string, number>)
-  : Promise<{players: IPlayer[], positions: Map<string, number>, isChanged: boolean}> {
-    const players = [];
+  private async getPlayersData(nbPlayers: number, status: eGameStatus, players?: Map<string, IPlayer>, positions?: Map<string, number>)
+  : Promise<{players: Map<string, IPlayer>, positions: Map<string, number>, isChanged: boolean}> {
     const indexes = [];
     for (let i = 0; i < nbPlayers; i++) {
       indexes.push(i);
     }
     const playersData = await this._contract.getPlayersData(indexes);
     let isChanged = false;
+    if (!players) {
+      players = new Map<string, IPlayer>();
+    }
     if (!positions) {
       positions = new Map<string, number>();
+    }
+    let winner;
+    if (status === eGameStatus.ENDED) {
+      winner = await this._contract.getWinner();
     }
     const keysToRemove = Array.from(positions.keys());
     for (let i = 0; i < nbPlayers; i++) {
       const playerAddress = playersData[USER_DATA_FIELDS.address][i];
       const username = playersData[USER_DATA_FIELDS.username][i];
       const avatar = playersData[USER_DATA_FIELDS.avatar][i];
-      players.push({
-        address: playerAddress,
-        username: ethers.utils.parseBytes32String(username),
-        avatar
-      });
+      const hasLost = playersData[USER_DATA_FIELDS.hasLost][i];
+      console.log('player', username ,'hasLost', hasLost);
+      const hasWon = (winner === playerAddress);
+      const theplayer = players.get(playerAddress);
+      if ((theplayer === undefined)
+      || (theplayer.username !== ethers.utils.parseBytes32String(username))
+      || (theplayer.avatar !== avatar)
+      || (theplayer.hasLost !== hasLost)
+      || (theplayer.hasWon !== hasWon)) {
+        isChanged = true;
+        players.set(
+          playerAddress, {
+            address: playerAddress,
+            username: ethers.utils.parseBytes32String(username),
+            avatar,
+            hasLost,
+            hasWon
+          }
+        );
+      }
       if (positions.has(playerAddress)) {
         keysToRemove.splice(keysToRemove.indexOf(playerAddress), 1);
       }
@@ -446,7 +471,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     return {players, positions, isChanged};
   }
 
-  private async getPlayers(nbPlayers: number): Promise<IPlayer[]> {
+  private async getPlayers(nbPlayers: number, status: eGameStatus): Promise<IPlayer[]> {
     const players = [];
     const indexes = [];
     for (let i = 0; i < nbPlayers; i++) {
@@ -482,6 +507,12 @@ export class GameMasterContractService extends AbstractContractService<IGameData
         this.onRolledDices = undefined;
       }
       this.recordEvent({ type: 'RolledDices', value: {player, dice1, dice2, cardId, newPosition, options} });
+    });
+    this._contract.on('PlayerLost', (player) => {
+      this.recordEvent({ type: 'PlayerLost', value: {player} });
+    });
+    this._contract.on('PlayerWin', (player) => {
+      this.recordEvent({ type: 'PlayerWin', value: {player} });
     });
   }
 
