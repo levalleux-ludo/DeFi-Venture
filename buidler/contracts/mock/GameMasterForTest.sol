@@ -26,5 +26,9 @@ contract GameMasterForTest is GameMaster {
         currentCardId = cardId;
     }
 
+    function setInitialAmount(uint256 _initialAmount) public onlyOwner {
+        initialAmount = _initialAmount;
+    }
+
 
 }

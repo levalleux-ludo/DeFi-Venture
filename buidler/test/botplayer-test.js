@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 const { getSpaces, getChances } = require("../db/playground");
+const { createGameMasterBase } = require('./testsUtils');
 
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 1000;
@@ -26,27 +27,7 @@ var token1, token2;
 var ownerAddress, addr1Address, addr1Address;
 
 async function createGameMaster() {
-    const GameMaster = await ethers.getContractFactory("GameMasterForTest");
-    const Playground = await ethers.getContractFactory("Playground");
-    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
-    await playgroundContract.deployed();
-    const Chance = await ethers.getContractFactory("Chance");
-    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
-    await chance.deployed();
-    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
-    const randomContract = await RandomGenerator.deploy();
-    await randomContract.deployed();
-    const gameMaster = await GameMaster.deploy(
-        NB_MAX_PLAYERS,
-        ethers.BigNumber.from(INITIAL_BALANCE),
-        playgroundContract.address,
-        chance.address,
-        randomContract.address
-    );
-    await gameMaster.deployed();
-    gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
-    gameMaster.getPlayground = () => playgroundContract.playground();
-    return gameMaster;
+    return createGameMasterBase();
 }
 
 function revertMessage(error) {

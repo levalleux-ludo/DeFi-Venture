@@ -1,92 +1,13 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { getSpaces, getChances } = require("../db/playground");
 const bre = require("@nomiclabs/buidler");
 const playground = require("../db/playground");
+const { createGameMasterBase, STATUS, PLAYGROUND, NB_POSITIONS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
 const ethers = bre.ethers;
 
-const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const PLAYGROUND = '0x0000000000000000867d776f030203645f554c01463d03342e261e170f030600';
-const NB_CHANCES = 32;
-const CHANCES = '0x1305169c190e120508051c05201e1034543a0520055c1e1118b4181c052643bc';
-
-
-const STATUS = {
-    created: 0,
-    started: 1,
-    frozen: 2,
-    ended: 3
-};
-
-// generic handlers to test exceptions
-const shouldFail = {
-    then: () => {
-        expect(false).to.equal(true, "must fail");
-    },
-    catch: (e) => {
-        expect(true).to.equal(true, "must fail");
-    }
-};
-
-function revertMessage(error) {
-    return 'VM Exception while processing transaction: revert ' + error;
-}
-
 async function createGameMaster() {
-    const GameMaster = await ethers.getContractFactory("GameMasterForTest");
-    const Playground = await ethers.getContractFactory("Playground");
-    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
-    await playgroundContract.deployed();
-    const Chance = await ethers.getContractFactory("Chance");
-    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
-    await chance.deployed();
-    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
-    const randomContract = await RandomGenerator.deploy();
-    await randomContract.deployed();
-    const gameMaster = await GameMaster.deploy(
-        NB_MAX_PLAYERS,
-        ethers.BigNumber.from(INITIAL_BALANCE),
-        playgroundContract.address,
-        chance.address,
-        randomContract.address
-    );
-    await gameMaster.deployed();
-    gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
-    gameMaster.getPlayground = () => playgroundContract.playground();
+    const gameMaster = await createGameMasterBase();
     return gameMaster;
-}
-
-var avatarCount = 1;
-
-async function registerPlayers(gameMaster, players) {
-    for (let player of players) {
-        await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
-    }
-}
-
-async function startGame(gameMaster) {
-    await gameMaster.start();
-}
-
-
-async function playTurn(gameMaster, signer) {
-    return new Promise(async(resolve) => {
-        let filter = gameMaster.filters.RolledDices(signer.address);
-        gameMaster.once(filter, async(player, dice1, dice2, cardId, newPosition, options) => {
-            console.log('RolledDices', player, dice1, dice2, cardId, newPosition, options);
-            await gameMaster.setOptions(255);
-            await gameMaster.connect(signer).play(1);
-            resolve([dice1, dice2]);
-        });
-        await gameMaster.connect(signer).rollDices();
-    });
-}
-
-function checkDice(dice) {
-    expect(dice).to.be.lessThan(7, 'dices cannot exceed 6');
-    expect(dice).to.be.greaterThan(0, 'dices cannot be under 1');
 }
 
 describe("GameMaster", function() {
@@ -529,8 +450,3 @@ describe('Game play options', () => {
         await expect(gameMaster.connect(addr2).play(8)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr2Address, 8, 12, position);
     })
 })
-
-function extractSpaceCode(playground, spaceId) {
-    const idxStart = playground.length - 2 * (spaceId);
-    return playground.slice(idxStart - 2, idxStart);
-}

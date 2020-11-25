@@ -1,14 +1,6 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { getSpaces, getChances } = require("../db/playground");
-
-const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const PLAYGROUND = '0x0000000000000000867d776f030203645f554c01463d03342e261e170f030600';
-const NB_CHANCES = 32;
-const CHANCES = '0x1305169c190e120508051c05201e1034543a0520055c1e1118b4181c052643bc';
-
+const { createGameMasterBase } = require('./testsUtils');
 
 const STATUS = {
     created: 0,
@@ -65,31 +57,11 @@ function revertMessage(error) {
 }
 
 async function createGameMaster() {
-    const GameMaster = await ethers.getContractFactory("GameMasterForTest");
-    const Playground = await ethers.getContractFactory("Playground");
-    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
-    await playgroundContract.deployed();
-    const Chance = await ethers.getContractFactory("Chance");
-    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
-    await chance.deployed();
-    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
-    const randomContract = await RandomGenerator.deploy();
-    await randomContract.deployed();
-    const gameMaster = await GameMaster.deploy(
-        NB_MAX_PLAYERS,
-        ethers.BigNumber.from(INITIAL_BALANCE),
-        playgroundContract.address,
-        chance.address,
-        randomContract.address
-    );
-    await gameMaster.deployed();
-    gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
-    gameMaster.getPlayground = () => playgroundContract.playground();
+    const gameMaster = await createGameMasterBase();
     gameMaster.getUsername = (player) => gameMaster.usernames(player);
     gameMaster.getAvatar = (player) => gameMaster.players(player);
     gameMaster.getCurrentOptions = () => gameMaster.currentOptions();
     gameMaster.getCurrentCardId = () => gameMaster.currentCardId();
-    gameMaster.getNbPositions = () => playgroundContract.nbPositions();
     return gameMaster;
 }
 

@@ -191,6 +191,14 @@ describe("GameFactory", function() {
         expect(balance1.toString()).to.equal(BigNumber.from(INITIAL_BALANCE).toString());
         expect((await token.totalSupply()).toString()).to.equal(BigNumber.from(INITIAL_BALANCE).mul(2).toString());
     });
+    it('Players shall be able to play', async function() {
+        const gameMasterAddress = await gameFactory.getGameAt(0);
+        const gameMaster = GameMasterFactory.attach(gameMasterAddress);
+        await gameMaster.deployed();
+        const addr1Address = addr1.getAddress();
+        console.log('gameMasterAddress', gameMasterAddress);
+        await gameMaster.connect(addr1).rollDices();
+    });
     it('End the game shall not reset the balances', async function() {
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);

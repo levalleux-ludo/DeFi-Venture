@@ -3,7 +3,9 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import { IPlayground } from  "./IPlayground.sol";
 
-contract Playground is IPlayground {
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract Playground is IPlayground, Ownable {
 
     uint8 public nbPositions;
     mapping(address => uint8) public positions;
@@ -12,7 +14,7 @@ contract Playground is IPlayground {
     constructor(
         uint8 _nbPositions,
         bytes32 _playground
-     ) public {
+     ) public Ownable() {
         nbPositions = _nbPositions;
         playground = _playground;
     }
@@ -45,13 +47,17 @@ contract Playground is IPlayground {
         return nbPositions;
     }
 
-    function setPlayerPosition(address player, uint8 newPosition) external override {
-        positions[player] = newPosition;
+    function setPlayerPosition(address player, uint8 newPosition) external override onlyOwner {
+        _setPlayerPosition(player, newPosition);
     }
 
-    function incrementPlayerPosition(address player, uint8 offset) external override {
+    function incrementPlayerPosition(address player, uint8 offset) external override onlyOwner {
         uint8 oldPosition = positions[player];
-        this.setPlayerPosition(player, (oldPosition + offset) % nbPositions);
+        _setPlayerPosition(player, (oldPosition + offset) % nbPositions);
+    }
+
+    function _setPlayerPosition(address player, uint8 newPosition) internal {
+        positions[player] = newPosition;
     }
 
 

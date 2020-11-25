@@ -3,12 +3,14 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import { IChance } from './IChance.sol';
 
-contract Chance is IChance {
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract Chance is IChance, Ownable {
     bytes32 public chances;
 
     constructor(
         bytes32 _chances
-    ) public {
+    ) public Ownable() {
         _chances = chances;
     }
 
@@ -19,7 +21,7 @@ contract Chance is IChance {
         chanceParam = chanceCode >> 3;
     }
 
-    function performChance(uint8 cardId) external override {
+    function performChance(uint8 cardId) external override onlyOwner {
         // TODO
     }
 

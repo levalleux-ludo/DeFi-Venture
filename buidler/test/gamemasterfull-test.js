@@ -1,84 +1,17 @@
 const { expect } = require("chai");
-const { getSpaces, getChances } = require("../db/playground");
 const { BigNumber, utils } = require("ethers");
-
-const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 200;
-const NB_POSITIONS = 24;
-const PLAYGROUND = '0x0000000000000000867d776f030203645f554c01463d03342e261e170f030600';
-const NB_CHANCES = 32;
-const CHANCES = '0x1305169c190e120508051c05201e1034543a0520055c1e1118b4181c052643bc';
-const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
-
-const STATUS = {
-    created: 0,
-    started: 1,
-    frozen: 2,
-    ended: 3
-};
+const { createGameMasterBase, createGameToken, createGameAssets, createMarketplace, NULL_ADDRESS, STATUS, revertMessage, startGame } = require('./testsUtils');
 
 var GameMasterFactory;
 var TokenFactory;
 var AssetsFactory;
 var MarketplaceFactory;
-
-// generic handlers to test exceptions
-const shouldFail = {
-    then: () => {
-        expect(false).to.equal(true, "must fail");
-    },
-    catch: (e) => {
-        expect(true).to.equal(true, "must fail");
-    }
-};
-
-function revertMessage(error) {
-    return 'VM Exception while processing transaction: revert ' + error;
-}
-
-async function createGameToken() {
-    TokenFactory = await ethers.getContractFactory("GameToken");
-    const gameToken = await TokenFactory.deploy();
-    await gameToken.deployed();
-    return gameToken;
-}
-
-async function createGameAssets() {
-    AssetsFactory = await ethers.getContractFactory("GameAssets");
-    const gameAssets = await AssetsFactory.deploy();
-    await gameAssets.deployed();
-    return gameAssets;
-}
-
-async function createMarketplace() {
-    MarketplaceFactory = await ethers.getContractFactory("Marketplace");
-    const marketplace = await MarketplaceFactory.deploy();
-    await marketplace.deployed();
-    return marketplace;
-}
-
+var avatarCount = 1;
+const INITIAL_BALANCE = 200; // Reduce the initial amount to make easier to get players losing
 
 async function createGameMaster(token, assets, marketplace) {
-    const GameMaster = await ethers.getContractFactory("GameMasterForTest");
-    const Playground = await ethers.getContractFactory("Playground");
-    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
-    await playgroundContract.deployed();
-    const Chance = await ethers.getContractFactory("Chance");
-    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
-    await chance.deployed();
-    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
-    const randomContract = await RandomGenerator.deploy();
-    await randomContract.deployed();
-    const gameMaster = await GameMaster.deploy(
-        NB_MAX_PLAYERS,
-        ethers.BigNumber.from(INITIAL_BALANCE),
-        playgroundContract.address,
-        chance.address,
-        randomContract.address
-    );
-    await gameMaster.deployed();
-    gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
-    gameMaster.getPlayground = () => playgroundContract.playground();
+    const gameMaster = await createGameMasterBase();
+    await gameMaster.setInitialAmount(BigNumber.from(INITIAL_BALANCE));
     await token.transferOwnership(gameMaster.address);
     await assets.transferOwnership(gameMaster.address);
     await gameMaster.setToken(token.address);
@@ -89,7 +22,6 @@ async function createGameMaster(token, assets, marketplace) {
     await gameMaster.setMarketplace(marketplace.address);
     return gameMaster;
 }
-var avatarCount = 1;
 
 async function registerPlayers(gameMaster, players) {
     let tokenContract;
@@ -119,29 +51,6 @@ async function registerPlayers(gameMaster, players) {
     }
 }
 
-async function startGame(gameMaster) {
-    await gameMaster.start();
-}
-
-
-async function playTurn(gameMaster, signer) {
-    return new Promise(async(resolve) => {
-        let filter = gameMaster.filters.RolledDices(signer.address);
-        gameMaster.once(filter, async(player, dice1, dice2, cardId, newPosition, options) => {
-            console.log('RolledDices', player, dice1, dice2, cardId, newPosition, options);
-            await gameMaster.setOptions(255);
-            await gameMaster.connect(signer).play(1);
-            resolve([dice1, dice2]);
-        });
-        await gameMaster.connect(signer).rollDices();
-    });
-}
-
-function checkDice(dice) {
-    expect(dice).to.be.lessThan(7, 'dices cannot exceed 6');
-    expect(dice).to.be.greaterThan(0, 'dices cannot be under 1');
-}
-
 describe('Game play with token and assets', () => {
     var gameMaster;
     var token;
@@ -155,10 +64,17 @@ describe('Game play with token and assets', () => {
 
     before('before', async() => {
         [owner, addr1, addr2] = await ethers.getSigners();
-        token = await createGameToken();
-        assets = await createGameAssets();
-        marketplace = await createMarketplace();
+        TokenFactory = await ethers.getContractFactory("GameToken");
+        token = await createGameToken(TokenFactory);
+        console.log('token', token.address);
+        AssetsFactory = await ethers.getContractFactory("GameAssets");
+        assets = await createGameAssets(AssetsFactory);
+        console.log('assets', assets.address);
+        MarketplaceFactory = await ethers.getContractFactory("Marketplace");
+        marketplace = await createMarketplace(MarketplaceFactory);
+        console.log('marketplace', marketplace.address);
         gameMaster = await createGameMaster(token, assets, marketplace);
+        console.log('gameMaster', gameMaster.address);
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
         addr1Address = await addr1.getAddress();
@@ -278,9 +194,12 @@ describe('Losing player', () => {
 
     before('before', async() => {
         [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
-        token = await createGameToken();
-        assets = await createGameAssets();
-        marketplace = await createMarketplace();
+        TokenFactory = await ethers.getContractFactory("GameToken");
+        token = await createGameToken(TokenFactory);
+        AssetsFactory = await ethers.getContractFactory("GameAssets");
+        assets = await createGameAssets(AssetsFactory);
+        MarketplaceFactory = await ethers.getContractFactory("Marketplace");
+        marketplace = await createMarketplace(MarketplaceFactory);
         gameMaster = await createGameMaster(token, assets, marketplace);
         await registerPlayers(gameMaster, [addr1, addr2, addr3, addr4]);
         await startGame(gameMaster);
@@ -444,8 +363,3 @@ describe('Losing player', () => {
 
 
 });
-
-function extractSpaceCode(playground, spaceId) {
-    const idxStart = playground.length - 2 * (spaceId);
-    return playground.slice(idxStart - 2, idxStart);
-}

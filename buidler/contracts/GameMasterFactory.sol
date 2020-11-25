@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0 <0.7.0;
 
+
 import { GameMaster } from './GameMaster.sol';
 import { IGameMasterFactory } from  "./IGameMasterFactory.sol";
 
@@ -12,6 +13,7 @@ contract GameMasterFactory is IGameMasterFactory {
         (address playground, address chances, address randomGenerator) = contractsFactory.create(_nbPositions, _playground, _chances);
         GameMaster gameMaster = new GameMaster(_nbMaxPlayers, _initialAmount, playground, chances, randomGenerator);
         gameMaster.transferOwnership(msg.sender);
+        contractsFactory.transferOwnership(address(gameMaster), playground, chances);
         return address(gameMaster);
     }
 
