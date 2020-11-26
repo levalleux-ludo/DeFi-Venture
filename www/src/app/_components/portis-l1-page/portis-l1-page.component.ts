@@ -21,7 +21,9 @@ export class PortisL1PageComponent implements OnInit {
   constructor(
     private portisL1Service: PortisL1Service
   ) {
-    this.networks = [environment.networks.l1, environment.networks.l2];
+    for (let network of Object.keys(environment.networks)) {
+      this.networks.push(environment.networks[network]);
+    }
   }
 
   ngOnInit(): void {

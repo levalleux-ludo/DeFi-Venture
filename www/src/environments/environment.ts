@@ -19,12 +19,16 @@ export interface IContracts {
 
 export const environment = {
   production: false,
-  botServerUrl: 'http://localhost:8899',
+  // botServerUrl: 'http://localhost:8899',
+  botServerUrl: 'https://defibot.levalleux.online',
+  defaultNetwork: 'l2',
   networks: {
     l1: { name: 'L1 (Goerli)', portisId: 'goerli', chainId: 5, nodeUrl: `https://goerli.infura.io/v3/833d4fef573b4c429e7f283dac2ba507`,
      gasPrice: '100000000', gasLimit: 400000, explorer: 'https://goerli.etherscan.io/'  },
     l2: { name: 'L2 (Mumbai)', portisId: 'maticMumbai', chainId: 80001, nodeUrl: 'https://rpc-mumbai.maticvigil.com/v1/aab3069bd822af86609df80c02f9d0e8642b3b6b',
-     gasPrice: '1000000000', gasLimit: 4000000, explorer: 'https://mumbai-explorer.matic.today/' }
+     gasPrice: '1000000000', gasLimit: 4000000, explorer: 'https://mumbai-explorer.matic.today/' },
+    local: { name: 'Local (Ganache)', portisId: 'local', chainId: 1337, nodeUrl: 'http://localhost:7545',
+    gasPrice: '100000000', gasLimit: 400000, explorer: 'http://localhost:7545/'}
   },
   contracts: {
     5: { // goerli
@@ -33,8 +37,13 @@ export const environment = {
       gasRelay: 'tbd'
     },
     80001: { // mumbai
-      gameFactory: '0x2dD64d434f96f6e33Df89982F4143CBF83E2e6eD',
+      gameFactory: '0x66C703021aDEa4f908339199cDf1447899C947Ba',
       greeter: '0x83a4BcdD650f67b7DbC92346B20e97fef660Ee20',
+      gasRelay: 'tbd'
+    },
+    1337: { // ganache
+      gameFactory: '0xF016cAd5fDbD3DA3D15a5f15cC5998b40Fa7DA45',
+      greeter: '0xe9c1fFc3E73C549c3061363ba2aa5D3522c49355',
       gasRelay: 'tbd'
     }
   }

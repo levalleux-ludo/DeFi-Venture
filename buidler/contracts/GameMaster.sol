@@ -3,160 +3,128 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@nomiclabs/buidler/console.sol";
 
-import "./GameScheduler.sol";
-import "./IGameMaster.sol";
-import "./GameToken.sol";
-import "./GameAssets.sol";
-contract GameMaster is GameScheduler, IGameMaster {
-    uint256 constant public MAX_UINT256 = 2**256 - 1;
+import { GameScheduler } from "./GameScheduler.sol";
+import { GameMasterStorage } from "./GameMasterStorage.sol";
+import { IGameMaster } from "./IGameMaster.sol";
+import { IGameToken } from "./IGameToken.sol";
+import { IGameAssets } from "./IGameAssets.sol";
+import { IMarketplace } from "./IMarketplace.sol";
+import { IPlayground } from './IPlayground.sol';
+import { IPlayOptions } from './IPlayOptions.sol';
+import { IChance } from './IChance.sol';
+import { IRandomGenerator } from './IRandomGenerator.sol';
+import { ITransferManager } from './ITransferManager.sol';
+import { IGameContracts } from './IGameContracts.sol';
 
-    GameToken private token;
-    address private tokenAddress;
-    GameAssets private assets;
-    address private assetsAddress;
-    uint256 initialAmount;
-    address currentPlayer;
-    uint256 internal nonce;
-    uint8 nbPositions;
-    uint8 internal currentOptions;
-    uint8 internal currentCardId;
-    mapping(address => uint8) internal positions;
-    bytes32 private playground;
-    bytes32 private chances;
+contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
 
     event RolledDices(address indexed player, uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options);
     event PlayPerformed(address indexed player, uint8 option, uint8 cardId, uint8 newPosition);
 
     constructor (
         uint8 nbMaxPlayers,
-        uint8 _nbPositions,
-        uint256 _initialAmount,
-        bytes32 _playground,
-        bytes32 _chances
+        uint256 _initialAmount
         ) public GameScheduler(nbMaxPlayers) {
-        nbPositions = _nbPositions;
         initialAmount = _initialAmount;
-        playground = _playground;
-        chances = _chances;
+        console.log('GameMaster: constructor');
     }
     
-    function setToken(address _token) external override onlyOwner {
-        tokenAddress = _token;
-        token = GameToken(_token);
+    function getGameData() external view returns (
+        uint8 _status,
+        uint8 _nbPlayers,
+        uint8 _nbPositions,
+        address _token,
+        address _assets,
+        address _marketplace,
+        address _nextPlayer,
+        address _currentPlayer,
+        uint8 _currentOptions,
+        uint8 _currentCardId
+    ) {
+        _status = status;
+        _nbPlayers = nbPlayers;
+        _nbPositions = IPlayground(IGameContracts(contracts).getPlayground()).getNbPositions();
+        _token = IGameContracts(contracts).getToken();
+        _assets = IGameContracts(contracts).getAssets();
+        _marketplace = IGameContracts(contracts).getMarketplace();
+        _nextPlayer = nextPlayer;
+        _currentPlayer = currentPlayer;
+        _currentOptions = currentOptions;
+        _currentCardId = currentCardId;
     }
 
-    function setAssets(address _assets) external override onlyOwner {
-        assetsAddress = _assets;
-        assets = GameAssets(_assets);
+    function getPlayerData(address player) external view returns (
+        address _address,
+        bytes32 _username,
+        uint8 _avatar,
+        uint8 _position,
+        bool _hasLost
+    ) {
+        _address = player;
+        _username = usernames[player];
+        _avatar = players[player];
+        _position = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(player);
+        _hasLost = lostPlayers[player];
     }
 
-    function getToken() external override view returns (address) {
-        return tokenAddress;
-    }
-
-    function getAssets() external override view returns (address) {
-        return assetsAddress;
-    }
-
-    function getCurrentPlayer() external override view returns (address) {
-        return currentPlayer;
-    }
-
-    function getCurrentOptions() external override view returns (uint8) {
-        return currentOptions;
-    }
-
-
-    function getCurrentCardId() external override view returns (uint8) {
-        return currentCardId;
-    }
-
-    function getNbPositions() external override view returns (uint8) {
-        return nbPositions;
-    }
-
-    function getPositionOf(address player) external override view returns (uint8) {
-        return positions[player];
-    }
-
-    function getChances() external override view returns (bytes32) {
-        return chances;
-    }
-
-    function getPlayground() external override view returns (bytes32) {
-        return playground;
-    }
-
-     function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
-        require(spaceId < nbPositions, "INVALID_ARGUMENT");
-        uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
-        spaceType = spaceCode & 0x7;
-        assetId = spaceCode >> 3;
-        if ((spaceType >= 4) && (spaceType < 8)) {
-            // spaceType: 4 <=> ASSET_CLASS_1, price = 50
-            // .. 
-            // spaceType: 7 <=> ASSET_CLASS_4, price = 200
-            uint8 assetClass = spaceType - 3;
-            assetPrice = 50 * assetClass;
-            productPrice = assetPrice / 4;
-            // TODO: get productPrice from InvestmentManager contract
+    function getPlayersPositions(address[] calldata players) external view returns (
+        uint8[] memory _positions
+    ) {
+        _positions = new uint8[](players.length);
+        for (uint i = 0; i < players.length; i++) {
+            _positions[i] = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(players[i]);
         }
     }
 
+    function getPlayersData(uint8[] calldata indexes) external view returns (
+        address[] memory _addresses,
+        bytes32[] memory _usernames,
+        uint8[] memory _avatars,
+        uint8[] memory _positions,
+        bool[] memory _hasLost
+    ) {
+        _addresses = new address[](indexes.length);
+        _usernames = new bytes32[](indexes.length);
+        _avatars = new uint8[](indexes.length);
+        _positions = new uint8[](indexes.length);
+        _hasLost = new bool[](indexes.length);
+        for (uint i = 0; i < indexes.length; i++) {
+            address player = playersSet[i];
+            _addresses[i] = player;
+            _usernames[i] = usernames[player];
+            _avatars[i] = players[player];
+            _positions[i] = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(player);
+            _hasLost[i] = lostPlayers[player];
+        }
+    }
+
+    function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
+        return IPlayground(IGameContracts(contracts).getPlayground()).getSpaceDetails(spaceId);
+    }
+
     function getChanceDetails(uint8 chanceId) external override view returns (uint8 chanceType, uint8 chanceParam) {
-        require(chanceId < chances.length, "INVALID_ARGUMENT");
-        uint8 chanceCode = uint8(chances[31 - chanceId]);// Important storage reverse (end-endian)
-        chanceType = chanceCode & 0x7;
-        chanceParam = chanceCode >> 3;
+        return IChance(IGameContracts(contracts).getChances()).getChanceDetails(chanceId);
     }
 
     function getOptionsAt(address player, uint8 position) external override view returns (uint8 options) {
         (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = this.getSpaceDetails(position);
         require(spaceType < 8, "SPACE_TYPE_INVALID");
-        options = 0;
-        if (
-            (spaceType == 0) // GENESIS
-            || (spaceType == 2 )// LIQUIDATION
-        ) {
-            options = 1; // 1 = NOTHING
-        } else if (spaceType == 1) { // QUARANTINE
-            options = 16; // 16 = QUARANTINE
-        } else if (spaceType == 3) { // CHANCE
-            options = 8; // 8 = CHANCE
-        } else { // ASSETS
-            if (assetsAddress != address(0)) {
-                if (assets.exists(uint256(assetId))) {
-                    address owner = assets.ownerOf(uint256(assetId));
-                    if (owner != msg.sender) {
-                        options = 4; // 4 = PAY_BILL
-                    } else {
-                        options = 1; // 1 = NOTHING
-                    }
-                } else {
-                    options = 1 + 2; // 1 + 2 = NOTHING | BUY_ASSET
-                }
-            } else {
-                options = 1; // 1
-            }
-        }
+        return IPlayOptions(IGameContracts(contracts).getPlayOptions()).getOptionsAt(player, spaceType, assetId, assetPrice, productPrice);
     }
 
-    function rollDices() external override returns (uint8 dice1, uint8 dice2, uint8 cardId, uint8 newPosition, uint8 options) {
+    function rollDices() external override {
         require(status == STARTED, "INVALID_GAME_STATE");
         require(msg.sender == nextPlayer, "NOT_AUTHORIZED");
         require(currentPlayer == address(0), "NOT_AUTHORIZED");
         currentPlayer = msg.sender;
-        uint random = random();
-        uint8 oldPosition = positions[msg.sender];
-        dice1 = 1 + uint8(random % 6);
-        dice2 = 1 + uint8(random % 7 % 6);
-        cardId = uint8(random % 47 % 32);
-        newPosition = (oldPosition + dice1 + dice2) % nbPositions;
-        positions[msg.sender] = newPosition;
-        options = this.getOptionsAt(msg.sender, newPosition);
+        (uint8 dice1, uint8 dice2, uint8 cardId) = IRandomGenerator(IGameContracts(contracts).getRandomGenerator()).getRandom();
+        address playgroundAddress = IGameContracts(contracts).getPlayground();
+        IPlayground(playgroundAddress).incrementPlayerPosition(msg.sender, dice1 + dice2);
+        uint8 newPosition = IPlayground(playgroundAddress).getPlayerPosition(msg.sender);
+        uint8 options = this.getOptionsAt(msg.sender, newPosition);
         currentOptions = options;
         currentCardId = cardId;
-        console.log('emit RolledDices event');
+        // console.log('emit RolledDices event');
         emit RolledDices(msg.sender, dice1, dice2, cardId, newPosition, options);
     }
 
@@ -166,90 +134,34 @@ contract GameMaster is GameScheduler, IGameMaster {
         require(msg.sender == currentPlayer, "NOT_AUTHORIZED");
         require((option & currentOptions) != 0, "OPTION_NOT_ALLOWED");
         require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
-        performOption(positions[msg.sender], option);
+        address playgroundAddress = IGameContracts(contracts).getPlayground();
+        performOption(IPlayground(playgroundAddress).getPlayerPosition(msg.sender), option);
         chooseNextPlayer();
         uint8 eventCardId = currentCardId;
         currentPlayer = address(0);
         currentOptions = 0;
         currentCardId = 0;
         // emit event at the end
-        emit PlayPerformed(msg.sender, option, eventCardId, positions[msg.sender]);
+        emit PlayPerformed(msg.sender, option, eventCardId, IPlayground(playgroundAddress).getPlayerPosition(msg.sender));
     }
-
 
     function _start() internal override {
         super._start();
-        for (uint i = 0; i < nbPlayers; i++) {
-            address player = playersSet[i];
-            if (tokenAddress != address(0)) {
-                token.mint(player, initialAmount);
-            }
-        }
+        ITransferManager(IGameContracts(contracts).getTransferManager()).giveAmount(initialAmount, playersSet, nbPlayers);
     }
     function _end() internal override {
         super._end();
-        if (tokenAddress != address(0)) {
-            token.reset();
-        }
     }
 
     function _register(bytes32 username, uint8 avatar) internal override {
-        if (tokenAddress != address(0)) {
-            require(token.allowance(msg.sender, address(this)) == MAX_UINT256, "SENDER_MUST_APPROVE_GAME_MASTER");
-        }
+        ITransferManager(IGameContracts(contracts).getTransferManager()).checkAllowance(msg.sender);
         super._register(username, avatar);
-    }
-
-
-    function random() internal returns (uint) {
-        uint _random = uint(keccak256(abi.encodePacked(now, msg.sender, nonce)));
-        nonce++;
-        return _random;
-    }
-
-    function bytesToUint8(bytes memory _bytes, uint256 _startIndex) internal pure returns (uint8) {
-        require(_startIndex + 1 >= _startIndex, "toUint8_overflow");
-        require(_bytes.length >= _startIndex + 1 , "toUint8_outOfBounds");
-        uint8 tempUint;
-
-        assembly {
-            tempUint := mload(add(add(_bytes, 0x1), _startIndex))
-        }
-
-        return tempUint;
     }
 
     function performOption(uint8 position, uint8 option) internal {
         (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = this.getSpaceDetails(position);
-        console.log("getSpaceDetails");
-        console.log("position");
-        console.log(position);
-        console.log("assetPrice");
-        console.logUint(assetPrice);
-        if ((option & 1) != 0) { // NOTHING
-
-        } else if ((option & 2) != 0) { // BUY_ASSET
-            if((tokenAddress != address(0)) && assetsAddress != address(0)) {
-                console.log("perform BUY_ASSET");
-                console.log("this");
-                console.logAddress(address(this));
-                console.log("sender");
-                console.logAddress(msg.sender);
-                console.logUint(token.allowance(msg.sender, address(this)));
-                token.burnFrom(msg.sender, assetPrice);
-                assets.safeMint(msg.sender, assetId);
-            }
-        } else if ((option & 4) != 0) { // PAY_BILL
-            if((tokenAddress != address(0)) && assetsAddress != address(0)) {
-                address owner = assets.ownerOf(uint256(assetId));
-                token.transferFrom(msg.sender, owner, productPrice);
-            }
-        } else if ((option & 8) != 0) { // CHANCE
-            // TODO: perform chance for currentCardId (delegated to ChanceContrat ?)
-            // cardId -> chanceType (Pay|Receive|Move_N ...), chanceParam
-            // chanceType -> contract
-        } else if ((option & 16) != 0) { // QUARANTINE
-            // TODO: set player in Quarantine
-        }
+        address playOptionsAddress = IGameContracts(contracts).getPlayOptions();
+        return IPlayOptions(playOptionsAddress).performOption(address(this), msg.sender, spaceType, assetId, assetPrice, productPrice, option, currentCardId);
     }
+
 }

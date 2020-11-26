@@ -14,7 +14,6 @@ export interface IAssetsData {
   providedIn: 'root'
 })
 export class AssetsContractService extends AbstractContractService<IAssetsData> {
-
   protected portfolios = new Map<string, number[]>();
   protected owners = new Map<number, string>();
 
@@ -29,7 +28,7 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
     if (!this.portfolios.has(address)) {
       this.portfolios.set(address, portfolio);
     }
-    if (this.isReady) {
+    await this.ready.then(async () => {
       const nbAssets = (await this._contract.balanceOf(address)).toNumber();
       for (let index = 0; index < nbAssets; index++) {
         const assetId = (await this._contract.tokenOfOwnerByIndex(address, index)).toNumber();
@@ -37,18 +36,27 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
         this.owners.set(assetId, address);
       }
       this.portfolios.set(address, portfolio);
-    }
+    });
     console.log('observeAccount', address, 'isReady', this.isReady, 'portfolio', portfolio);
     return portfolio;
   }
 
   protected subscribeToEvents() {
     this._contract.on('Transfer', (from: string, to: string, tokenId: BigNumber) => {
-      this.recordEvent({ type: 'Transfer', value: {from, to, tokenId} });
+      const assetId = tokenId.toNumber();
+      this.recordEvent({ type: 'Transfer', value: {from, to, assetId} });
     });
   }
 
-  protected async refreshData() {
+  protected unsubscribeToEvents() {
+    this._contract.removeAllListeners({topics: ['Transfer']});
+  }
+
+  protected async resetData() {
+    this.portfolios = new Map<string, number[]>();
+    this.owners = new Map<number, string>();  }
+
+  protected async refreshData(): Promise<{data: IAssetsData, hasChanged: boolean}> {
     console.log("assets contract refreshData");
     const totalSupply = await this._contract.totalSupply();
     for (const address of this.portfolios.keys()) {
@@ -58,7 +66,8 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
       portfolios: this.portfolios,
       owners: this.owners
     };
-    this._onUpdate.next(assetsData);
+    // this._onUpdate.next(assetsData);
+    return {data: assetsData, hasChanged: true};
   }
 
   public async getOwner(assetId: number): Promise<string> {
@@ -67,6 +76,9 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
       return await this._contract.ownerOf(tokenId);
     }
     return undefined;
+  }
+
+  protected async _onContractSet(value: ethers.Contract) {
   }
 
 }

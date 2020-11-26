@@ -1,3 +1,4 @@
+import { DiscordTestComponent } from './_components/discord-test/discord-test.component';
 import { TestShowModalPageComponent } from './_components/test-show-modal-page/test-show-modal-page.component';
 import { TestPageComponent } from './_components/test-page/test-page.component';
 import { MyCashComponent } from './_components/my-cash/my-cash.component';
@@ -24,6 +25,7 @@ const routes: Routes = [
   {path: 'test/mycash', component: MyCashComponent, runGuardsAndResolvers: 'always'},
   {path: 'test/modal', component: TestShowModalPageComponent, runGuardsAndResolvers: 'always'},
   {path: 'test', component: TestPageComponent, runGuardsAndResolvers: 'always'},
+  {path: 'discord', component: DiscordTestComponent, runGuardsAndResolvers: 'always'},
   {path: 'portis1', component: PortisL1PageComponent},
   { path: '404', component: NotFoundComponent},
   { path: '', redirectTo: '/games', pathMatch: 'full'},

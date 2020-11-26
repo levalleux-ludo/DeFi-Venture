@@ -7,10 +7,15 @@
         "postinstall": "node scripts/post_install.js",
         "test": "buidler test",
         "build": "buidler compile",
+        "faucet:ganache": "buidler run scripts/ganache_faucet.js --network ganache",
+        "deploy:bots": "buidler run scripts/deploy_bots.js",
+        "deploy:bots:ganache": "buidler run scripts/deploy_bots.js --network ganache",
+        "deploy:bots:mumbai": "buidler run scripts/deploy_bots.js --network mumbai",
         "deploy:ganache": "buidler run scripts/deploy_contracts.js --network ganache",
         "deploy:mocks": "buidler run scripts/deploy_mocks.js --network ganache",
         "deploy:goerli": "buidler run scripts/deploy_contracts.js --network goerli",
-        "deploy:mumbai": "buidler run scripts/deploy_contracts.js --network mumbai"
+        "deploy:mumbai": "buidler run scripts/deploy_contracts.js --network mumbai",
+        "test:factory:ganache": "node scripts//test_factory.js -f 0x687748919Cb88508C9f5ad5E3A26855b45048C17 -n ganache"
     },
     "author": "",
     "license": "ISC",
@@ -18,7 +23,9 @@
         "@nomiclabs/buidler": "^1.4.7",
         "@nomiclabs/buidler-ethers": "^2.0.0",
         "@nomiclabs/buidler-waffle": "^2.1.0",
+        "buidler-contract-sizer": "^1.0.2",
         "chai": "^4.2.0",
+        "command-line-args": "^5.1.1",
         "dotenv": "^8.2.0",
         "ethereum-waffle": "^3.1.1",
         "ethers": "^5.0.14"

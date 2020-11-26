@@ -1,5 +1,6 @@
+import { ChancesLibraryService } from './../../_services/chances-library.service';
 import { Component, Inject, Input, OnInit } from '@angular/core';
-import chancesJSON from '../../../assets/chances.json';
+// import chancesJSON from '../../../assets/chances.json';
 
 @Component({
   selector: 'app-chance-detail',
@@ -12,24 +13,20 @@ export class ChanceDetailComponent implements OnInit {
 
   @Input()
   set chanceId(value: number) {
-    const chance = chancesJSON.chances[value % chancesJSON.chances.length];
-    this.text = this.readChance(chance);
+    // const chance = chancesJSON.chances[value % chancesJSON.chances.length];
+    const chanceId = value % this.chancesLibrary.nbChances;
+    this.text = this.chancesLibrary.readChance(chanceId);
   }
 
-  constructor() { }
+  constructor(
+    private chancesLibrary: ChancesLibraryService
+  ) { }
 
   ngOnInit(): void {
   }
 
-  readChance(chance) {
-    let text = chance.text;
-    if (chance.amount) {
-      text = text.replace('%AMOUNT%', chance.amount);
-    }
-    if (chance.nb) {
-      text = text.replace('%NB%', chance.nb);
-    }
-    return text;
-  }
+  // readChance(chance) {
+  //   return this.chancesLibrary.readChance(chance);
+  // }
 
 }

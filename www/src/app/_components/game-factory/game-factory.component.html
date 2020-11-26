@@ -1,45 +1,55 @@
 <p *ngIf="(gameFactory != undefined)">Game Factory:
-    <app-blockchain-link [network]="network" [link]="gameFactory"></app-blockchain-link>
+    <app-blockchain-link [network]="network" [link]="gameFactory" [text]="shortAddress(gameFactory)"></app-blockchain-link>
 </p>
 <div *ngIf="balanceEth <= 0.02">
     <h2>Warning !</h2>
     <p>Your account balance is too low. You need to purchase native tokens ({{(network?.chainId == 80001) ? 'MATIC' : 'ETH'}})</p>
     <button mat-raised-button (click)="callFaucet()">Get Tokens</button>
 </div>
-<mat-spinner *ngIf="(gameFactory == undefined) || isCreating || isRegistering || refreshing"></mat-spinner>
-<div *ngIf="(gameFactory != undefined) && !refreshing">
-    <h1>Games: {{games.length}}</h1>
+<div *ngIf="(gameFactory == undefined)">
+    <h1>Connecting blockchain ...</h1>
+</div>
+<div *ngIf="(gameFactory != undefined)">
+    <div fxLayout="row">
+        <h1>Games: <span *ngIf="!refreshing">{{games.length}}</span>
+        </h1>
+        <mat-progress-bar *ngIf="(gameFactory == undefined) || isCreating || isRegistering || refreshing" mode="indeterminate" style="width: 350px; margin-top: 15px;"></mat-progress-bar>
+    </div>
     <table>
         <tr>
             <th></th>
             <th>Status</th>
             <th>Game Master Contract</th>
             <!-- <th>Nb Players</th> -->
-            <th></th>
             <th>Players</th>
+            <th></th>
             <th></th>
         </tr>
         <tr *ngFor="let game of games; let i = index;">
             <td>#{{i+1}}</td>
-            <td>{{status2String(game.status)}}</td>
+            <td>{{game.status}}</td>
             <td>
-                <app-blockchain-link [network]="network" [link]="game.gameMaster"></app-blockchain-link>
+                <app-blockchain-link [network]="network " [link]="game.gameMaster" [text]="shortAddress(game.gameMaster)"></app-blockchain-link>
             </td>
             <!-- <td>{{game.nbPlayers}}</td> -->
-            <td>
-                <button mat-raised-button *ngIf="!game.isRegistered" [disabled]="(game.status != eGameStatus('CREATED')) || isRegistering" (click)="register(game.gameMaster)">Register</button>
-                <button mat-raised-button *ngIf="game.isRegistered" routerLink="/game/{{game.gameMaster}}">Join</button>
-            </td>
-            <td>
-                <span *ngFor="let player of game.players">
-                  <img src="assets/avatars/{{avatarsImgs[player.avatar]}}.png" height="15">
-                  {{player.username}}<span *ngIf="player.address == account">(You)</span>&nbsp;
+            <td *ngIf="!game.isCompleted ">Acquiring game information ...</td>
+            <td *ngIf="game.isCompleted ">
+                <span *ngFor="let player of game.players " style="position: relative;">
+                <img class="img-avatar" src="assets/avatars/{{avatarsImgs[player.avatar]}}.png " height="15 ">
+                <img class="img-badge" *ngIf="player.hasLost" src="assets/looser.png" width="20">
+                <img class="img-badge" *ngIf="player.hasWon" src="assets/winner.png" width="20">
+                        <span class="text-player">{{player.username}}<span *ngIf="player.address==account ">(You)</span>&nbsp;</span>
                 </span>
             </td>
-            <td>
-                <button mat-raised-button [disabled]="(game.status != eGameStatus('CREATED')) || addingBot" (click)="addBot(game.gameMaster)">Add a Bot Player</button>
+            <td *ngIf="game.isCompleted ">
+                <button mat-raised-button *ngIf="!game.isRegistered " [disabled]="(game.status != 'CREATED') || isRegistering " (click)="register(game.gameMaster) ">Register</button>
+                <button mat-raised-button *ngIf="game.isRegistered " routerLink="/game/{{game.gameMaster}}">Join</button>
+            </td>
+            <td *ngIf="game.isCompleted ">
+                <button mat-raised-button [disabled]="(game.status != 'CREATED') || addingBot " (click)="addBot(game.gameMaster) ">Add a Bot Player</button>
             </td>
         </tr>
     </table>
-    <button mat-raised-button [disabled]="!gameFactory || isCreating" (click)="createGame()">Create Game</button>
+    <button mat-raised-button [disabled]="!gameFactory || isCreating " (click)="createGame() ">Create Game</button>
 </div>
+<mat-spinner *ngIf="(gameFactory==undefined) || isCreating || isRegistering || refreshing "></mat-spinner>

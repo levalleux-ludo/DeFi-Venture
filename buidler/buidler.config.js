@@ -5,6 +5,8 @@ const resolve = require('path').resolve;
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 
 usePlugin("@nomiclabs/buidler-waffle");
+usePlugin('buidler-contract-sizer');
+
 
 // This is a sample Buidler task. To learn how to create your own go to
 // https://buidler.dev/guides/create-task.html
@@ -78,8 +80,12 @@ module.exports = {
             // allowUnlimitedContractSize: true,
             // timeout: 1800000
         },
+        localhost: {
+            url: "http://127.0.0.1:8545"
+        },
         ganache: {
             url: "http://127.0.0.1:7545",
+            chainId: 1337,
         },
         goerli: {
             ...createNetworkConfig("goerli"),
@@ -113,5 +119,9 @@ module.exports = {
     // This is a sample solc configuration that specifies which version of solc to use
     solc: {
         version: "0.6.8",
+    },
+    contractSizer: {
+        alphaSort: true,
+        runOnCompile: true,
     },
 };

@@ -1,3 +1,6 @@
+import { IPlayer } from 'src/app/_services/game-master-contract.service';
+import { DiscordWidgetbotComponent } from './../discord-widgetbot/discord-widgetbot.component';
+import { DiscordService } from './../../_services/discord.service';
 import { OtherPlayersComponent } from './../other-players/other-players.component';
 import { MatDialog } from '@angular/material/dialog';
 import { RegisterFormComponent } from './../register-form/register-form.component';
@@ -5,7 +8,7 @@ import { AssetsContractService, IAssetsData } from './../../_services/assets-con
 import { PlayersTableComponent } from './../players-table/players-table.component';
 import { Utils } from './../../_utils/utils';
 import { GameTokenContractService, ITokenData } from './../../_services/game-token-contract.service';
-import { GameMasterContractService, GAME_STATUS, IGameData, eSpaceType, eAvatar } from './../../_services/game-master-contract.service';
+import { GameMasterContractService, GAME_STATUS, IGameData, eSpaceType, eAvatar, ISpace } from './../../_services/game-master-contract.service';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { GameService } from './../../_services/game.service';
 import { Component, OnInit, ViewChild, ElementRef, OnDestroy, AfterViewInit, ViewChildren, QueryList } from '@angular/core';
@@ -14,12 +17,14 @@ import { environment } from 'src/environments/environment';
 import { DicesComponent } from '../dices/dices.component';
 import { TestCanvasComponent } from '../test-canvas/test-canvas.component';
 import { Breakpoints, BreakpointObserver } from '@angular/cdk/layout';
-import { fromEvent, Observable, Subscription } from 'rxjs';
-import { first, map, shareReplay } from 'rxjs/operators';
+import { Observable, Subscription, Subject, fromEvent } from 'rxjs';
+import { first, map, shareReplay, takeUntil } from 'rxjs/operators';
 import { element } from 'protractor';
 import { BigNumber } from 'ethers';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import { AriaDescriber } from '@angular/cdk/a11y';
+import { DiscordConnectDialogComponent } from '../discord-connect-dialog/discord-connect-dialog.component';
+import { GameTranslatorService } from 'src/app/_services/game-translator.service';
 
 @Component({
   selector: 'app-game-connect',
@@ -34,6 +39,8 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     shareReplay()
   );
 
+  private unsubscribe$ = new Subject<void>();
+
   username: string = '';
   gameMaster;
   network;
@@ -44,16 +51,17 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   events = [];
   position = 0;
   owner;
-  assets;
+  assets = [];
   tokenDecimals: number;
   balances: Map<string, BigNumber>;
-  playground;
+  playground: ISpace[] = [];
   isValidating = false;
   isPlaying = false;
   isStarting = false;
   isRegistering = false;
-  usernames = new Map<string, string>();
   avatars = new Map<string, eAvatar>();
+  zoom;
+  currentPlayer: IPlayer;
 
   @ViewChild('dices', {static: false})
   dices: DicesComponent;
@@ -67,11 +75,15 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   players: PlayersTableComponent;
   @ViewChild('otherPlayers', {static: false})
   otherPlayers: OtherPlayersComponent;
+  @ViewChild('discord', {static: false})
+  discordWidget: DiscordWidgetbotComponent;
   resizeObservable$: Observable<Event>;
   clickObservable$: Observable<Event>;
   resizeSubscription$: Subscription;
   board_width;
   board_height = 900;
+
+  shortAddress = Utils.shortAddress;
 
   constructor(
     private breakpointObserver: BreakpointObserver,
@@ -82,63 +94,89 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     private tokenContractService: GameTokenContractService,
     private assetsContractService: AssetsContractService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    public discordService: DiscordService,
+    public translatorService: GameTranslatorService
   ) { }
   ngAfterViewInit(): void {
     this.board_width = this.content.nativeElement.clientWidth;
     // this.board_height = this.content.nativeElement.clientHeight;
     this.board_height = Math.min(this.content.nativeElement.clientHeight, 800 + 200 * this.board_width / 1600);
     // this.board_height = 800 + 200 * this.board_width / 1600;
+    this.discordService.getChannelFromGame(this.gameMaster).then((channelId) => {
+      if (channelId) {
+        this.discordWidget.channelId = channelId;
+        // setTimeout(() => {
+        //   this.discordWidget.refreshChannel();
+        // },
+        // 1500);
+      } else {
+        console.error('UNable to get Discord channel for game', this.gameMaster);
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.resizeSubscription$.unsubscribe();
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 
   ngOnInit(): void {
-    this.gameService.getUsername().subscribe((username) => {
+    console.log("reset component values");
+    this.gameData = undefined;
+    this.tokenData = undefined;
+    this.assetsData = undefined;
+    this.gameService.getUsername().pipe(takeUntil(this.unsubscribe$)).subscribe((username) => {
       this.username = username;
     });
-    this.portisService.onConnect.subscribe(({network, account}) => {
+    this.portisService.onConnect.pipe(takeUntil(this.unsubscribe$)).subscribe(({network, account}) => {
       this.network = network;
       this.currentAccount = account;
       console.log('set currentAccount', this.currentAccount);
+      if (account) {
+        this.discordService.getUserData(account).then((discordUserData) => {
+          if (!discordUserData) {
+            DiscordConnectDialogComponent.showModal(this.dialog).then((result) => {
+              console.log('discord dialog closed');
+            });
+          }
+        }).catch(e => console.error(e));
+      }
     });
     this.gameMaster = this.route.snapshot.paramMap.get('id');
-    this.portisService.connect(
-      environment.networks.l2
-    ).then(() => {
+    this.portisService.connect().then(() => {
       this.network = this.portisService.network;
-      this.gameMasterContractService.setAddress(this.gameMaster).then(() => {
-        this.gameMasterContractService.onEvent.subscribe((event) => {
-          const message = this.event2message('gameMaster', event);
+      this.gameMasterContractService.setAddress(this.gameMaster).then((gameData) => {
+        this.gameMasterContractService.onEvent.pipe(takeUntil(this.unsubscribe$)).subscribe((event) => {
+          const message = this.translatorService.event2message('gameMaster', event);
           this.events.push({log: message});
           this.showInfo(message);
         });
-        const tokenAddress = this.gameMasterContractService.data.tokenAddress;
+        const tokenAddress = gameData.tokenAddress;
         this.tokenContractService.setAddress(tokenAddress).then(() => {
-          this.tokenContractService.onEvent.subscribe((event) => {
-            const message = this.event2message('token', event);
+          this.tokenContractService.onEvent.pipe(takeUntil(this.unsubscribe$)).subscribe((event) => {
+            const message = this.translatorService.event2message('token', event);
             this.events.push({log: message});
             this.showInfo(message);
           })
-          this.tokenContractService.onUpdate.subscribe((tokenData) => {
+          this.tokenContractService.onUpdate.pipe(takeUntil(this.unsubscribe$)).subscribe((tokenData) => {
             this.refreshTokenData(tokenData);
           });
         });
-        const assetsAddress = this.gameMasterContractService.data.assetsAddress;
+        const assetsAddress = gameData.assetsAddress;
         this.assetsContractService.setAddress(assetsAddress).then(() => {
-          this.assetsContractService.onEvent.subscribe((event) => {
-            const message = this.event2message('assets', event);
+          this.assetsContractService.onEvent.pipe(takeUntil(this.unsubscribe$)).subscribe((event) => {
+            const message = this.translatorService.event2message('assets', event);
             this.events.push({log: message});
             this.showInfo(message);
           })
+          this.assetsContractService.onUpdate.pipe(takeUntil(this.unsubscribe$)).subscribe((assetsData) => {
+            this.refreshAssetsData(assetsData);
+          });
         });
-        this.assetsContractService.onUpdate.subscribe((assetsData) => {
-          this.refreshAssetsData(assetsData);
-        });
-        this.gameMasterContractService.onUpdate.subscribe((gameData) => {
-          this.refreshGameData(gameData);
+        this.gameMasterContractService.onUpdate.pipe(takeUntil(this.unsubscribe$)).subscribe((gameData2) => {
+          this.refreshGameData(gameData2);
         });
       });
     }).catch(e => console.error(e));
@@ -147,10 +185,10 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     // this.board_height = this.content.nativeElement.clientHeight;
     // this.board_height = Math.min(this.content.nativeElement.clientHeight, this.board_width);
     this.resizeObservable$ = fromEvent(window, 'resize');
-    this.clickObservable$ = fromEvent(this.content.nativeElement, 'click');
-    this.clickObservable$.subscribe(evt => {
-      console.log('click', evt);
-    });
+    // this.clickObservable$ = fromEvent(this.content.nativeElement, 'click');
+    // this.clickObservable$.subscribe(evt => {
+    //   console.log('click', evt);
+    // });
     this.resizeSubscription$ = this.resizeObservable$.subscribe(evt => {
       console.log('resize', evt);
       this.board_width = this.content.nativeElement.clientWidth;
@@ -167,18 +205,22 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
   public get isRegistered(): boolean {
     return (!this.gameData)
      || (!this.currentAccount)
-     || (this.gameData.players.find((player) => (player.address === this.currentAccount)) !== undefined);
+     || (this.gameData.players.get(this.currentAccount) !== undefined);
   }
 
   refreshGameData(gameData: IGameData) {
     if (gameData) {
       this.gameData = gameData;
-      this.gameData.players.forEach(player => {
-        this.tokenContractService.observeAccount(player.address);
-        this.assetsContractService.observeAccount(player.address);
+      this.gameData.players.forEach((player, playerAddress) => {
+        this.tokenContractService.observeAccount(playerAddress);
+        this.assetsContractService.observeAccount(playerAddress);
       });
-      if (!this.playground) {
+      if (!this.playground || !this.playground.length) {
         this.playground = gameData.playground;
+      }
+      const player = gameData.players.get(this.currentAccount);
+      if (player !== undefined) {
+        this.currentPlayer = player;
       }
       const newPosition = this.gameData.playersPosition.get(this.currentAccount);
       const oldPosition = this.position;
@@ -186,19 +228,30 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         console.log('refresh position during refreshGameData', newPosition);
         this.refreshPosition(newPosition);
       }
-      this.gameData.players.forEach(player => {
-        this.usernames.set(player.address, player.username);
-        this.avatars.set(player.address, player.avatar);
+      this.gameData.players.forEach((aplayer, playerAddress) => {
+        this.avatars.set(playerAddress, aplayer.avatar);
       });
-      this.gameData.playersPosition.forEach((position, player) => {
+      this.gameData.playersPosition.forEach((position, aplayer) => {
         if (this.players !== undefined) {
-          this.players.setPlayerPosition(player, position);
+          this.players.setPlayerPosition(aplayer, position);
         }
         if (this.board !== undefined) {
-          this.board.setPlayerPosition(this.avatars.get(player), position);
+          this.board.setPlayerPosition(this.getPlayerAvatar(aplayer), position, true);
         }
       });
+      if (this.otherPlayers !== undefined) {
+        this.otherPlayers.gameData = gameData;
+      }
+      setTimeout(() => {
+        if (this.board !== undefined) {
+          this.zoom = this.board.zoom;
+        }
+      }, 500);
     }
+  }
+
+  getPlayerAvatar(player: string): number | undefined {
+    return this.avatars.get(player);
   }
 
   refreshTokenData(tokenData: ITokenData) {
@@ -228,13 +281,23 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       if (this.otherPlayers !== undefined) {
         this.otherPlayers.portfolios = assetsData.portfolios;
       }
+      if ((this.board !== undefined) && (this.playground !== undefined)) {
+        this.assetsData.owners.forEach((player, assetId) => {
+          const assetPosition = this.playground.findIndex(space => space.assetId === assetId);
+          if (assetPosition === -1) {
+            console.error('Unable to find assetPosition for assetId', assetId);
+          } else {
+            this.board.setOwner(this.getPlayerAvatar(player), assetPosition);
+          }
+        });
+      }
     } else {
       this.assets = [];
     }
   }
 
   public get canStart(): boolean {
-    return ((this.gameData) && (!this.isStarting) && (this.gameData.status === GAME_STATUS[0]) && (this.gameData.players.length >= 2));
+    return ((this.gameData) && (!this.isStarting) && (this.gameData.status === GAME_STATUS[0]) && (this.gameData.players.size >= 2));
   }
 
   public get canPlay(): boolean {
@@ -261,7 +324,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
 
   start() {
     this.isStarting = true;
-    this.gameMasterContractService.contract.start().then(() => {
+    this.gameMasterContractService.start().then(() => {
       console.log('start called');
     }).catch((e) => {
       console.error(e);
@@ -297,16 +360,17 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       });
       return;
     }
-    this.board.lockAvatar();
+    this.board.lockAvatar(this.getPlayerAvatar(this.currentAccount));
     const oldPosition = this.position;
     const nbBlocks = this.board.nbBlocks;
     let offset = (oldPosition <= newPosition) ? newPosition - oldPosition : (newPosition + nbBlocks) - oldPosition;
     const revPosition = nbBlocks - newPosition % nbBlocks;
     const targetAngle = revPosition * 2 * Math.PI / nbBlocks;
     this.board.setTargetAngle(targetAngle, offset/nbBlocks).then(() => {
-      this.board.unlockAvatar();
+      this.board.unlockAvatar(this.getPlayerAvatar(this.currentAccount), newPosition);
       this.position = newPosition;
       const space = this.playground[newPosition];
+      this.owner = undefined;
       if ((space.type >= eSpaceType.ASSET_CLASS_1) && (space.type <= eSpaceType.ASSET_CLASS_4)) {
         this.assetsContractService.ready.then(() => {
           this.assetsContractService.getOwner(space.assetId).then((owner) => {
@@ -377,82 +441,6 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
 
   }
 
-  event2message(contract: string, event: any): string {
-    switch (contract) {
-      case 'gameMaster': {
-        switch(event.type) {
-          case 'StatusChanged': {
-            return `Game status has changed to ${event.value.newStatus}`;
-            break;
-          }
-          case 'PlayerRegistered': {
-            return `Player ${this.getUsername(event.value.newPlayer)} has registered to the game`;
-            break;
-          }
-          case 'PlayPerformed': {
-            return `Player ${this.getUsername(event.value.player)} has played with option ${event.value.option}`;
-            break;
-          }
-          case 'RolledDices': {
-            return `Player ${this.getUsername(event.value.player)} has rolled the dices, got ${event.value.dice1}+${event.value.dice2} and moved to block ${event.value.newPosition}`;
-            break;
-          }
-          default: {
-            return '';
-          }
-        }
-        break;
-      }
-      case 'token': {
-        switch(event.type) {
-          case 'Transfer': {
-            if (event.value.from === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.to)} has received ${event.value.value.toString()} tokens`;
-            } else if (event.value.to === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.from)} has spent ${event.value.value.toString()} tokens`;
-            } else {
-              return `Player ${this.getUsername(event.value.from)} has transferred ${event.value.value.toString()} tokens to account ${this.getUsername(event.value.to)}`;
-            }
-            break;
-          }
-          // case 'Approval': {
-          //   return `Player ${event.value.owner} has approved account ${event.value.spender} for amount ${event.value.value.toString()}`;
-          //   break;
-          // }
-          default: {
-            return '';
-          }
-        }
-        break;
-      }
-      case 'assets': {
-        switch(event.type) {
-          case 'Transfer': {
-            if (event.value.from === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.to)} has received asset with id ${event.value.tokenId.toString()}`;
-            } else if (event.value.to === Utils.ADDRESS_ZERO) {
-              return `Player ${this.getUsername(event.value.from)} has released asset with id ${event.value.tokenId.toString()}`;
-            } else {
-              return `Player ${this.getUsername(event.value.from)} has transferred asset with id ${event.value.tokenId.toString()} to account ${this.getUsername(event.value.to)}`;
-            }
-            break;
-          }
-          // case 'Approval': {
-          //   return `Player ${event.value.owner} has approved account ${event.value.spender} for amount ${event.value.value.toString()}`;
-          //   break;
-          // }
-          default: {
-            return '';
-          }
-        }
-        break;
-      }
-
-      default:
-        return '';
-    }
-  }
-
   register() {
     this.isRegistering = true;
     RegisterFormComponent.showModal(this.dialog).then((result) => {
@@ -473,15 +461,19 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  getPlayer(address: string) {
-    return this.gameData?.players.find(player => player.address === address);
+  getPlayer(address: string): IPlayer {
+    return this.gameData?.players.get(address);
   }
 
-  getUsername(address: string): string {
-    if (this.usernames.has(address)) {
-      return this.usernames.get(address);
+  changeZoom(zoom: number) {
+    this.zoom = zoom;
+    this.board.zoom = zoom;
+  }
+
+  reconnectDiscord() {
+    if (this.discordWidget) {
+      this.discordWidget.refreshChannel();
     }
-    return address;
   }
 
 }

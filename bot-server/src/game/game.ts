@@ -3,19 +3,33 @@ import { Web3Provider } from '../web3/web3.provider';
 
 export interface ICallbacks {
   onPlayerRegistered?: (newPlayer: string, nbPlayers: number) => void;
-  onPlayPerformed?: (player: string, option: number, cardId: number, newPosition: number) => void;
-  onRolledDices?: (player: string, dice1: number, dice2: number, cardId: number, newPosition: number, options: number) => void;
+  onPlayPerformed?: (
+    player: string,
+    option: number,
+    cardId: number,
+    newPosition: number
+  ) => void;
+  onRolledDices?: (
+    player: string,
+    dice1: number,
+    dice2: number,
+    cardId: number,
+    newPosition: number,
+    options: number
+  ) => void;
   onStatusChanged?: (newStatus: number) => void;
-};
+}
 
 export interface IGame {
   address: string;
   registerToEvents(callbacks: ICallbacks);
-  getCurrentOptions();
+  // getCurrentOptions();
+  getGameData(): Promise<IGameData>;
   isPlayerRegistered(player: string): Promise<boolean>;
-  getNextPlayer(): Promise<string>;
-  getCurrentPlayer(): Promise<string>;
-  getStatus(): Promise<number>;
+  // getNextPlayer(): Promise<string>;
+  // getCurrentPlayer(): Promise<string>;
+  // getStatus(): Promise<number>;
+  getPlayers(): Promise<IPlayer[]>;
   // rollDices(): Promise<{
   //   dice1: number;
   //   dice2: number;
@@ -23,6 +37,20 @@ export interface IGame {
   //   options: number;
   // }>;
   // play(option: number): Promise<void>;
+}
+
+export interface IPlayer {
+  address: string;
+  username: string;
+  avatar: number;
+}
+
+export interface IGameData {
+  gameMaster: string;
+  status: number;
+  nextPlayer: string;
+  currentPlayer: string;
+  currentOptions: number;
 }
 
 export enum eOption {
@@ -38,8 +66,38 @@ export enum eGameStatus {
   CREATED = 0,
   STARTED = 1,
   FROZEN = 2,
-  ENDED = 3
+  ENDED = 3,
 }
+
+export const GAME_STATUS = {
+  0: 'CREATED',
+  1: 'STARTED',
+  2: 'FROZEN',
+  3: 'ENDED',
+};
+
+export const USER_DATA_FIELDS = {
+  address: 0,
+  username: 1,
+  // tslint:disable-next-line: object-literal-sort-keys
+  avatar: 2,
+  position: 3,
+  hasLost: 4,
+};
+
+export const GAME_DATA_FIELDS = {
+  status: 0,
+  // tslint:disable-next-line: object-literal-sort-keys
+  nbPlayers: 1,
+  nbPositions: 2,
+  token: 3,
+  assets: 4,
+  marketplace: 5,
+  nextPlayer: 6,
+  currentPlayer: 7,
+  currentOptions: 8,
+  currentCardId: 9,
+};
 
 export class Game implements IGame {
   private _contract: ethers.Contract;
@@ -52,7 +110,8 @@ export class Game implements IGame {
     private _address: string,
     abi: ethers.ContractInterface
   ) {
-    this._contract = new ethers.Contract(this._address, abi, _web3.signer);
+    // this._contract = new ethers.Contract(this._address, abi, _web3.signer);
+    this._contract = _web3.getContract(this._address, abi);
     this._contract.on(
       'RolledDices',
       (player, dice1, dice2, cardId, newPosition, options) => {
@@ -79,20 +138,65 @@ export class Game implements IGame {
     return this._contract.isPlayerRegistered(player);
   }
 
-  public async getNextPlayer(): Promise<string> {
-    return this._contract.getNextPlayer();
+  // public async getNextPlayer(): Promise<string> {
+  //   return this._contract.nextPlayer();
+  // }
+
+  // public async getCurrentPlayer(): Promise<string> {
+  //   return this._contract.currentPlayer();
+  // }
+
+  // public async getCurrentOptions(): Promise<number> {
+  //   return this._contract.currentOptions();
+  // }
+
+  // public async getStatus(): Promise<number> {
+  //   return this._contract.status();
+  // }
+
+  public async getGameData(): Promise<IGameData> {
+    const contractGameData = await this._contract.getGameData();
+    const status = contractGameData[GAME_DATA_FIELDS.status];
+    const nbPlayers = contractGameData[GAME_DATA_FIELDS.nbPlayers];
+    const nextPlayer = contractGameData[GAME_DATA_FIELDS.nextPlayer];
+    const currentPlayer = contractGameData[GAME_DATA_FIELDS.currentPlayer];
+    const currentOptions = contractGameData[GAME_DATA_FIELDS.currentOptions];
+    return {
+      currentOptions,
+      currentPlayer,
+      gameMaster: this.address,
+      nextPlayer,
+      status,
+    };
   }
 
-  public async getCurrentPlayer(): Promise<string> {
-    return this._contract.getCurrentPlayer();
-  }
-
-  public async getCurrentOptions(): Promise<number> {
-    return this._contract.getCurrentOptions();
-  }
-
-  public async getStatus(): Promise<number> {
-    return this._contract.getStatus();
+  public async getPlayers(): Promise<IPlayer[]> {
+    return new Promise<IPlayer[]>(async (resolve, reject) => {
+      try {
+        const players: IPlayer[] = [];
+        const indexes: number[] = [];
+        const nbPlayers = await this._contract
+          .nbPlayers()
+          .catch(e => console.error(e));
+        for (let i = 0; i < nbPlayers; i++) {
+          indexes.push(i);
+        }
+        const playersData = await this._contract.getPlayersData(indexes);
+        for (let i = 0; i < nbPlayers; i++) {
+          const playerAddress = playersData[USER_DATA_FIELDS.address][i];
+          const username = playersData[USER_DATA_FIELDS.username][i];
+          const avatar = playersData[USER_DATA_FIELDS.avatar][i];
+          players.push({
+            address: playerAddress,
+            avatar,
+            username: ethers.utils.parseBytes32String(username),
+          });
+        }
+        resolve(players);
+      } catch (e) {
+        reject(e);
+      }
+    });
   }
 
   // public async rollDices(): Promise<{
@@ -168,9 +272,7 @@ export class Game implements IGame {
   //   });
   // }
 
-  public registerToEvents(
-    callbacks: ICallbacks
-  ) {
+  public registerToEvents(callbacks: ICallbacks) {
     if (callbacks.onRolledDices) {
       this._contract.on('RolledDices', callbacks.onRolledDices);
     }

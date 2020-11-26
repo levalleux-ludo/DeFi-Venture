@@ -76,6 +76,9 @@ import { DefiIcoComponent } from './_components/defi-ico/defi-ico.component';
 import { ChanceDetailFormComponent } from './_components/chance-detail-form/chance-detail-form.component';
 import { ChanceDetailComponent } from './_components/chance-detail/chance-detail.component';
 import { InvestFormComponent } from './_components/invest-form/invest-form.component';
+import { DiscordTestComponent } from './_components/discord-test/discord-test.component';
+import { DiscordConnectDialogComponent } from './_components/discord-connect-dialog/discord-connect-dialog.component';
+import { DiscordWidgetbotComponent } from './_components/discord-widgetbot/discord-widgetbot.component';
 
 export function enableWeb3Provider(provider) {
   return () => {
@@ -127,7 +130,10 @@ export function enableWeb3Provider(provider) {
     DefiIcoComponent,
     ChanceDetailFormComponent,
     ChanceDetailComponent,
-    InvestFormComponent
+    InvestFormComponent,
+    DiscordTestComponent,
+    DiscordConnectDialogComponent,
+    DiscordWidgetbotComponent
   ],
   imports: [
     BrowserModule,
@@ -162,12 +168,12 @@ export function enableWeb3Provider(provider) {
     MatInputCounterModule
   ],
   providers: [
-    {
-      provide: APP_INITIALIZER,
-      useFactory: enableWeb3Provider,
-      deps: [WEB3PROVIDER],
-      multi: true
-    }
+    // {
+    //   provide: APP_INITIALIZER,
+    //   useFactory: enableWeb3Provider,
+    //   deps: [WEB3PROVIDER],
+    //   multi: true
+    // }
   ],
   bootstrap: [AppComponent],
   entryComponents: [

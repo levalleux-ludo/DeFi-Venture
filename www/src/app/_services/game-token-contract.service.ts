@@ -29,10 +29,10 @@ export class GameTokenContractService extends AbstractContractService<ITokenData
     if (!this.balances.has(address)) {
       this.balances.set(address, balance);
     }
-    if (this.isReady) {
+    await this.ready.then(async () => {
       balance = await this._contract.balanceOf(address);
       this.balances.set(address, balance);
-    }
+    });
     console.log('observeAccount', address, 'isReady', this.isReady, 'balance', balance.toString());
     return balance;
   }
@@ -46,7 +46,16 @@ export class GameTokenContractService extends AbstractContractService<ITokenData
     });
   }
 
-  protected async refreshData() {
+
+  protected unsubscribeToEvents() {
+    this._contract.removeAllListeners({topics: ['Transfer', 'Approval']});
+  }
+
+  protected async resetData() {
+    this.balances = new Map<string, BigNumber>();
+  }
+
+  protected async refreshData(): Promise<{data: ITokenData, hasChanged: boolean}> {
     console.log("token contract refreshData");
     const decimals = await this._contract.decimals();
     const totalSupply = await this._contract.totalSupply();
@@ -57,6 +66,11 @@ export class GameTokenContractService extends AbstractContractService<ITokenData
       balances: this.balances,
       decimals
     };
-    this._onUpdate.next(tokenData);
+    return {data: tokenData, hasChanged: true};
+
   }
+
+  protected async _onContractSet(value: ethers.Contract) {
+  }
+
 }

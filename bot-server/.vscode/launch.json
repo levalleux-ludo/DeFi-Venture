@@ -20,14 +20,17 @@
     },
     {
       "type": "node",
+      "protocol": "inspector",
       "request": "launch",
       "name": "Debug test",
-      "program": "${workspaceRoot}/node_modules/jest/bin/jest.js",
-      "args": [
-        "--findRelatedTests",
-        "${relativeFile}"
-      ],
-      "cwd": "${workspaceRoot}"
+      "program": "${workspaceFolder}/src/test.ts",
+      "cwd": "${workspaceFolder}",
+      "sourceMaps": true,
+      "smartStep": true,
+      "preLaunchTask": "build",
+      "outFiles": [
+        "${workspaceFolder}/lib/**/*.js"
+      ]
     }
   ]
 }

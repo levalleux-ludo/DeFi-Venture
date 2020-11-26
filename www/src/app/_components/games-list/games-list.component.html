@@ -1,1 +1,5 @@
+<div *ngIf="network != undefined">You're connected to blockchain: {{network.name}}</div>
+<div *ngIf="account != undefined">Your blockchain account is: {{account}}</div>
+<div *ngIf="discordUsername != undefined">You're connected to Discord with nickname: {{discordUsername}}</div>
 <app-game-factory #gameFactory></app-game-factory>
+<app-discord-widgetbot [guildId]="discordService.GUILD_ID$ | async" [channelId]="discordService.CHANNELS_ID$ | async"></app-discord-widgetbot>

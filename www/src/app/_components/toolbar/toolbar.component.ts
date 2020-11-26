@@ -1,3 +1,4 @@
+import { DiscordService } from './../../_services/discord.service';
 import { PortisL1Service } from 'src/app/_services/portis-l1.service';
 import { TokenWatcherService } from './../../_services/token-watcher.service';
 import { EthereumService } from './../../_services/ethereum.service';
@@ -19,6 +20,7 @@ export class ToolbarComponent implements OnInit {
   username: string;
   balanceEth: string;
   balanceUSDc: string;
+  discordUsername: string;
   network;
   constructor(
     private connectionService: ConnectionService,
@@ -26,7 +28,8 @@ export class ToolbarComponent implements OnInit {
     private domSanitizer: DomSanitizer,
     private ethService: EthereumService,
     private tokenWatcherService: TokenWatcherService,
-    private portisService: PortisL1Service
+    private portisService: PortisL1Service,
+    private discordService: DiscordService
   ) {
     this.matIconRegistry.addSvgIcon(
       `ethereum-eth-logo`,
@@ -88,11 +91,27 @@ export class ToolbarComponent implements OnInit {
           this.balanceEth = Utils.getBalanceAsNumber(balanceETH, Utils.ETH_decimals, 0.00001).toString();
         });
       }
-    }, 5000);
+    }, 30000);
+    this.discordService.userData.subscribe((userData) => {
+      if (userData) {
+        this.discordUsername = userData.username;
+      }
+    })
   }
 
   logout() {
     this.portisService.logout();
   }
+
+  connectDiscord() {
+    this.discordService.jumpToLogin(this.portisService.accounts[0])
+    .then((userId) => {
+      console.log('User successfully logged on Discord', userId);
+    })
+    .catch((e) => {
+      console.error(e);
+    });
+  }
+
 
 }

@@ -68,20 +68,22 @@ export class MyCashComponent implements OnInit {
   buildAssets() {
     const assets = [];
     let assetsValue = 0;
-    for(const assetId of this._assetIds) {
-      let assetValue;
-      if (this._playground) {
-        const space = this._playground.find(space => space.assetId === assetId);
-        assetValue = space?.assetPrice;
-        assetsValue += assetValue;
+    if (this._assetIds !== undefined) {
+      for(const assetId of this._assetIds) {
+        let assetValue;
+        if (this._playground) {
+          const space = this._playground.find(space => space.assetId === assetId);
+          assetValue = space?.assetPrice;
+          assetsValue += assetValue;
+        }
+        assets.push({
+          assetId,
+          name: startups.startups[assetId].name,
+          detail: startups.startups[assetId].detail,
+          image: `assets/blocks/block_${startups.startups[assetId].image}`,
+          value: assetValue
+        });
       }
-      assets.push({
-        assetId,
-        name: startups.startups[assetId].name,
-        detail: startups.startups[assetId].detail,
-        image: `assets/blocks/block_${startups.startups[assetId].image}`,
-        value: assetValue
-      });
     }
     this._assets = assets;
     this.assetsValue = assetsValue.toString();

@@ -54,7 +54,7 @@ export class OtherPlayersComponent implements OnInit {
   refresh() {
     this._players = [];
     if (this._gameData) {
-      for (const player of this._gameData.players) {
+      for (const player of this._gameData.players.values()) {
         if (player.address !== this._currentAccount) {
           this._players.push({
             ...player,

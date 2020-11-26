@@ -1,6 +1,8 @@
 <div fxLayout="column" fxLayoutAlign="start center" class="block-container">
     <div *ngIf="player != undefined" class="block-username" fxLayout="row">
         <img src="assets/avatars/{{avatarsImgs[player.avatar]}}.png" height="36">
+        <img class="img-badge" *ngIf="player.hasLost" src="assets/looser.png" width="72">
+        <img class="img-badge" *ngIf="player.hasWon" src="assets/winner.png" width="72">
         <div fxFlex style="font-size: medium;">{{player.username}}</div>
     </div>
     <div class="block-cash">
