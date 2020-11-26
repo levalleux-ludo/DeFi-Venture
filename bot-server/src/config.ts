@@ -24,19 +24,19 @@ export const config = {
   bots: {
     80001: [
       // mumbai
-      { name: 'R1D1', address: '0xf5ed59CE3698eB241dc490217c9FAbEAbE9b045a' },
-      { name: 'R2D2', address: '0x4e562B63AbCeb7016B2b825DAC983a69D7701009' },
-      { name: 'R3D3', address: '0x2334b578912446D3286c87B81503284632707225' },
-      { name: 'R4D4', address: '0xF44F095bFF344f1b3d936b98F167df17256662D9' },
-      { name: 'R5D5', address: '0xDC4598452478c44880910eC1ff453f806eC65388' },
+      { name: 'R1D1', address: '0x01A04638569e6D0D454B35a126D7b8c7bE035629'},
+      { name: 'R2D2', address: '0xE92F42cf109a7aE902A7BD215d3fe519445e013e'},
+      { name: 'R3D3', address: '0x957B28Ead878b4e8b6A74251445891e22F7fb6b4'},
+      { name: 'R4D4', address: '0x8f32a03441bEb231Fb0AcA4bdb2fd99e33433254'},
+      { name: 'R5D5', address: '0xC136494e1Dc8A6F7c08B17ed40BF42C25B2b6576'},
     ],
     1337: [
       // ganache
-      { name: 'R1D1', address: '0x46a9E47B18Efc0655443CEA419e84b82866D76eb' },
-      { name: 'R2D2', address: '0xdAFACB0A2b5c8Be978e19F3268dF2305DDC76a08' },
-      { name: 'R3D3', address: '0x7F1fc6249c96090Dac9e206bF644ED6793F35229' },
-      { name: 'R4D4', address: '0xd0926e3FC3eD92C05527AA732057EDE85fde82B3' },
-      { name: 'R5D5', address: '0x2346764D5f5f8C9f2f7A532A80f493B6397a50f1' },
+      { name: 'R1D1', address: '0xBeBA8C47eCe2b13B04496E6BC15d67beafB44002' },
+      { name: 'R2D2', address: '0xE2454CEE72Dc085c92b41E97cAcaFec7D1a0492A' },
+      { name: 'R3D3', address: '0x61b9d9e22E886A075E1d7613f9e912FDBEa18386' },
+      { name: 'R4D4', address: '0x0a5ba96354C00CAe6623a53612084Bb0826d614D' },
+      { name: 'R5D5', address: '0xA60D19c5BA9d98DF4e4f704fA7Ada7B7b0D08990' },
     ],
   },
   discord: {
@@ -54,8 +54,8 @@ export const config = {
     },
   },
   gameFactory: {
-    80001: '0xb509029889B27bFCa71340f2B8ebF0cbe0295d07', // mumbai
-    1337: '0x520A3Fef8C677Be3B1e4a4665cA0355525B50fD9', // ganache
+    80001: '0x66C703021aDEa4f908339199cDf1447899C947Ba', // mumbai
+    1337: '0xF016cAd5fDbD3DA3D15a5f15cC5998b40Fa7DA45', // ganache
   },
   networks: {
     ganache: {

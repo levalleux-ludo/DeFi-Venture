@@ -36,6 +36,7 @@ export const USER_DATA_FIELDS = {
 
 import GameMasterJSON from '../../../../buidler/artifacts/GameMaster.json';
 import PlaygroundJSON from '../../../../buidler/artifacts/Playground.json';
+import GameContractsJSON from '../../../../buidler/artifacts/GameContracts.json';
 import { throwToolbarMixedModesError } from '@angular/material/toolbar';
 import { AbstractContractService } from './AbstractContractService';
 import { ConnectedPositionStrategy } from '@angular/cdk/overlay';
@@ -128,6 +129,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
   onRolledDices: (player, dice1, dice2, cardId, newPosition, options) => void;
   protected contracts = new Map<string, GameMaster>();
   protected _playgroundContract: ethers.Contract;
+  protected _gameContracts: ethers.Contract;
 
   constructor(
     protected sessionStorageService: SessionStorageService,
@@ -566,7 +568,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
   }
 
   protected async createPlaygroundContract(gameMaster: Contract) {
-    await gameMaster.playgroundAddress().then(async (playgroundAddress: string) => {
+    await this._gameContracts.getPlayground().then(async (playgroundAddress: string) => {
       await (new Contract(playgroundAddress, PlaygroundJSON.abi, this.portisL1Service?.provider)).deployed().then((contract) => {
         this._playgroundContract = contract;
       }).catch(e => {
@@ -575,8 +577,19 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     });
   }
 
+  protected async createGameContracts(gameMaster: Contract) {
+    await gameMaster.contracts().then(async (contractsAddress: string) => {
+      await (new Contract(contractsAddress, GameContractsJSON.abi, this.portisL1Service?.provider)).deployed().then((contract) => {
+        this._gameContracts = contract;
+      }).catch(e => {
+        console.error('Unable to create playground contract', e);
+      });
+    });
+  }
+
   protected async _onContractSet(value: ethers.Contract) {
     if (value) {
+      await this.createGameContracts(value);
       await this.createPlaygroundContract(value);
     } else {
       this._playgroundContract = undefined;

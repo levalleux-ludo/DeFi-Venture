@@ -127,21 +127,21 @@ describe("GameFactory", function() {
             ethers.BigNumber.from(INITIAL_BALANCE),
             spaces,
             chances
-        )).to.emit(gameFactory, 'GameCreated');
+        )).to.emit(gameFactory, 'GameMasterCreated');
         const nbGames = await gameFactory.nbGames();
         console.log('nbGames', nbGames, nbGames.toString());
         expect(nbGames.toNumber()).to.equal(1);
         const gameMasterAddress = await gameFactory.getGameAt(0);
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
-        await gameFactory.createGameContracts(
+        await expect(gameFactory.createGameContracts(
             gameMasterAddress,
             NB_MAX_PLAYERS,
             NB_POSITIONS,
             ethers.BigNumber.from(INITIAL_BALANCE),
             spaces,
             chances
-        )
+        )).to.emit(gameFactory, 'GameContractsCreated').to.emit(gameFactory, 'GameCreated');
         console.log('contracts', await gameMaster.contracts());
         await gameFactory.createGameToken(gameMasterAddress);
         await gameFactory.createGameAssets(gameMasterAddress);

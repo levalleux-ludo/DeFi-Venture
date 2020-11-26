@@ -30,6 +30,8 @@ contract GameFactory is IGameStatus {
     EnumerableSet.AddressSet private gamesSet;
 
     event GameCreated(address gameMasterAddress, uint index);
+    event GameMasterCreated(address gameMasterAddress);
+    event GameContractsCreated(address gameContractsAddress);
 
     constructor (address _gameMasterFactory, address _gameContractsWrapper, address _gameContractsFactory, address _tokenFactory, address _assetsFactory, address _marketplaceFactory) public {
         gameMasterFactory = _gameMasterFactory;
@@ -51,7 +53,7 @@ contract GameFactory is IGameStatus {
         address gameMasterAddress = IGameMasterFactory(gameMasterFactory).create(_nbMaxPlayers, _nbPositions, _initialAmount, _playground, _chances);
         // store gameMaster address in createdGameSet
         gamesSet.add(gameMasterAddress);
-        emit GameCreated(gameMasterAddress, gamesSet.length() - 1);
+        emit GameMasterCreated(gameMasterAddress);
     }
 
     function createGameContracts(address gameMasterAddress, uint8 _nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount, bytes32 _playground, bytes32 _chances) external {
@@ -63,6 +65,8 @@ contract GameFactory is IGameStatus {
         console.log('created contracts', contracts, gameContractsAddr);
         contractsFactory.transferOwnership(gameMasterAddress, IGameContracts(contracts).getPlayground());
         GameMasterStorage(gameMasterAddress).setContracts(gameContractsAddr);
+        emit GameContractsCreated(gameContractsAddr);
+        emit GameCreated(gameMasterAddress, gamesSet.length() - 1);
     }
 
     function createGameToken(address gameMasterAddress) external {
