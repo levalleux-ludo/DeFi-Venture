@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { BigNumber, utils } = require("ethers");
-const { createGameMasterBase, createGameToken, createGameAssets, createMarketplace, NULL_ADDRESS, STATUS, revertMessage, startGame } = require('./testsUtils');
+const { createGameMasterFull, registerPlayers, createGameToken, createGameAssets, createMarketplace, NULL_ADDRESS, STATUS, revertMessage, startGame } = require('./testsUtils');
 
 var GameMasterFactory;
 var TokenFactory;
@@ -8,48 +8,6 @@ var AssetsFactory;
 var MarketplaceFactory;
 var avatarCount = 1;
 const INITIAL_BALANCE = 200; // Reduce the initial amount to make easier to get players losing
-
-async function createGameMaster(token, assets, marketplace) {
-    const gameMaster = await createGameMasterBase();
-    await gameMaster.setInitialAmount(BigNumber.from(INITIAL_BALANCE));
-    await token.transferOwnership(gameMaster.address);
-    await assets.transferOwnership(gameMaster.address);
-    await gameMaster.setToken(token.address);
-    await gameMaster.setAssets(assets.address);
-    // await marketplace.setToken(token.address);
-    // await marketplace.setAssets(assets.address);
-    await marketplace.transferOwnership(gameMaster.address);
-    await gameMaster.setMarketplace(marketplace.address);
-    return gameMaster;
-}
-
-async function registerPlayers(gameMaster, players) {
-    let tokenContract;
-    let assetsContract;
-    const token = await gameMaster.tokenAddress();
-    if (token !== 0) {
-        tokenContract = await TokenFactory.attach(token);
-        await tokenContract.deployed();
-    }
-    const assets = await gameMaster.assetsAddress();
-    if (assets !== 0) {
-        assetsContract = await AssetsFactory.attach(assets);
-        await assetsContract.deployed();
-    }
-    const marketplaceAddr = await gameMaster.marketplaceAddress();
-    for (let player of players) {
-        if (tokenContract) {
-            await tokenContract.connect(player).approveMax(gameMaster.address);
-            if (marketplaceAddr) {
-                await tokenContract.connect(player).approveMax(marketplaceAddr);
-            }
-        }
-        if (assetsContract && marketplaceAddr) {
-            await assetsContract.connect(player).setApprovalForAll(marketplaceAddr, true);
-        }
-        await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
-    }
-}
 
 describe('Game play with token and assets', () => {
     var gameMaster;
@@ -64,17 +22,13 @@ describe('Game play with token and assets', () => {
 
     before('before', async() => {
         [owner, addr1, addr2] = await ethers.getSigners();
-        TokenFactory = await ethers.getContractFactory("GameToken");
-        token = await createGameToken(TokenFactory);
-        console.log('token', token.address);
-        AssetsFactory = await ethers.getContractFactory("GameAssets");
-        assets = await createGameAssets(AssetsFactory);
-        console.log('assets', assets.address);
-        MarketplaceFactory = await ethers.getContractFactory("Marketplace");
-        marketplace = await createMarketplace(MarketplaceFactory);
-        console.log('marketplace', marketplace.address);
-        gameMaster = await createGameMaster(token, assets, marketplace);
+        const game = await createGameMasterFull();
+        gameMaster = game.gameMaster;
+        token = game.token;
+        assets = game.assets;
+        marketplace = game.marketplace;
         console.log('gameMaster', gameMaster.address);
+        await gameMaster.setInitialAmount(BigNumber.from(INITIAL_BALANCE));
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
         addr1Address = await addr1.getAddress();
@@ -194,13 +148,12 @@ describe('Losing player', () => {
 
     before('before', async() => {
         [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners();
-        TokenFactory = await ethers.getContractFactory("GameToken");
-        token = await createGameToken(TokenFactory);
-        AssetsFactory = await ethers.getContractFactory("GameAssets");
-        assets = await createGameAssets(AssetsFactory);
-        MarketplaceFactory = await ethers.getContractFactory("Marketplace");
-        marketplace = await createMarketplace(MarketplaceFactory);
-        gameMaster = await createGameMaster(token, assets, marketplace);
+        const game = await createGameMasterFull();
+        gameMaster = game.gameMaster;
+        token = game.token;
+        assets = game.assets;
+        marketplace = game.marketplace;
+        await gameMaster.setInitialAmount(BigNumber.from(INITIAL_BALANCE));
         await registerPlayers(gameMaster, [addr1, addr2, addr3, addr4]);
         await startGame(gameMaster);
         addr1Address = await addr1.getAddress();

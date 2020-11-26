@@ -1,13 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { createGameMasterBase } = require('./testsUtils');
+const { createGameMasterFull, STATUS, PLAYGROUND, NB_POSITIONS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
 
-const STATUS = {
-    created: 0,
-    started: 1,
-    frozen: 2,
-    ended: 3
-};
 
 let GAME_DATA_FIELDS = {}; {
     let index = 0;
@@ -42,94 +36,51 @@ let USER_DATA_FIELDS = {}; {
     }
 }
 
-// generic handlers to test exceptions
-const shouldFail = {
-    then: () => {
-        expect(false).to.equal(true, "must fail");
-    },
-    catch: (e) => {
-        expect(true).to.equal(true, "must fail");
-    }
-};
-
-function revertMessage(error) {
-    return 'VM Exception while processing transaction: revert ' + error;
-}
-
 async function createGameMaster() {
-    const gameMaster = await createGameMasterBase();
+    const { gameMaster, token } = await createGameMasterFull();
     gameMaster.getUsername = (player) => gameMaster.usernames(player);
     gameMaster.getAvatar = (player) => gameMaster.players(player);
     gameMaster.getCurrentOptions = () => gameMaster.currentOptions();
     gameMaster.getCurrentCardId = () => gameMaster.currentCardId();
-    return gameMaster;
-}
-
-var avatarCount = 1;
-
-async function registerPlayers(gameMaster, players) {
-    for (let player of players) {
-        await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
-    }
-}
-
-async function startGame(gameMaster) {
-    await gameMaster.start();
-}
-
-
-async function playTurn(gameMaster, signer) {
-    return new Promise(async(resolve) => {
-        let filter = gameMaster.filters.RolledDices(signer.address);
-        gameMaster.once(filter, async(player, dice1, dice2, cardId, newPosition, options) => {
-            console.log('RolledDices', player, dice1, dice2, cardId, newPosition, options);
-            await gameMaster.setOptions(255);
-            await gameMaster.connect(signer).play(1);
-            resolve([dice1, dice2]);
-        });
-        await gameMaster.connect(signer).rollDices();
-    });
-}
-
-function checkDice(dice) {
-    expect(dice).to.be.lessThan(7, 'dices cannot exceed 6');
-    expect(dice).to.be.greaterThan(0, 'dices cannot be under 1');
+    return { gameMaster, token };
 }
 
 describe("GameMaster optimised", function() {
     it("Should return the address of the contract's creator", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster } = await createGameMaster();
         const ownerAddress = await owner.getAddress();
         expect(await gameMaster.owner()).to.equal(ownerAddress);
     });
     it("Should be in status 'created' and no players", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster } = await createGameMaster();
         expect(await gameMaster.getStatus()).to.equal(STATUS.created);
         expect(await gameMaster.nbPlayers()).to.equal(0);
     });
     it("Should allow to register", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster, token } = await createGameMaster();
         const addr1Address = await addr1.getAddress();
+        await token.connect(addr1).approveMax(gameMaster.transferManagerAddress());
         await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
         expect(await gameMaster.nbPlayers()).to.equal(1);
         expect(await gameMaster.nextPlayer()).to.equal(addr1Address);
         const addr2Address = await addr2.getAddress();
+        await token.connect(addr2).approveMax(gameMaster.transferManagerAddress());
         await expect(gameMaster.connect(addr2).register(utils.formatBytes32String('titi'), 2)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
         expect(await gameMaster.nbPlayers()).to.equal(2);
     });
     it("Should allow to start game", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster } = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await expect(gameMaster.start()).to.emit(gameMaster, 'StatusChanged').withArgs(STATUS.started);
         expect(await gameMaster.getStatus()).to.equal(STATUS.started);
     });
     it("Should allow to rollDices the nextPlayer", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster } = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
         const addr1Address = await addr1.getAddress();
@@ -137,7 +88,7 @@ describe("GameMaster optimised", function() {
     });
     it('Should return all game data in one call', async() => {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster } = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
         const addr1Address = await addr1.getAddress();
@@ -163,7 +114,7 @@ describe("GameMaster optimised", function() {
     })
     it("Should return player Data in one call", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster } = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
         const addr1Address = await addr1.getAddress();
@@ -182,7 +133,7 @@ describe("GameMaster optimised", function() {
     });
     it("Should return several players positions in one call", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster } = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
         const addr1Address = await addr1.getAddress();
@@ -201,7 +152,7 @@ describe("GameMaster optimised", function() {
     });
     it("Should return several players data in one call", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const gameMaster = await createGameMaster();
+        const { gameMaster } = await createGameMaster();
         await registerPlayers(gameMaster, [addr1, addr2]);
         await startGame(gameMaster);
         const addr1Address = await addr1.getAddress();

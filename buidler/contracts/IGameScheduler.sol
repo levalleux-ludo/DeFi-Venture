@@ -18,4 +18,5 @@ interface IGameScheduler {
     function register(bytes32 username, uint8 avatar) external payable;
     function start() external;
     function end() external;
+    function playerLost(address player) external;
 }

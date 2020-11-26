@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 const { getSpaces, getChances } = require("../db/playground");
-const { createGameMasterBase } = require('./testsUtils');
+const { createGameMasterFull } = require('./testsUtils');
 
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 1000;
@@ -23,11 +23,11 @@ var botPlayerFactory;
 var owner, addr1, addr2;
 var botPlayer1, botPlayer2;
 var gameMaster1, gameMaster2;
-var token1, token2;
 var ownerAddress, addr1Address, addr1Address;
 
 async function createGameMaster() {
-    return createGameMasterBase();
+    const { gameMaster } = await createGameMasterFull();
+    return gameMaster;
 }
 
 function revertMessage(error) {
@@ -62,13 +62,6 @@ describe('BotPlayer', () => {
         gameMaster1Addr = await gameMaster1.address;
         gameMaster2 = await createGameMaster();
         gameMaster2Addr = await gameMaster2.address;
-
-        token1 = await tokenFactory.deploy();
-        await token1.transferOwnership(gameMaster1.address);
-        await gameMaster1.setToken(token1.address);
-        token2 = await tokenFactory.deploy();
-        await token2.transferOwnership(gameMaster2.address);
-        await gameMaster2.setToken(token2.address);
 
     })
     it('Create 2 bots', async() => {

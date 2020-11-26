@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {GameMaster} from "./GameMaster.sol";
 import {IGameToken} from "./IGameToken.sol";
 import {IBotPlayer} from "./IBotPlayer.sol";
+import { IGameContracts } from './IGameContracts.sol';
 
 contract BotPlayer is Ownable, IBotPlayer, IERC721Receiver {
     constructor() public Ownable() {}
@@ -22,10 +23,11 @@ contract BotPlayer is Ownable, IBotPlayer, IERC721Receiver {
 
     function register(address gameMasterAddress, bytes32 username, uint8 avatar) external override onlyOwner {
         GameMaster gameMaster = GameMaster(gameMasterAddress);
-        address tokenAddress = gameMaster.tokenAddress();
+        address tokenAddress = IGameContracts(gameMaster.contracts()).getToken();
+        address transferManagerAddress = IGameContracts(gameMaster.contracts()).getTransferManager();
         if (tokenAddress != address(0)) {
             IGameToken token = IGameToken(tokenAddress);
-            token.approveMax(gameMasterAddress);
+            token.approveMax(transferManagerAddress);
         }
         console.log('Bot: calling register ...');
         gameMaster.register(username, avatar);

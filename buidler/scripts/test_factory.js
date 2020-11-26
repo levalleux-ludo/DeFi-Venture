@@ -13,25 +13,27 @@ const STATUS = {
     ended: 3
 };
 
+const bre = require("@nomiclabs/buidler");
+const ethers = bre.ethers;
 
-const options = commandLineArgs([
-    { name: 'factory', alias: 'f', type: String },
-    { name: 'network', alias: 'n', type: String }
-])
-if (options.factory === undefined) {
-    console.error('"--factory" argument is required');
-    return;
-}
+// const options = commandLineArgs([
+//     { name: 'factory', alias: 'f', type: String },
+//     { name: 'network', alias: 'n', type: String }
+// ])
+// if (options.factory === undefined) {
+//     console.error('"--factory" argument is required');
+//     return;
+// }
+// if (options.network !== undefined) {
+//     process.env.BUIDLER_NETWORK = options.network;
+// }
+// console.log('Use factory adress: ', options.factory);
 
-async function main() {
-    if (options.network !== undefined) {
-        process.env.BUIDLER_NETWORK = options.network;
-    }
-    const bre = require("@nomiclabs/buidler");
-    const ethers = bre.ethers;
-    console.log('Use factory adress: ', options.factory);
+const test_factory = async(gameFactoryAddr, standalone) => {
+    console.log('Use factory adress: ', gameFactoryAddr);
     const GameFactoryFactory = await ethers.getContractFactory("GameFactory");
-    const gameFactory = GameFactoryFactory.attach(options.factory);
+    const GameContractsFactory = await ethers.getContractFactory("GameContracts");
+    const gameFactory = GameFactoryFactory.attach(gameFactoryAddr);
     await gameFactory.deployed();
     const nbGames = await gameFactory.nbGames();
     console.log('nbGames', nbGames.toString());
@@ -51,23 +53,40 @@ async function main() {
         chances
     );
     await waitCreatedGame.then(async(gameMasterAddress) => {
+        const GameMasterFactory = await ethers.getContractFactory("GameMaster");
+        const gameMaster = GameMasterFactory.attach(gameMasterAddress);
+        await gameMaster.deployed();
+        await gameFactory.createGameContracts(
+            gameMasterAddress,
+            NB_MAX_PLAYERS,
+            NB_POSITIONS,
+            ethers.BigNumber.from(INITIAL_BALANCE),
+            spaces,
+            chances
+        )
+        console.log('contracts', await gameMaster.contracts());
+        console.log('game created:', gameMasterAddress);
         await gameFactory.createGameToken(gameMasterAddress);
         await gameFactory.createGameAssets(gameMasterAddress);
         await gameFactory.createMarketplace(gameMasterAddress);
-        const GameMasterFactory = await ethers.getContractFactory("GameMaster");
-        const gameMaster = GameMasterFactory.attach(gameMasterAddress);
-        const token = await gameMaster.getToken();
+        const gameContracts = GameContractsFactory.attach(gameMaster.contracts());
+        await gameContracts.deployed();
+        const token = await gameContracts.getToken();
         console.log('token', token);
-        const assets = await gameMaster.getAssets();
+        const assets = await gameContracts.getAssets();
         console.log('assets', assets);
-        const marketplace = await gameMaster.getMarketplace();
+        const marketplace = await gameContracts.getMarketplace();
         console.log('marketplace', marketplace);
     });
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch(error => {
-        console.error(error);
-        process.exit(1);
-    });
+// test_factory(options.factory)
+//     .then(() => process.exit(0))
+//     .catch(error => {
+//         console.error(error);
+//         process.exit(1);
+//     });
+
+module.exports = {
+    test_factory
+}

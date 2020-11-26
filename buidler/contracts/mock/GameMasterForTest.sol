@@ -2,23 +2,22 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import { GameMaster } from "../GameMaster.sol";
+import { IGameContracts } from '../IGameContracts.sol';
 import { IPlayground } from '../IPlayground.sol';
 
 contract GameMasterForTest is GameMaster {
 
     constructor (
         uint8 nbMaxPlayers,
-        uint256 _initialAmount,
-        address _playground,
-        address _chances,
-        address _randomGenerator
-        ) public GameMaster(nbMaxPlayers, _initialAmount, _playground, _chances, _randomGenerator) {
+        uint256 _initialAmount
+        ) public GameMaster(nbMaxPlayers, _initialAmount) {
     }
     function setOptions(uint8 options) public onlyOwner {
         currentOptions = options;
     }
 
     function setPlayerPosition(address player, uint8 newPosition) public onlyOwner {
+        address playgroundAddress = IGameContracts(contracts).getPlayground();
         IPlayground(playgroundAddress).setPlayerPosition(player, newPosition);
     }
 

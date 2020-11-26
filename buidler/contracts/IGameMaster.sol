@@ -23,4 +23,5 @@ interface IGameMaster is IGameScheduler {
     function getOptionsAt(address player, uint8 position) external view returns (uint8 options);
     function rollDices() external;
     function play(uint8 option) external;
+    // function setContracts(address gameContractsAddr) external;
 }

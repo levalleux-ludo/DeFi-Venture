@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0 <0.7.0;
 
-// import "@nomiclabs/buidler/console.sol";
+import "@nomiclabs/buidler/console.sol";
 import { IGameStatus } from  "./IGameStatus.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -24,6 +24,7 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
     event PlayerWin(address indexed player);
     
     constructor(uint8 _nbMaxPlayers) public Ownable() {
+        console.log('GameScheduler: constructor');
         nbMaxPlayers = _nbMaxPlayers;
         playersSet = new address[](_nbMaxPlayers);
     }
@@ -163,7 +164,7 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
     return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 
-    function _playerLost(address player) internal virtual {
+    function playerLost(address player) external override {
         lostPlayers[player] = true;
         address winner = this.getWinner();
         emit PlayerLost(player);
