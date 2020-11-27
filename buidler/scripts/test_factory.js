@@ -51,6 +51,13 @@ const test_factory = async(gameFactoryAddr, standalone) => {
             resolve(gameContractsAddress);
         });
     });
+    const waitCreatedOtherContracts = new Promise((resolve, reject) => {
+        gameFactory.once('GameCreated', (gameMaster, index) => {
+            console.log('other contracts created:');
+            resolve();
+        });
+    });
+    console.log('createGameMaster');
     gameFactory.createGameMaster(
         NB_MAX_PLAYERS,
         NB_POSITIONS,
@@ -62,6 +69,7 @@ const test_factory = async(gameFactoryAddr, standalone) => {
         const GameMasterFactory = await ethers.getContractFactory("GameMaster");
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
+        console.log('createGameContracts');
         gameFactory.createGameContracts(
             gameMasterAddress,
             NB_MAX_PLAYERS,
@@ -71,19 +79,28 @@ const test_factory = async(gameFactoryAddr, standalone) => {
             chances
         );
         await waitCreatedGameContracts.then(async(gameContractsAddress) => {
-            console.log('contracts', await gameMaster.contracts());
-            console.log('game created:', gameMasterAddress);
-            await gameFactory.createGameToken(gameMasterAddress);
-            await gameFactory.createGameAssets(gameMasterAddress);
-            await gameFactory.createMarketplace(gameMasterAddress);
-            const gameContracts = GameContractsFactory.attach(gameMaster.contracts());
-            await gameContracts.deployed();
-            const token = await gameContracts.getToken();
-            console.log('token', token);
-            const assets = await gameContracts.getAssets();
-            console.log('assets', assets);
-            const marketplace = await gameContracts.getMarketplace();
-            console.log('marketplace', marketplace);
+            console.log('createOtherContracts');
+            gameFactory.createOtherContracts(
+                gameMasterAddress,
+                gameContractsAddress,
+                NB_POSITIONS,
+                spaces,
+                chances
+            );
+            await waitCreatedOtherContracts.then(async() => {
+                console.log('game created:', gameMasterAddress);
+                await gameFactory.createGameToken(gameMasterAddress);
+                await gameFactory.createGameAssets(gameMasterAddress);
+                await gameFactory.createMarketplace(gameMasterAddress);
+                const gameContracts = GameContractsFactory.attach(gameMaster.contracts());
+                await gameContracts.deployed();
+                const token = await gameContracts.getToken();
+                console.log('token', token);
+                const assets = await gameContracts.getAssets();
+                console.log('assets', assets);
+                const marketplace = await gameContracts.getMarketplace();
+                console.log('marketplace', marketplace);
+            })
         });
     });
 }

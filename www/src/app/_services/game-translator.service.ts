@@ -70,6 +70,11 @@ export class GameTranslatorService {
             return `Congratulations to ${this.getUsername(player)}. He/she wins the game !!!!`;
             break;
           }
+          case 'PlayerLiquidated': {
+            const {player} = event.value;
+            return `${this.getUsername(player)} has been liquidated`;
+            break;
+          }
           default: {
             return '';
           }

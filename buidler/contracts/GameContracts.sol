@@ -31,7 +31,7 @@ contract GameContracts is IGameContracts {
             IMarketplace(marketplace).setToken(_token);
         }
         if (playOptions != address(0)) {
-            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager);
+            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
         }
         if (transferManager != address(0)) {
             ITransferManager(transferManager).setToken(token);
@@ -50,7 +50,7 @@ contract GameContracts is IGameContracts {
             IMarketplace(marketplace).setAssets(_assets);
         }
         if (playOptions != address(0)) {
-            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager);
+            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
         }
         if (transferManager != address(0)) {
             ITransferManager(transferManager).setAssets(assets);
@@ -67,7 +67,7 @@ contract GameContracts is IGameContracts {
     function setChances(address _chances) external override {
         chances = _chances;
         if (playOptions != address(0)) {
-            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager);
+            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
             if (Ownable(chances).owner() == address(this)) {
                 console.log('transfer chances ownership to transferManager');
                 Ownable(chances).transferOwnership(playOptions);
@@ -81,10 +81,13 @@ contract GameContracts is IGameContracts {
     }
     function setPlayground(address _playground) external override {
         playground = _playground;
+        if (playOptions != address(0)) {
+            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
+        }
     }
     function setPlayOptions(address _playOptions) external override {
         playOptions = _playOptions;
-        IPlayOptions(playOptions).initialize(token, assets, chances, transferManager);
+        IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
         if (chances != address(0)) {
             if (Ownable(chances).owner() == address(this)) {
                 console.log('transfer chances ownership to transferManager');
@@ -100,7 +103,7 @@ contract GameContracts is IGameContracts {
         ITransferManager(transferManager).setToken(token);
         ITransferManager(transferManager).setAssets(assets);
         if (playOptions != address(0)) {
-            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager);
+            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
         }
         if (token != address(0)) {
             if (Ownable(token).owner() == address(this)) {

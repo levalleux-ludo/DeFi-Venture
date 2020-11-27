@@ -3,6 +3,7 @@ import { GameToken } from './GameToken';
 import { ethers } from 'ethers';
 import gameMasterABI from '../../../../../buidler/artifacts/GameMaster.json';
 import gameContractsABI from '../../../../../buidler/artifacts/GameContracts.json';
+import { GameAssets } from './GameAssets';
 
 export enum eGameStatus {
   CREATED = 0,
@@ -119,11 +120,13 @@ export class GameMaster {
     return new Promise(async (resolve, reject) => {
       const contracts = await this.getContracts();
       const tokenAddress = await contracts.getToken();
+      const assetsAddress = await contracts.getAssets();
       (this.contract.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
       (this.contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
       try {
         const transferManagerAddress = await contracts.getTransferManager();
         await (new GameToken(tokenAddress, this.contractWithSigner.signer)).approveMax(transferManagerAddress);
+        await (new GameAssets(assetsAddress, this.contractWithSigner.signer)).approveForAll(transferManagerAddress);
         await this.contractWithSigner.register(ethers.utils.formatBytes32String(username), avatar).then(async(response) => {
           console.log('Tx sent', response.hash);
           (this.contract.provider as ethers.providers.Web3Provider).pollingInterval = 1000;

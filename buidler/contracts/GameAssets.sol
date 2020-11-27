@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import { IGameAssets } from "./IGameAssets.sol";
 
-contract GameAssets is ERC721, Ownable, IGameAssets {
+contract GameAssets is ERC721Burnable, Ownable, IGameAssets {
     using EnumerableSet for EnumerableSet.UintSet;
 
     EnumerableSet.UintSet private tokenIdsSet;

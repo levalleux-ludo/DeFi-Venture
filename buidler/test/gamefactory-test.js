@@ -3,32 +3,33 @@ const { BigNumber, utils } = require("ethers");
 const { getSpaces, getChances } = require("../db/playground");
 const bre = require("@nomiclabs/buidler");
 const ethers = bre.ethers;
+const { createGameMasterFull, STATUS, PLAYGROUND, NB_POSITIONS, NB_CHANCES, NB_MAX_PLAYERS, INITIAL_BALANCE, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
 
-const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const NB_CHANCES = 32;
+// const NB_MAX_PLAYERS = 8;
+// const INITIAL_BALANCE = 1000;
+// const NB_POSITIONS = 24;
+// const NB_CHANCES = 32;
 
-const STATUS = {
-    created: 0,
-    started: 1,
-    frozen: 2,
-    ended: 3
-};
+// const STATUS = {
+//     created: 0,
+//     started: 1,
+//     frozen: 2,
+//     ended: 3
+// };
 
-// generic handlers to test exceptions
-const shouldFail = {
-    then: () => {
-        expect(false).to.equal(true, "must fail");
-    },
-    catch: (e) => {
-        expect(true).to.equal(true, "must fail");
-    }
-};
+// // generic handlers to test exceptions
+// const shouldFail = {
+//     then: () => {
+//         expect(false).to.equal(true, "must fail");
+//     },
+//     catch: (e) => {
+//         expect(true).to.equal(true, "must fail");
+//     }
+// };
 
-function revertMessage(error) {
-    return 'VM Exception while processing transaction: revert ' + error;
-}
+// function revertMessage(error) {
+//     return 'VM Exception while processing transaction: revert ' + error;
+// }
 
 var gameFactory;
 var GameMasterFactory;
@@ -39,41 +40,41 @@ var MarketplaceFactory;
 var owner;
 var addr1;
 var addr2;
-var avatarCount = 1;
+// var avatarCount = 1;
 
 
-async function registerPlayers(gameMaster, players) {
-    let tokenContract;
-    let assetsContract;
-    const token = await gameMaster.tokenAddress();
-    if (token !== 0) {
-        tokenContract = await TokenFactory.attach(token);
-        await tokenContract.deployed();
-    }
-    const assets = await gameMaster.assetsAddress();
-    if (assets !== 0) {
-        assetsContract = await AssetsFactory.attach(assets);
-        await assetsContract.deployed();
-    }
-    const marketplaceAddr = await gameMaster.marketplaceAddress();
-    const transferManagerAddress = await gameMaster.transferManagerAddress();
-    for (let player of players) {
-        if (tokenContract) {
-            await tokenContract.connect(player).approveMax(transferManagerAddress);
-            if (marketplaceAddr) {
-                await tokenContract.connect(player).approveMax(marketplaceAddr);
-            }
-        }
-        if (assetsContract && marketplaceAddr) {
-            await assetsContract.connect(player).setApprovalForAll(marketplaceAddr, true);
-        }
-        await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
-    }
-}
+// async function registerPlayers(gameMaster, players) {
+//     let tokenContract;
+//     let assetsContract;
+//     const token = await gameMaster.tokenAddress();
+//     if (token !== 0) {
+//         tokenContract = await TokenFactory.attach(token);
+//         await tokenContract.deployed();
+//     }
+//     const assets = await gameMaster.assetsAddress();
+//     if (assets !== 0) {
+//         assetsContract = await AssetsFactory.attach(assets);
+//         await assetsContract.deployed();
+//     }
+//     const marketplaceAddr = await gameMaster.marketplaceAddress();
+//     const transferManagerAddress = await gameMaster.transferManagerAddress();
+//     for (let player of players) {
+//         if (tokenContract) {
+//             await tokenContract.connect(player).approveMax(transferManagerAddress);
+//             if (marketplaceAddr) {
+//                 await tokenContract.connect(player).approveMax(marketplaceAddr);
+//             }
+//         }
+//         if (assetsContract && marketplaceAddr) {
+//             await assetsContract.connect(player).setApprovalForAll(marketplaceAddr, true);
+//         }
+//         await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
+//     }
+// }
 
-async function startGame(gameMaster) {
-    await gameMaster.start();
-}
+// async function startGame(gameMaster) {
+//     await gameMaster.start();
+// }
 
 describe("GameFactory", function() {
     before('before tests', async() => {
@@ -141,8 +142,18 @@ describe("GameFactory", function() {
             ethers.BigNumber.from(INITIAL_BALANCE),
             spaces,
             chances
-        )).to.emit(gameFactory, 'GameContractsCreated').to.emit(gameFactory, 'GameCreated');
-        console.log('contracts', await gameMaster.contracts());
+        )).to.emit(gameFactory, 'GameContractsCreated');
+        const gameContractsAddress = await gameMaster.contracts();
+        console.log('gameContractsAddress', gameContractsAddress);
+        const gameContracts = await GameContractsFactory.attach(gameContractsAddress);
+        await gameContracts.deployed();
+        await expect(gameFactory.createOtherContracts(
+            gameMasterAddress,
+            gameContractsAddress,
+            NB_POSITIONS,
+            spaces,
+            chances
+        )).to.emit(gameFactory, 'GameCreated');
         await gameFactory.createGameToken(gameMasterAddress);
         await gameFactory.createGameAssets(gameMasterAddress);
         await gameFactory.createMarketplace(gameMasterAddress);

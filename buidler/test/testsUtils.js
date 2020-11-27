@@ -17,6 +17,27 @@ const STATUS = {
     frozen: 2,
     ended: 3
 };
+const eSpaceType = {
+    GENESIS: 0,
+    QUARANTINE: 1,
+    LIQUIDATION: 2,
+    CHANCE: 3,
+    ASSET_CLASS_1: 4,
+    ASSET_CLASS_2: 5,
+    ASSET_CLASS_3: 6,
+    ASSET_CLASS_4: 7
+};
+const SPACE_TYPE = [
+    'GENESIS',
+    'QUARANTINE',
+    'LIQUIDATION',
+    'CHANCE',
+    'ASSET_CLASS_1',
+    'ASSET_CLASS_2',
+    'ASSET_CLASS_3',
+    'ASSET_CLASS_4'
+];
+
 // generic handlers to test exceptions
 const shouldFail = {
     then: () => {
@@ -161,8 +182,11 @@ async function registerPlayers(gameMaster, players) {
                 await tokenContract.connect(player).approveMax(marketplaceAddr);
             }
         }
-        if (assetsContract && marketplaceAddr) {
-            await assetsContract.connect(player).setApprovalForAll(marketplaceAddr, true);
+        if (assetsContract) {
+            await assetsContract.connect(player).setApprovalForAll(transferManager.address, true);
+            if (marketplaceAddr) {
+                await assetsContract.connect(player).setApprovalForAll(marketplaceAddr, true);
+            }
         }
         await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
     }
@@ -213,3 +237,20 @@ async function createMarketplace(MarketplaceFactory) {
     await marketplace.deployed();
     return marketplace;
 }
+
+function decodePlayground(playground, nbSpaces) {
+    console.log('decodePlayground');
+    for (let i = 0; i < nbSpaces; i++) {
+        const spaceCodeStr = '0x' + extractSpaceCode(playground, i);
+        const spaceCode = parseInt(spaceCodeStr, 16);
+        const type = spaceCode & 0x7;
+        const isAsset = ((type >= eSpaceType.ASSET_CLASS_1) && (type <= eSpaceType.ASSET_CLASS_4));
+        const assetId = spaceCode >> 3;
+        const assetClass = isAsset ? type - eSpaceType.ASSET_CLASS_1 + 1 : 0;
+        const assetPrice = isAsset ? 50 * assetClass : 0;
+        const productPrice = isAsset ? 15 * assetClass : 0;
+        console.log(`#${i} ${SPACE_TYPE[type]} ${isAsset ? 'asset #' + assetId + ', price:' + assetPrice + ',bill:' + productPrice : ''}`);
+    }
+}
+
+decodePlayground(PLAYGROUND, NB_POSITIONS);

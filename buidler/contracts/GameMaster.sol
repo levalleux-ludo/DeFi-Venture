@@ -135,14 +135,14 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         require((option & currentOptions) != 0, "OPTION_NOT_ALLOWED");
         require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
         address playgroundAddress = IGameContracts(contracts).getPlayground();
-        performOption(IPlayground(playgroundAddress).getPlayerPosition(msg.sender), option);
+        uint8 realOption = performOption(IPlayground(playgroundAddress).getPlayerPosition(msg.sender), option);
         chooseNextPlayer();
         uint8 eventCardId = currentCardId;
         currentPlayer = address(0);
         currentOptions = 0;
         currentCardId = 0;
         // emit event at the end
-        emit PlayPerformed(msg.sender, option, eventCardId, IPlayground(playgroundAddress).getPlayerPosition(msg.sender));
+        emit PlayPerformed(msg.sender, realOption, eventCardId, IPlayground(playgroundAddress).getPlayerPosition(msg.sender));
     }
 
     function _start() internal override {
@@ -158,7 +158,7 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         super._register(username, avatar);
     }
 
-    function performOption(uint8 position, uint8 option) internal {
+    function performOption(uint8 position, uint8 option) internal returns (uint8) {
         (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = this.getSpaceDetails(position);
         address playOptionsAddress = IGameContracts(contracts).getPlayOptions();
         return IPlayOptions(playOptionsAddress).performOption(address(this), msg.sender, spaceType, assetId, assetPrice, productPrice, option, currentCardId);

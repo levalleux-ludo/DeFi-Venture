@@ -8,4 +8,5 @@ interface IPlayground {
     function getNbPositions() external view returns (uint8);
     function setPlayerPosition(address player, uint8 newPosition) external;
     function incrementPlayerPosition(address player, uint8 offset) external;
+    function getAssetData(uint8 assetId) external returns (uint256 assetPrice, uint256 productPrice);
 }

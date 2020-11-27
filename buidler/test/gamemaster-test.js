@@ -29,33 +29,37 @@ describe("GameMaster", function() {
         const allowance = await token.allowance(addr1Address, gameMaster.transferManagerAddress());
         expect(allowance.toString()).to.equal('0');
         expect(await gameMaster.nbPlayers()).to.equal(0);
-        await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.be.revertedWith(revertMessage("SENDER_MUST_APPROVE_GAME_MASTER"));
+        await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.be.revertedWith(revertMessage("PLAYER_MUST_APPROVE_TRANSFER_MANAGER_FOR_TOKEN"));
     });
     it("Should allow to register", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const { gameMaster, token } = await createGameMaster();
+        const { gameMaster, token, assets } = await createGameMaster();
         const addr1Address = await addr1.getAddress();
         await token.connect(addr1).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr1).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
         expect(await gameMaster.nbPlayers()).to.equal(1);
         expect(await gameMaster.nextPlayer()).to.equal(addr1Address);
         const addr2Address = await addr2.getAddress();
         await token.connect(addr2).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr2).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await expect(gameMaster.connect(addr2).register(utils.formatBytes32String('titi'), 2)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
         expect(await gameMaster.nbPlayers()).to.equal(2);
     });
     it("Should not allow to register same player twice", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const { gameMaster, token } = await createGameMaster();
+        const { gameMaster, token, assets } = await createGameMaster();
         await token.connect(addr1).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr1).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1);
         expect(await gameMaster.nbPlayers()).to.equal(1);
         await gameMaster.connect(addr1).register(utils.formatBytes32String('titi'), 2).then(shouldFail.then).catch(shouldFail.catch);
     });
     it("Should not allow to start game if less than 2 players", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const { gameMaster, token } = await createGameMaster();
+        const { gameMaster, token, assets } = await createGameMaster();
         await token.connect(addr1).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr1).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await gameMaster.connect(owner).start().then(shouldFail.then).catch(shouldFail.catch);
         await gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1);
         await expect(gameMaster.connect(owner).start()).to.be.revertedWith(revertMessage("NOT_ENOUGH_PLAYERS"));

@@ -37,6 +37,7 @@ export const USER_DATA_FIELDS = {
 import GameMasterJSON from '../../../../buidler/artifacts/GameMaster.json';
 import PlaygroundJSON from '../../../../buidler/artifacts/Playground.json';
 import GameContractsJSON from '../../../../buidler/artifacts/GameContracts.json';
+import TransferManagerJSON from '../../../../buidler/artifacts/TransferManager.json';
 import { throwToolbarMixedModesError } from '@angular/material/toolbar';
 import { AbstractContractService } from './AbstractContractService';
 import { ConnectedPositionStrategy } from '@angular/cdk/overlay';
@@ -129,6 +130,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
   onRolledDices: (player, dice1, dice2, cardId, newPosition, options) => void;
   protected contracts = new Map<string, GameMaster>();
   protected _playgroundContract: ethers.Contract;
+  protected _transferManager: ethers.Contract;
   protected _gameContracts: ethers.Contract;
 
   constructor(
@@ -516,6 +518,9 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     this._contract.on('PlayerWin', (player) => {
       this.recordEvent({ type: 'PlayerWin', value: {player} });
     });
+    this._transferManager.on('PlayerLiquidated', (player) => {
+      this.recordEvent({ type: 'PlayerLiquidated', value: {player} });
+    });
   }
 
   protected unsubscribeToEvents() {
@@ -547,10 +552,10 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       const type = spaceCode & 0x7;
       const isAsset = ((type >= eSpaceType.ASSET_CLASS_1) && (type <= eSpaceType.ASSET_CLASS_4));
       // tslint:disable-next-line: no-bitwise
-      const assetId = spaceCode >> 3;
+      const assetId = isAsset ? spaceCode >> 3 : -1;
       const assetClass = isAsset ? type - eSpaceType.ASSET_CLASS_1 + 1 : 0;
       const assetPrice = isAsset ? 50 * assetClass : 0;
-      const productPrice = isAsset ? assetPrice / 4 : 0;
+      const productPrice = isAsset ? 15 * assetClass : 0;
     //   const spaceDetails = await this._contract.getSpaceDetails(spaceId);
     //   const type = spaceDetails[0];
     //   const assetId = spaceDetails[1];
@@ -577,6 +582,16 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     });
   }
 
+  protected async createTransferManagerContract(gameMaster: Contract) {
+    await this._gameContracts.getTransferManager().then(async (transferManagerAddress: string) => {
+      await (new Contract(transferManagerAddress, TransferManagerJSON.abi, this.portisL1Service?.provider)).deployed().then((contract) => {
+        this._transferManager = contract;
+      }).catch(e => {
+        console.error('Unable to create transferManager contract', e);
+      });
+    });
+  }
+
   protected async createGameContracts(gameMaster: Contract) {
     await gameMaster.contracts().then(async (contractsAddress: string) => {
       await (new Contract(contractsAddress, GameContractsJSON.abi, this.portisL1Service?.provider)).deployed().then((contract) => {
@@ -591,6 +606,7 @@ export class GameMasterContractService extends AbstractContractService<IGameData
     if (value) {
       await this.createGameContracts(value);
       await this.createPlaygroundContract(value);
+      await this.createTransferManagerContract(value);
     } else {
       this._playgroundContract = undefined;
     }

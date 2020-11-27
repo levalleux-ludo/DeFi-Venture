@@ -15,7 +15,7 @@ export interface IAssetsData {
 })
 export class AssetsContractService extends AbstractContractService<IAssetsData> {
   protected portfolios = new Map<string, number[]>();
-  protected owners = new Map<number, string>();
+  // protected owners = new Map<number, string>();
 
   constructor(
     protected portisL1Service: PortisL1Service
@@ -23,17 +23,24 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
     super(GameAssetsJSON, portisL1Service);
    }
 
-   public async observeAccount(address: string): Promise<number[]> {
+   public async observeAccount(address: string, owners?: Map<number, string>): Promise<number[]> {
     const portfolio = [];
     if (!this.portfolios.has(address)) {
       this.portfolios.set(address, portfolio);
     }
     await this.ready.then(async () => {
-      const nbAssets = (await this._contract.balanceOf(address)).toNumber();
-      for (let index = 0; index < nbAssets; index++) {
-        const assetId = (await this._contract.tokenOfOwnerByIndex(address, index)).toNumber();
-        portfolio.push(assetId);
-        this.owners.set(assetId, address);
+      try {
+        const nbAssets = (await this._contract.balanceOf(address)).toNumber();
+        for (let index = 0; index < nbAssets; index++) {
+          const assetId = (await this._contract.tokenOfOwnerByIndex(address, index)).toNumber();
+          portfolio.push(assetId);
+          if (owners) {
+            owners.set(assetId, address);
+          }
+        }
+      } catch (e) {
+        // could crash in case a liquidation is on-going
+        console.error(e);
       }
       this.portfolios.set(address, portfolio);
     });
@@ -54,17 +61,19 @@ export class AssetsContractService extends AbstractContractService<IAssetsData> 
 
   protected async resetData() {
     this.portfolios = new Map<string, number[]>();
-    this.owners = new Map<number, string>();  }
+    // this.owners = new Map<number, string>();
+  }
 
   protected async refreshData(): Promise<{data: IAssetsData, hasChanged: boolean}> {
     console.log("assets contract refreshData");
     const totalSupply = await this._contract.totalSupply();
+    const owners = new Map<number, string>();
     for (const address of this.portfolios.keys()) {
-      await this.observeAccount(address);
+      await this.observeAccount(address, owners);
     }
     const assetsData = {
       portfolios: this.portfolios,
-      owners: this.owners
+      owners
     };
     // this._onUpdate.next(assetsData);
     return {data: assetsData, hasChanged: true};

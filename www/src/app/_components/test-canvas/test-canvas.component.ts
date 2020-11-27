@@ -162,6 +162,13 @@ export class TestCanvasComponent implements OnInit {
     });
   }
 
+  public clearOwners() {
+    this.owners = new Map<number, number>();
+    if (this.ctx) {
+      this.draw(this._currentAngle);
+    }
+  }
+
   public setOwner(player: number, position: number) {
     const avatarId = player - 1; // avatar 0 does not exist
     this.owners.set(position, avatarId);

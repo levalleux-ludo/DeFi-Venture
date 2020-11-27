@@ -37,12 +37,12 @@ let USER_DATA_FIELDS = {}; {
 }
 
 async function createGameMaster() {
-    const { gameMaster, token } = await createGameMasterFull();
+    const { gameMaster, token, assets } = await createGameMasterFull();
     gameMaster.getUsername = (player) => gameMaster.usernames(player);
     gameMaster.getAvatar = (player) => gameMaster.players(player);
     gameMaster.getCurrentOptions = () => gameMaster.currentOptions();
     gameMaster.getCurrentCardId = () => gameMaster.currentCardId();
-    return { gameMaster, token };
+    return { gameMaster, token, assets };
 }
 
 describe("GameMaster optimised", function() {
@@ -60,14 +60,16 @@ describe("GameMaster optimised", function() {
     });
     it("Should allow to register", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const { gameMaster, token } = await createGameMaster();
+        const { gameMaster, token, assets } = await createGameMaster();
         const addr1Address = await addr1.getAddress();
         await token.connect(addr1).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr1).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
         expect(await gameMaster.nbPlayers()).to.equal(1);
         expect(await gameMaster.nextPlayer()).to.equal(addr1Address);
         const addr2Address = await addr2.getAddress();
         await token.connect(addr2).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr2).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await expect(gameMaster.connect(addr2).register(utils.formatBytes32String('titi'), 2)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
         expect(await gameMaster.nbPlayers()).to.equal(2);
     });

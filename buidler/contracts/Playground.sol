@@ -7,9 +7,18 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Playground is IPlayground, Ownable {
 
+    struct Space {
+        uint8 spaceType;
+        uint8 assetId;
+        uint256 assetPrice;
+        uint256 productPrice;
+    }
+
     uint8 public nbPositions;
     mapping(address => uint8) public positions;
     bytes32 public playground;
+    mapping(uint8 => Space) spaces;
+    mapping(uint8 => uint8) assetsPositions;
 
     constructor(
         uint8 _nbPositions,
@@ -17,22 +26,29 @@ contract Playground is IPlayground, Ownable {
      ) public Ownable() {
         nbPositions = _nbPositions;
         playground = _playground;
+        for (uint8 spaceId = 0; spaceId < nbPositions; spaceId++) {
+            uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
+            spaces[spaceId].spaceType = spaceCode & 0x7;
+            spaces[spaceId].assetId = spaceCode >> 3;
+            assetsPositions[spaces[spaceId].assetId] = spaceId;
+            if ((spaces[spaceId].spaceType >= 4) && (spaces[spaceId].spaceType < 8)) {
+                // spaceType: 4 <=> ASSET_CLASS_1, price = 50
+                // .. 
+                // spaceType: 7 <=> ASSET_CLASS_4, price = 200
+                uint8 assetClass = spaces[spaceId].spaceType - 3;
+                spaces[spaceId].assetPrice = 50 * assetClass;
+                spaces[spaceId].productPrice = 15 * assetClass;
+                // TODO: get productPrice from InvestmentManager contract
+            }
+        }
     }
 
     function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
         require(spaceId < nbPositions, "INVALID_ARGUMENT");
-        uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
-        spaceType = spaceCode & 0x7;
-        assetId = spaceCode >> 3;
-        if ((spaceType >= 4) && (spaceType < 8)) {
-            // spaceType: 4 <=> ASSET_CLASS_1, price = 50
-            // .. 
-            // spaceType: 7 <=> ASSET_CLASS_4, price = 200
-            uint8 assetClass = spaceType - 3;
-            assetPrice = 50 * assetClass;
-            productPrice = assetPrice / 4;
-            // TODO: get productPrice from InvestmentManager contract
-        }
+        spaceType = spaces[spaceId].spaceType;
+        assetId = spaces[spaceId].assetId;
+        assetPrice = spaces[spaceId].assetPrice;
+        productPrice = spaces[spaceId].productPrice;
     }
 
     // function getPlayground() external override view returns (bytes32) {
@@ -58,6 +74,12 @@ contract Playground is IPlayground, Ownable {
 
     function _setPlayerPosition(address player, uint8 newPosition) internal {
         positions[player] = newPosition;
+    }
+
+    function getAssetData(uint8 assetId) external override returns (uint256 assetPrice, uint256 productPrice) {
+        uint8 spaceId = assetsPositions[assetId];
+        assetPrice = spaces[spaceId].assetPrice;
+        productPrice = spaces[spaceId].productPrice;
     }
 
 

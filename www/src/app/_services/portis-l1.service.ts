@@ -327,6 +327,13 @@ export class PortisL1Service {
           resolve2(gameContractsAddress);
         });
       });
+      const waitCreatedOtherContracts = new Promise<void>((resolve2, reject2) => {
+        contractWithSigner.once('GameCreated', (gameMaster, index) => {
+            console.log('other contracts created:');
+            resolve2();
+        });
+    });
+      console.log('createGameMaster');
       contractWithSigner.createGameMaster(
         NB_MAX_PLAYERS,
         NB_POSITIONS,
@@ -338,6 +345,7 @@ export class PortisL1Service {
         (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
         response.wait().then(() => {
           waitCreatedGameMaster.then(async (gameMasterAddress) => {
+            console.log('createGameContracts');
             contractWithSigner.createGameContracts(
               gameMasterAddress,
               NB_MAX_PLAYERS,
@@ -347,12 +355,29 @@ export class PortisL1Service {
               getChances(NB_CHANCES, NB_POSITIONS)
             );
             await waitCreatedGameContracts.then(async (gameContractsAddress) => {
-              await contractWithSigner.createGameToken(gameMasterAddress);
-              await contractWithSigner.createGameAssets(gameMasterAddress);
-              await contractWithSigner.createMarketplace(gameMasterAddress);
-              this.provider.pollingInterval = pollingInterval1;
-              (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
-              resolve();
+              console.log('createOtherContracts');
+              contractWithSigner.createOtherContracts(
+                gameMasterAddress,
+                gameContractsAddress,
+                NB_POSITIONS,
+                getSpaces(NB_POSITIONS),
+                getChances(NB_CHANCES, NB_POSITIONS)
+              );
+              await waitCreatedOtherContracts.then(async() => {
+                console.log('createGameToken');
+                await contractWithSigner.createGameToken(gameMasterAddress);
+                console.log('createGameAssets');
+                await contractWithSigner.createGameAssets(gameMasterAddress);
+                console.log('createMarketplace');
+                await contractWithSigner.createMarketplace(gameMasterAddress);
+                this.provider.pollingInterval = pollingInterval1;
+                (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+                resolve();
+              }).catch(e => {
+                this.provider.pollingInterval = pollingInterval1;
+                (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+                reject(e);
+              });
             }).catch(e => {
               this.provider.pollingInterval = pollingInterval1;
               (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;

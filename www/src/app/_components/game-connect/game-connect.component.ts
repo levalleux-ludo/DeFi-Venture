@@ -282,6 +282,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         this.otherPlayers.portfolios = assetsData.portfolios;
       }
       if ((this.board !== undefined) && (this.playground !== undefined)) {
+        this.board.clearOwners();
         this.assetsData.owners.forEach((player, assetId) => {
           const assetPosition = this.playground.findIndex(space => space.assetId === assetId);
           if (assetPosition === -1) {
