@@ -5,13 +5,11 @@
 const bre = require("@nomiclabs/buidler");
 const { BigNumber } = require("ethers");
 const ethers = bre.ethers;
-const { getSpaces, getChances } = require("../db/playground");
+const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
 const { test_factory } = require('./test_factory');
 
 const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const NB_CHANCES = 32;
+const INITIAL_BALANCE = 300;
 
 function getBalanceAsNumber(bn, decimals, accuracy) {
     const r1 = BigNumber.from(10).pow(decimals - accuracy);

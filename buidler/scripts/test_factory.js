@@ -1,10 +1,8 @@
 const commandLineArgs = require('command-line-args')
-const { getSpaces, getChances } = require("../db/playground");
+const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
 
 const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const NB_CHANCES = 32;
+const INITIAL_BALANCE = 300;
 
 const STATUS = {
     created: 0,
@@ -37,8 +35,8 @@ const test_factory = async(gameFactoryAddr, standalone) => {
     await gameFactory.deployed();
     const nbGames = await gameFactory.nbGames();
     console.log('nbGames', nbGames.toString());
-    const spaces = getSpaces(NB_POSITIONS);
-    const chances = getChances(NB_CHANCES, NB_POSITIONS);
+    const spaces = SPACES;
+    const chances = CHANCES;
     const waitCreatedGameMaster = new Promise((resolve, reject) => {
         gameFactory.once('GameMasterCreated', (gameMasterAddress) => {
             console.log('gameMaster created:', gameMasterAddress);
@@ -60,7 +58,7 @@ const test_factory = async(gameFactoryAddr, standalone) => {
     console.log('createGameMaster');
     gameFactory.createGameMaster(
         NB_MAX_PLAYERS,
-        NB_POSITIONS,
+        NB_SPACES,
         ethers.BigNumber.from(INITIAL_BALANCE),
         spaces,
         chances
@@ -73,7 +71,7 @@ const test_factory = async(gameFactoryAddr, standalone) => {
         gameFactory.createGameContracts(
             gameMasterAddress,
             NB_MAX_PLAYERS,
-            NB_POSITIONS,
+            NB_SPACES,
             ethers.BigNumber.from(INITIAL_BALANCE),
             spaces,
             chances
@@ -83,7 +81,7 @@ const test_factory = async(gameFactoryAddr, standalone) => {
             gameFactory.createOtherContracts(
                 gameMasterAddress,
                 gameContractsAddress,
-                NB_POSITIONS,
+                NB_SPACES,
                 spaces,
                 chances
             );

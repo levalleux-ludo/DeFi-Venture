@@ -1,14 +1,6 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { getSpaces, getChances } = require("../db/playground");
 const { createGameMasterFull } = require('./testsUtils');
-
-const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const PLAYGROUND = '0x0000000000000000867d776f030203645f554c01463d03342e261e170f030600';
-const NB_CHANCES = 32;
-const CHANCES = '0x1305169c190e120508051c05201e1034543a0520055c1e1118b4181c052643bc';
 
 const OWNABLE_ERROR = 'Ownable: caller is not the owner';
 

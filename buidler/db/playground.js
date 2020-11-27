@@ -1,5 +1,10 @@
 const { isHexString } = require("ethers/lib/utils");
 
+const NB_SPACES = 24;
+const SPACES = '0x0000000000000000867d776f030203645f554c01463d03342e261e170f030600';
+const NB_CHANCES = 16;
+const CHANCES = '0x0006030432013201640264020c050a0964020007640164011908640232080f08';
+
 const eSpaceType = {
     GENESIS: 0,
     QUARANTINE: 1,
@@ -22,8 +27,6 @@ const eChanceType = {
     RECEIVE_PER_ASSET: 7
 }
 
-const NB_SPACES = 24;
-const NB_CHANCES = 32;
 
 const getSpaces = (nbSpaces) => {
     // let spaces = [];
@@ -153,10 +156,12 @@ function randomBetween(min, max) {
 
 const spaces = getSpaces(NB_SPACES);
 const chances = getChances(NB_CHANCES, NB_SPACES);
-
+console.log('chances', chances);
 module.exports = {
-    getSpaces,
-    getChances,
+    NB_SPACES,
+    SPACES,
+    NB_CHANCES,
+    CHANCES,
     eSpaceType,
     eChanceType
 };

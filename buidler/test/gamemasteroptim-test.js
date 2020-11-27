@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { createGameMasterFull, STATUS, PLAYGROUND, NB_POSITIONS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
+const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
+const { createGameMasterFull, STATUS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
 
 
 let GAME_DATA_FIELDS = {}; {

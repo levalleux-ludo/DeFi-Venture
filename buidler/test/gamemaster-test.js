@@ -1,8 +1,8 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 const bre = require("@nomiclabs/buidler");
-const playground = require("../db/playground");
-const { createGameMasterFull, STATUS, PLAYGROUND, NB_POSITIONS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
+const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
+const { createGameMasterFull, STATUS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
 const ethers = bre.ethers;
 
 async function createGameMaster() {
@@ -195,14 +195,14 @@ describe('GameMaster play phases', () => {
         checkDice(dices[0]);
         checkDice(dices[1]);
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "next player shall be changed");
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
         expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
     });
@@ -215,14 +215,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -236,14 +236,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -257,14 +257,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -278,14 +278,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -299,14 +299,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -320,14 +320,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -351,7 +351,7 @@ describe('GameMaster Playground', () => {
     });
     it('getPlayground', async() => {
         const playground = await gameMaster.getPlayground();
-        expect(playground).to.equal(PLAYGROUND, 'Playground is wrong');
+        expect(playground).to.equal(SPACES, 'Playground is wrong');
     });
     it('check Genesis code', async() => {
         const playground = await gameMaster.getPlayground();

@@ -1,15 +1,11 @@
 const bre = require("@nomiclabs/buidler");
 const { BigNumber } = require("ethers");
-const { getSpaces, getChances } = require("../db/playground");
+const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
 const { expect } = require("chai");
-const playground = require("../db/playground");
 const ethers = bre.ethers;
 const utils = ethers.utils;
 const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const PLAYGROUND = '0x0000000000000000867d776f030203645f554c01463d03342e261e170f030600';
-const NB_CHANCES = 32;
+const INITIAL_BALANCE = 300;
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 const STATUS = {
     created: 0,
@@ -48,28 +44,6 @@ const shouldFail = {
     }
 };
 var avatarCount = 1;
-
-module.exports = {
-    createGameMasterFull,
-    STATUS,
-    PLAYGROUND,
-    NB_MAX_PLAYERS,
-    INITIAL_BALANCE,
-    NB_POSITIONS,
-    NB_CHANCES,
-    NULL_ADDRESS,
-    shouldFail,
-    revertMessage,
-    registerPlayers,
-    startGame,
-    checkDice,
-    extractSpaceCode,
-    playTurn,
-    createGameToken,
-    createGameAssets,
-    createMarketplace,
-    avatarCount
-};
 
 function revertMessage(error) {
     return 'VM Exception while processing transaction: revert ' + error;
@@ -112,11 +86,11 @@ async function createGameMasterBase() {
     const contracts = await Contracts.deploy();
     await contracts.deployed();
     const Playground = await ethers.getContractFactory("Playground");
-    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
+    const playgroundContract = await Playground.deploy(NB_SPACES, SPACES);
     await playgroundContract.deployed();
     await contracts.setPlayground(playgroundContract.address)
     const Chance = await ethers.getContractFactory("Chance");
-    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
+    const chance = await Chance.deploy(CHANCES);
     await chance.deployed();
     await chance.transferOwnership(contracts.address);
     await contracts.setChances(chance.address)
@@ -253,4 +227,23 @@ function decodePlayground(playground, nbSpaces) {
     }
 }
 
-decodePlayground(PLAYGROUND, NB_POSITIONS);
+decodePlayground(SPACES, NB_SPACES);
+
+module.exports = {
+    createGameMasterFull,
+    STATUS,
+    NB_MAX_PLAYERS,
+    INITIAL_BALANCE,
+    NULL_ADDRESS,
+    shouldFail,
+    revertMessage,
+    registerPlayers,
+    startGame,
+    checkDice,
+    extractSpaceCode,
+    playTurn,
+    createGameToken,
+    createGameAssets,
+    createMarketplace,
+    avatarCount
+};
