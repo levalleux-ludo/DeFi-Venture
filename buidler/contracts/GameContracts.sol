@@ -10,8 +10,10 @@ import { IMarketplace } from './IMarketplace.sol';
 import { IGameToken } from './IGameToken.sol';
 import { IPlayOptions } from './IPlayOptions.sol';
 import { ITransferManager } from './ITransferManager.sol';
+import { IChance } from './IChance.sol';
+import { Initialized } from './Initialized.sol';
 
-contract GameContracts is IGameContracts {
+contract GameContracts is IGameContracts, Initialized {
     address token;
     address assets;
     address marketplace;
@@ -21,10 +23,8 @@ contract GameContracts is IGameContracts {
     address playOptions;
     address transferManager;
 
-    constructor() public {
-        
-    }
-    function setToken(address _token) external override {
+    constructor() public {}
+    function setToken(address _token) external override initialized {
         token = _token;
         console.log('gameContracts.setToken');
         if (marketplace != address(0)) {
@@ -34,7 +34,7 @@ contract GameContracts is IGameContracts {
             IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
         }
         if (transferManager != address(0)) {
-            ITransferManager(transferManager).setToken(token);
+            ITransferManager(transferManager).initialize(token, assets, playground);
             if (Ownable(token).owner() == address(this)) {
                 console.log('transfer token ownership to transferManager');
                 Ownable(token).transferOwnership(transferManager);
@@ -42,9 +42,8 @@ contract GameContracts is IGameContracts {
                 console.log('gameContracts is not owner of token');
             }
         }
-
     }
-    function setAssets(address _assets) external override {
+    function setAssets(address _assets) external override initialized {
         assets = _assets;
         if (marketplace != address(0)) {
             IMarketplace(marketplace).setAssets(_assets);
@@ -53,74 +52,60 @@ contract GameContracts is IGameContracts {
             IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
         }
         if (transferManager != address(0)) {
-            ITransferManager(transferManager).setAssets(assets);
+            ITransferManager(transferManager).initialize(token, assets, playground);
             if (Ownable(assets).owner() == address(this)) {
                 Ownable(assets).transferOwnership(transferManager);
             }
         }
     }
-    function setMarketplace(address _marketplace) external override {
+    function setMarketplace(address _marketplace) external override initialized {
         marketplace = _marketplace;
         IMarketplace(marketplace).setToken(token);
         IMarketplace(marketplace).setAssets(assets);
     }
-    function setChances(address _chances) external override {
-        chances = _chances;
-        if (playOptions != address(0)) {
-            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
-            if (Ownable(chances).owner() == address(this)) {
-                console.log('transfer chances ownership to transferManager');
-                Ownable(chances).transferOwnership(playOptions);
-            } else {
-                console.log('gameContracts is not owner of chances');
-            }
-        }
-    }
-    function setRandomGenerator(address _randomGenerator) external override {
-        randomGenerator = _randomGenerator;
-    }
-    function setPlayground(address _playground) external override {
-        playground = _playground;
-        if (playOptions != address(0)) {
-            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
-        }
-    }
-    function setPlayOptions(address _playOptions) external override {
-        playOptions = _playOptions;
-        IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
-        if (chances != address(0)) {
-            if (Ownable(chances).owner() == address(this)) {
-                console.log('transfer chances ownership to transferManager');
-                Ownable(chances).transferOwnership(playOptions);
-            } else {
-                console.log('gameContracts is not owner of chances');
-            }
-        }
-    }
-    function setTransferManager(address _transferManager) external override {
-        console.log('gameContracts.setTransferManager');
+    // function setChances(address _chances) external override {
+    //     chances = _chances;
+    //     if (playOptions != address(0)) {
+    //         IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
+    //         if (Ownable(chances).owner() == address(this)) {
+    //             console.log('transfer chances ownership to transferManager');
+    //             Ownable(chances).transferOwnership(playOptions);
+    //         } else {
+    //             console.log('gameContracts is not owner of chances');
+    //         }
+    //     }
+    //     IChance(chances).initialize(transferManager, playground);
+    // }
+    // function setRandomGenerator(address _randomGenerator) external override {
+    //     randomGenerator = _randomGenerator;
+    // }
+    // function setPlayground(address _playground) external override {
+    //     playground = _playground;
+    //     if (playOptions != address(0)) {
+    //         IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
+    //     }
+    //     if (transferManager != address(0)) {
+    //         ITransferManager(transferManager).initialize(token, assets, playground);
+    //     }
+    //     if (chances != address(0)) {
+    //         IChance(chances).initialize(transferManager, playground);
+    //     }
+    // }
+    // function setPlayOptions(address _playOptions) external override {
+    //     playOptions = _playOptions;
+    //     IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
+    //     if (chances != address(0)) {
+    //         if (Ownable(chances).owner() == address(this)) {
+    //             console.log('transfer chances ownership to transferManager');
+    //             Ownable(chances).transferOwnership(playOptions);
+    //         } else {
+    //             console.log('gameContracts is not owner of chances');
+    //         }
+    //     }
+    // }
+    function setTransferManager(address _transferManager) external override initialized {
         transferManager = _transferManager;
-        ITransferManager(transferManager).setToken(token);
-        ITransferManager(transferManager).setAssets(assets);
-        if (playOptions != address(0)) {
-            IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
-        }
-        if (token != address(0)) {
-            if (Ownable(token).owner() == address(this)) {
-                console.log('transfer token ownership to transferManager');
-                Ownable(token).transferOwnership(transferManager);
-            } else {
-                console.log('gameContracts is not owner of token');
-            }
-        }
-        if (assets != address(0)) {
-            if (Ownable(assets).owner() == address(this)) {
-                console.log('transfer assets ownership to transferManager');
-                Ownable(assets).transferOwnership(transferManager);
-            } else {
-                console.log('gameContracts is not owner of assets');
-            }
-        }
+        make_dependencies();
     }
 
     function getToken() external view override returns (address) {
@@ -158,5 +143,23 @@ contract GameContracts is IGameContracts {
     //     }
 
     // }
+
+    function initialize(address _chances, address _playground, address _playOptions, address _randomGenerator) external override {
+        require(Ownable(_chances).owner() == address(this), "GAME_CONTRACTS_NOT_OWNER_OF_CHANCES");
+        chances = _chances;
+        playground = _playground;
+        playOptions = _playOptions;
+        randomGenerator = _randomGenerator;
+
+        super.initialize();
+    }
+
+    function make_dependencies() internal {
+        IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
+        ITransferManager(transferManager).initialize(token, assets, playground);
+        console.log('transfer chances ownership to transferManager');
+        Ownable(chances).transferOwnership(playOptions);
+        IChance(chances).initialize(transferManager, playground);
+    }
 
 }

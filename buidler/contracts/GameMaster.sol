@@ -53,41 +53,22 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         _currentCardId = currentCardId;
     }
 
-    function getPlayerData(address player) external view returns (
-        address _address,
-        bytes32 _username,
-        uint8 _avatar,
-        uint8 _position,
-        bool _hasLost
-    ) {
-        _address = player;
-        _username = usernames[player];
-        _avatar = players[player];
-        _position = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(player);
-        _hasLost = lostPlayers[player];
-    }
-
-    function getPlayersPositions(address[] calldata players) external view returns (
-        uint8[] memory _positions
-    ) {
-        _positions = new uint8[](players.length);
-        for (uint i = 0; i < players.length; i++) {
-            _positions[i] = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(players[i]);
-        }
-    }
-
     function getPlayersData(uint8[] calldata indexes) external view returns (
         address[] memory _addresses,
         bytes32[] memory _usernames,
         uint8[] memory _avatars,
         uint8[] memory _positions,
-        bool[] memory _hasLost
+        bool[] memory _hasLost,
+        bool[] memory  _hasImmunity,
+        bool[] memory _isInQuarantine
     ) {
         _addresses = new address[](indexes.length);
         _usernames = new bytes32[](indexes.length);
         _avatars = new uint8[](indexes.length);
         _positions = new uint8[](indexes.length);
         _hasLost = new bool[](indexes.length);
+        _hasImmunity = new bool[](indexes.length);
+        _isInQuarantine = new bool[](indexes.length);
         for (uint i = 0; i < indexes.length; i++) {
             address player = playersSet[i];
             _addresses[i] = player;
@@ -95,22 +76,24 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
             _avatars[i] = players[player];
             _positions[i] = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(player);
             _hasLost[i] = lostPlayers[player];
+            _hasImmunity[i] = IPlayground(IGameContracts(contracts).getPlayground()).hasImmunity(player);
+            _isInQuarantine[i] = IPlayground(IGameContracts(contracts).getPlayground()).isInQuarantine(player);
         }
     }
 
-    function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
-        return IPlayground(IGameContracts(contracts).getPlayground()).getSpaceDetails(spaceId);
-    }
+    // function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
+    //     return IPlayground(IGameContracts(contracts).getPlayground()).getSpaceDetails(spaceId);
+    // }
 
-    function getChanceDetails(uint8 chanceId) external override view returns (uint8 chanceType, uint8 chanceParam) {
-        return IChance(IGameContracts(contracts).getChances()).getChanceDetails(chanceId);
-    }
+    // function getChanceDetails(uint8 chanceId) external override view returns (uint8 chanceType, uint8 chanceParam) {
+    //     return IChance(IGameContracts(contracts).getChances()).getChanceDetails(chanceId);
+    // }
 
-    function getOptionsAt(address player, uint8 position) external override view returns (uint8 options) {
-        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = this.getSpaceDetails(position);
-        require(spaceType < 8, "SPACE_TYPE_INVALID");
-        return IPlayOptions(IGameContracts(contracts).getPlayOptions()).getOptionsAt(player, spaceType, assetId, assetPrice, productPrice);
-    }
+    // function getOptionsAt(address player, uint8 position) external override view returns (uint8 options) {
+    //     (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = this.getSpaceDetails(position);
+    //     require(spaceType < 8, "SPACE_TYPE_INVALID");
+    //     return IPlayOptions(IGameContracts(contracts).getPlayOptions()).getOptionsAt(player, spaceType, assetId, assetPrice, productPrice);
+    // }
 
     function rollDices() external override {
         require(status == STARTED, "INVALID_GAME_STATE");
@@ -119,9 +102,9 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         currentPlayer = msg.sender;
         (uint8 dice1, uint8 dice2, uint8 cardId) = IRandomGenerator(IGameContracts(contracts).getRandomGenerator()).getRandom();
         address playgroundAddress = IGameContracts(contracts).getPlayground();
-        IPlayground(playgroundAddress).incrementPlayerPosition(msg.sender, dice1 + dice2);
+        IPlayground(playgroundAddress).incrementPlayerPosition(msg.sender, int8(dice1 + dice2));
         uint8 newPosition = IPlayground(playgroundAddress).getPlayerPosition(msg.sender);
-        uint8 options = this.getOptionsAt(msg.sender, newPosition);
+        uint8 options = IPlayOptions(IGameContracts(contracts).getPlayOptions()).getOptionsAt(msg.sender, newPosition);
         currentOptions = options;
         currentCardId = cardId;
         // console.log('emit RolledDices event');
@@ -134,15 +117,15 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         require(msg.sender == currentPlayer, "NOT_AUTHORIZED");
         require((option & currentOptions) != 0, "OPTION_NOT_ALLOWED");
         require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
-        address playgroundAddress = IGameContracts(contracts).getPlayground();
-        uint8 realOption = performOption(IPlayground(playgroundAddress).getPlayerPosition(msg.sender), option);
+        address playOptionsAddress = IGameContracts(contracts).getPlayOptions();
+        (uint8 realOption, uint8 newPosition) = IPlayOptions(playOptionsAddress).performOption(address(this), msg.sender, option, currentCardId);
         chooseNextPlayer();
         uint8 eventCardId = currentCardId;
         currentPlayer = address(0);
         currentOptions = 0;
         currentCardId = 0;
         // emit event at the end
-        emit PlayPerformed(msg.sender, realOption, eventCardId, IPlayground(playgroundAddress).getPlayerPosition(msg.sender));
+        emit PlayPerformed(msg.sender, realOption, eventCardId, newPosition);
     }
 
     function _start() internal override {
@@ -157,11 +140,5 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         ITransferManager(IGameContracts(contracts).getTransferManager()).checkAllowance(msg.sender);
         super._register(username, avatar);
     }
-
-    function performOption(uint8 position, uint8 option) internal returns (uint8) {
-        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = this.getSpaceDetails(position);
-        address playOptionsAddress = IGameContracts(contracts).getPlayOptions();
-        return IPlayOptions(playOptionsAddress).performOption(address(this), msg.sender, spaceType, assetId, assetPrice, productPrice, option, currentCardId);
-    }
-
+ 
 }

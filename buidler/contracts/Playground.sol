@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0 <0.7.0;
 
+import "@nomiclabs/buidler/console.sol";
 import { IPlayground } from  "./IPlayground.sol";
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
@@ -19,6 +20,8 @@ contract Playground is IPlayground, Ownable {
     bytes32 public playground;
     mapping(uint8 => Space) spaces;
     mapping(uint8 => uint8) assetsPositions;
+    mapping(address => bool) immunity;
+    mapping(address => bool) inQuarantine;
 
     constructor(
         uint8 _nbPositions,
@@ -63,23 +66,52 @@ contract Playground is IPlayground, Ownable {
         return nbPositions;
     }
 
-    function setPlayerPosition(address player, uint8 newPosition) external override onlyOwner {
+    function setPlayerPosition(address player, uint8 newPosition) external override {
         _setPlayerPosition(player, newPosition);
     }
 
-    function incrementPlayerPosition(address player, uint8 offset) external override onlyOwner {
+    function incrementPlayerPosition(address player, int8 offset) external override {
+        require(offset < int8(nbPositions), "OFFSET_OUT_OF_BOUNDS");
+        require(offset > -int8(nbPositions), "OFFSET_OUT_OF_BOUNDS");
         uint8 oldPosition = positions[player];
-        _setPlayerPosition(player, (oldPosition + offset) % nbPositions);
+        int8 newPosition = int8(oldPosition) + offset;
+        if (newPosition < 0) {
+            newPosition += int8(nbPositions);
+        }
+        _setPlayerPosition(player, uint8(newPosition) % nbPositions);
     }
 
     function _setPlayerPosition(address player, uint8 newPosition) internal {
         positions[player] = newPosition;
     }
 
-    function getAssetData(uint8 assetId) external override returns (uint256 assetPrice, uint256 productPrice) {
+    function getAssetData(uint8 assetId) external view override returns (uint256 assetPrice, uint256 productPrice) {
         uint8 spaceId = assetsPositions[assetId];
         assetPrice = spaces[spaceId].assetPrice;
         productPrice = spaces[spaceId].productPrice;
+    }
+
+    function giveImmunity(address player) external override {
+        console.log('Playground: set immunity', player);
+        immunity[player] = true;
+    }
+
+    function gotoQuarantine(address player) external override {
+        console.log('Playground: gotoQuarantine', player);
+        if (!immunity[player]) {
+            inQuarantine[player] = true;
+        } else {
+            console.log('Playground: reset immunity', player);
+            immunity[player] = false; // works only once
+        }
+    }
+
+    function hasImmunity(address player) external view override returns (bool) {
+        console.log('Playground: get immunity', player, immunity[player]);
+        return immunity[player];
+    }
+    function isInQuarantine(address player)  external view override returns (bool) {
+        return inQuarantine[player];
     }
 
 

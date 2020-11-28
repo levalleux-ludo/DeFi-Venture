@@ -19,8 +19,9 @@ describe("GameFactory", function() {
         [owner, addr1, addr2] = await ethers.getSigners();
         const GameFactoryFactory = await ethers.getContractFactory("GameFactory");
         const GameMasterFactoryFactory = await ethers.getContractFactory("GameMasterFactory");
-        const GameContractsWrapper = await ethers.getContractFactory("GameContractsWrapper");
         const GameContractsFactoryFactory = await ethers.getContractFactory("GameContractsFactory");
+        const OtherContractsFactoryFactory = await ethers.getContractFactory("OtherContractsFactory");
+        const TransferManagerFactoryFactory = await ethers.getContractFactory("TransferManagerFactory");
         const TokenFactoryFactory = await ethers.getContractFactory("TokenFactory");
         const AssetsFactoryFactory = await ethers.getContractFactory("AssetsFactory");
         const MarketplaceFactoryFactory = await ethers.getContractFactory("MarketplaceFactory");
@@ -31,21 +32,24 @@ describe("GameFactory", function() {
         MarketplaceFactory = await ethers.getContractFactory("Marketplace");
 
         const gameMasterFactory = await GameMasterFactoryFactory.deploy();
-        const gameContractsWrapper = await GameContractsWrapper.deploy();
         const gameContractsFactory = await GameContractsFactoryFactory.deploy();
+        const otherContractsFactory = await OtherContractsFactoryFactory.deploy();
+        const transferManagerFactory = await TransferManagerFactoryFactory.deploy();
         const tokenFactory = await TokenFactoryFactory.deploy();
         const assetsFactory = await AssetsFactoryFactory.deploy();
         const marketplaceFactory = await MarketplaceFactoryFactory.deploy();
         await gameMasterFactory.deployed();
-        await gameContractsWrapper.deployed();
         await gameContractsFactory.deployed();
+        await otherContractsFactory.deployed();
+        await transferManagerFactory.deployed();
         await tokenFactory.deployed();
         await assetsFactory.deployed();
         await marketplaceFactory.deployed();
         gameFactory = await GameFactoryFactory.deploy(
             gameMasterFactory.address,
-            gameContractsWrapper.address,
             gameContractsFactory.address,
+            otherContractsFactory.address,
+            transferManagerFactory.address,
             tokenFactory.address,
             assetsFactory.address,
             marketplaceFactory.address
@@ -85,12 +89,16 @@ describe("GameFactory", function() {
         console.log('gameContractsAddress', gameContractsAddress);
         const gameContracts = await GameContractsFactory.attach(gameContractsAddress);
         await gameContracts.deployed();
-        await expect(gameFactory.createOtherContracts(
+        await gameFactory.createOtherContracts(
             gameMasterAddress,
             gameContractsAddress,
             NB_SPACES,
             spaces,
             chances
+        );
+        await expect(gameFactory.createTransferManager(
+            gameMasterAddress,
+            gameContractsAddress,
         )).to.emit(gameFactory, 'GameCreated');
         await gameFactory.createGameToken(gameMasterAddress);
         await gameFactory.createGameAssets(gameMasterAddress);

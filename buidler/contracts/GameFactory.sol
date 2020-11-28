@@ -14,7 +14,8 @@ import { IMarketplace } from "./IMarketplace.sol";
 import { IGameMasterFactory } from "./IGameMasterFactory.sol";
 
 import { IGameContractsFactory } from "./IGameContractsFactory.sol";
-import { IGameContractsWrapper } from './IGameContractsWrapper.sol';
+import { IOtherContractsFactory } from './IOtherContractsFactory.sol';
+import { ITransferManagerFactory } from './ITransferManagerFactory.sol';
 import { IGameContracts } from './IGameContracts.sol';
 
 contract GameFactory is IGameStatus {
@@ -22,8 +23,9 @@ contract GameFactory is IGameStatus {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     address gameMasterFactory;
-    address gameContractsWrapper;
     address gameContractsFactory;
+    address otherContractsFactory;
+    address transferManagerFactory;
     address tokenFactory;
     address assetsFactory;
     address marketplaceFactory;
@@ -33,10 +35,11 @@ contract GameFactory is IGameStatus {
     event GameMasterCreated(address gameMasterAddress);
     event GameContractsCreated(address gameContractsAddress);
 
-    constructor (address _gameMasterFactory, address _gameContractsWrapper, address _gameContractsFactory, address _tokenFactory, address _assetsFactory, address _marketplaceFactory) public {
+    constructor (address _gameMasterFactory, address _gameContractsFactory, address _otherContractsFactory, address _transferManagerFactory, address _tokenFactory, address _assetsFactory, address _marketplaceFactory) public {
         gameMasterFactory = _gameMasterFactory;
-        gameContractsWrapper = _gameContractsWrapper;
         gameContractsFactory = _gameContractsFactory;
+        otherContractsFactory = _otherContractsFactory;
+        transferManagerFactory = _transferManagerFactory;
         tokenFactory = _tokenFactory;
         assetsFactory = _assetsFactory;
         marketplaceFactory = _marketplaceFactory;
@@ -57,19 +60,24 @@ contract GameFactory is IGameStatus {
     }
 
     function createGameContracts(address gameMasterAddress, uint8 _nbMaxPlayers, uint8 _nbPositions, uint256 _initialAmount, bytes32 _playground, bytes32 _chances) external {
-        require(gameContractsWrapper != address(0), "GAME_CONTRACTS_WRAPPER_NOT_DEFINED");
-        address gameContractsAddr = IGameContractsWrapper(gameContractsWrapper).create();
+        require(gameContractsFactory != address(0), "GAME_CONTRACTS_WRAPPER_NOT_DEFINED");
+        address gameContractsAddr = IGameContractsFactory(gameContractsFactory).create();
         console.log('created gameContracts', gameContractsAddr);
         GameMasterStorage(gameMasterAddress).setContracts(gameContractsAddr);
         emit GameContractsCreated(gameContractsAddr);
     }
 
     function createOtherContracts(address gameMasterAddress, address gameContractsAddr, uint8 _nbPositions, bytes32 _playground, bytes32 _chances) external {
-        require(gameContractsFactory != address(0), "GAME_CONTRACTS_FACTORY_NOT_DEFINED");
-        IGameContractsFactory contractsFactory = IGameContractsFactory(gameContractsFactory);
-        (address contracts) = contractsFactory.create(gameContractsAddr, _nbPositions, _playground, _chances);
-        console.log('created contracts', contracts, gameContractsAddr);
-        contractsFactory.transferOwnership(gameMasterAddress, IGameContracts(contracts).getPlayground());
+        require(otherContractsFactory != address(0), "GAME_CONTRACTS_FACTORY_NOT_DEFINED");
+        (address contracts) = IOtherContractsFactory(otherContractsFactory).create(gameContractsAddr, _nbPositions, _playground, _chances);
+        console.log('created other contracts', contracts, gameContractsAddr);
+        IOtherContractsFactory(otherContractsFactory).transferOwnership(gameMasterAddress, IGameContracts(contracts).getPlayground());
+    }
+
+    function createTransferManager(address gameMasterAddress, address gameContractsAddr) external {
+        require(transferManagerFactory != address(0), "TRANSFER_MANAGER_FACTORY_NOT_DEFINED");
+        (address contracts) = ITransferManagerFactory(transferManagerFactory).create(gameContractsAddr);
+        console.log('created transferManager', contracts, gameContractsAddr);
         emit GameCreated(gameMasterAddress, gamesSet.length() - 1);
     }
 

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import { IGameAssets } from "./IGameAssets.sol";
 
-contract GameAssets is ERC721Burnable, Ownable, IGameAssets {
+contract GameAssets is ERC721, Ownable, IGameAssets {
     using EnumerableSet for EnumerableSet.UintSet;
 
     EnumerableSet.UintSet private tokenIdsSet;
@@ -38,5 +38,11 @@ contract GameAssets is ERC721Burnable, Ownable, IGameAssets {
         }
         assert(totalSupply() == 0);
     }
+
+    function burn(uint256 tokenId) external override {
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "GameAssets: caller is not owner nor approved");
+        _burn((tokenId));
+    }
+
 
 }

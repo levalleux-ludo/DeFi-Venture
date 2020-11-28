@@ -119,7 +119,9 @@ describe('Game play with token and assets', () => {
         }
         await marketplace.connect(addr1).sell(1, 100, 75);
         expect((await marketplace.getNbSales()).toString()).to.equal('1');
-        await marketplace.connect(addr2).bid(1, 100);
+        const balance2Before = await token.balanceOf(addr2Address);
+        expect(balance2Before.toNumber()).to.be.gte(90);
+        await marketplace.connect(addr2).bid(1, 90);
         const nbSales = await marketplace.getNbSales();
         await expect(nbSales.toString()).to.equal('0');
 
@@ -132,6 +134,9 @@ describe('Game play with token and assets', () => {
             const assetId2 = await assets.tokenOfOwnerByIndex(addr2Address, 0);
             await expect(assetId2.toString()).to.equal('1');
         }
+        const balance2After = await token.balanceOf(addr2Address);
+        expect(balance2Before.sub(balance2After).toString()).to.equal('90');
+
     })
 })
 

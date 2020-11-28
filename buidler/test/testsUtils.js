@@ -34,6 +34,43 @@ const SPACE_TYPE = [
     'ASSET_CLASS_4'
 ];
 
+let USER_DATA_FIELDS = {}; {
+    let index = 0;
+    let keys = [
+        'address',
+        'username',
+        'avatar',
+        'position',
+        'hasLost',
+        'hasImmunity',
+        'isInQuarantine'
+    ];
+    for (let key of keys) {
+        USER_DATA_FIELDS[key] = index++;
+    }
+}
+
+let GAME_DATA_FIELDS = {}; {
+    let index = 0;
+    let keys = [
+        'status',
+        'nbPlayers',
+        'nbPositions',
+        'token',
+        'assets',
+        'marketplace',
+        'nextPlayer',
+        'currentPlayer',
+        'currentOptions',
+        'currentCardId'
+    ];
+    for (let key of keys) {
+        GAME_DATA_FIELDS[key] = index++;
+    }
+};
+
+
+
 // generic handlers to test exceptions
 const shouldFail = {
     then: () => {
@@ -78,6 +115,7 @@ async function createGameMasterFull() {
     gameMaster.assetsAddress = () => gameContracts.getAssets();
     gameMaster.marketplaceAddress = () => gameContracts.getMarketplace();
     gameMaster.transferManagerAddress = () => gameContracts.getTransferManager();
+    gameMaster.chancesAddress = () => gameContracts.getChances();
     return { gameMaster, token, assets, marketplace };
 }
 
@@ -88,24 +126,28 @@ async function createGameMasterBase() {
     const Playground = await ethers.getContractFactory("Playground");
     const playgroundContract = await Playground.deploy(NB_SPACES, SPACES);
     await playgroundContract.deployed();
-    await contracts.setPlayground(playgroundContract.address)
     const Chance = await ethers.getContractFactory("Chance");
+    console.log('create Chances contract with', CHANCES);
     const chance = await Chance.deploy(CHANCES);
     await chance.deployed();
     await chance.transferOwnership(contracts.address);
-    await contracts.setChances(chance.address)
     const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
     const randomContract = await RandomGenerator.deploy();
     await randomContract.deployed();
-    await contracts.setRandomGenerator(randomContract.address)
     const PlayOptions = await ethers.getContractFactory('PlayOptions');
     const playOptions = await PlayOptions.deploy();
     await playOptions.deployed();
-    await contracts.setPlayOptions(playOptions.address)
     const TransferManager = await ethers.getContractFactory('TransferManager');
     const transferManager = await TransferManager.deploy();
     await transferManager.deployed();
-    await contracts.setTransferManager(transferManager.address)
+
+    await contracts.initialize(
+        chance.address,
+        playgroundContract.address,
+        playOptions.address,
+        randomContract.address
+    );
+    await contracts.setTransferManager(transferManager.address);
 
     const GameMaster = await ethers.getContractFactory("GameMasterForTest");
     const gameMaster = await GameMaster.deploy(
@@ -118,6 +160,8 @@ async function createGameMasterBase() {
     gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
     gameMaster.getPlayground = () => playgroundContract.playground();
     gameMaster.getNbPositions = () => playgroundContract.nbPositions();
+    gameMaster.getOptionsAt = (player, position) => playOptions.getOptionsAt(player, position);
+    gameMaster.getSpaceDetails = (spaceId) => playgroundContract.getSpaceDetails(spaceId);
     return gameMaster;
 }
 
@@ -235,6 +279,8 @@ module.exports = {
     NB_MAX_PLAYERS,
     INITIAL_BALANCE,
     NULL_ADDRESS,
+    USER_DATA_FIELDS,
+    GAME_DATA_FIELDS,
     shouldFail,
     revertMessage,
     registerPlayers,
@@ -245,5 +291,5 @@ module.exports = {
     createGameToken,
     createGameAssets,
     createMarketplace,
-    avatarCount
+    avatarCount,
 };

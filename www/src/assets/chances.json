@@ -65,7 +65,7 @@
         {
             "text": "Advance to %SPACE%. If you pass the Genesis Block, you receive Universal Basic Income",
             "params": {
-                "space": 12
+                "space": 14
             },
             "impl": "GOTO_SPACE"
         },

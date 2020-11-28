@@ -1,41 +1,8 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
-const { createGameMasterFull, STATUS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
+const { createGameMasterFull, STATUS, GAME_DATA_FIELDS, USER_DATA_FIELDS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
 
-
-let GAME_DATA_FIELDS = {}; {
-    let index = 0;
-    let keys = [
-        'status',
-        'nbPlayers',
-        'nbPositions',
-        'token',
-        'assets',
-        'marketplace',
-        'nextPlayer',
-        'currentPlayer',
-        'currentOptions',
-        'currentCardId'
-    ];
-    for (let key of keys) {
-        GAME_DATA_FIELDS[key] = index++;
-    }
-};
-
-let USER_DATA_FIELDS = {}; {
-    let index = 0;
-    let keys = [
-        'address',
-        'username',
-        'avatar',
-        'position',
-        'hasLost'
-    ];
-    for (let key of keys) {
-        USER_DATA_FIELDS[key] = index++;
-    }
-}
 
 async function createGameMaster() {
     const { gameMaster, token, assets } = await createGameMasterFull();

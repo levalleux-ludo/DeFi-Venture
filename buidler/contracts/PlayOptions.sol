@@ -16,20 +16,17 @@ import { IGameScheduler } from './IGameScheduler.sol';
 import { IGameContracts } from './IGameContracts.sol';
 
 import { ITransferManager } from './ITransferManager.sol';
+import { IPlayground } from './IPlayground.sol';
+import { Initialized } from './Initialized.sol';
 
-contract PlayOptions is IPlayOptions {
+
+contract PlayOptions is IPlayOptions, Initialized {
     address public tokenAddress;
     address public assetsAddress;
     address public chancesAddress;
     address public transferManager;
     address public playground;
 
-    modifier initialized() {
-        require(tokenAddress != address(0), "TOKEN_CONTRACT_NOT_DEFINED");
-        require(assetsAddress != address(0), "ASSETS_CONTRACT_NOT_DEFINED");
-        require(chancesAddress != address(0), "CHANCES_CONTRACT_NOT_DEFINED");
-        _;
-    }
     constructor() public {}
 
     function initialize(address _tokenAddress, address _assetsAddress, address _chancesAddress, address _transferManager, address _playground) external override {
@@ -38,9 +35,11 @@ contract PlayOptions is IPlayOptions {
         chancesAddress = _chancesAddress;
         transferManager = _transferManager;
         playground = _playground;
+        super.initialize();
     }
 
-    function getOptionsAt(address player, uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) external view override initialized returns (uint8 options) {
+    function getOptionsAt(address player, uint8 position) external view override initialized returns (uint8 options) {
+        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = IPlayground(playground).getSpaceDetails(position);
         options = 0;
         if (
             (spaceType == 0) // GENESIS
@@ -70,8 +69,11 @@ contract PlayOptions is IPlayOptions {
 
     }
 
-    function performOption(address gameMaster, address player, uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice, uint8 option, uint8 currentCardId) external override initialized returns (uint8 realOption) {
+    function performOption(address gameMaster, address player, uint8 option, uint8 currentCardId) external override initialized returns (uint8 realOption, uint8 newPosition) {
+        uint8 position = IPlayground(playground).getPlayerPosition(player);
+        (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) = IPlayground(playground).getSpaceDetails(position);
         realOption = option;
+        newPosition = position;
         if ((option & 1) != 0) { // NOTHING
 
         } else if ((option & 2) != 0) { // BUY_ASSET
@@ -81,7 +83,7 @@ contract PlayOptions is IPlayOptions {
                 } else {
                     // real played option is NOTHING
                     realOption = 1;// NOTHING
-                }                
+                }
             }
         } else if ((option & 4) != 0) { // PAY_BILL
             if((tokenAddress != address(0)) && assetsAddress != address(0)) {
@@ -91,30 +93,15 @@ contract PlayOptions is IPlayOptions {
             }
         } else if ((option & 8) != 0) { // CHANCE
             // TODO: perform chance for currentCardId (delegated to ChanceContrat ?)
-            IChance(chancesAddress).performChance(currentCardId);
+            IChance(chancesAddress).performChance(gameMaster, player, currentCardId);
+            newPosition = IPlayground(playground).getPlayerPosition(player);
         } else if ((option & 16) != 0) { // QUARANTINE
             // TODO: set player in Quarantine
+            newPosition = IPlayground(playground).getPlayerPosition(player);
         }
     }
 
     function checkBalance(address gameMaster, address player, uint256 requiredCash, bool mustContinue) internal returns(bool) {
-        if (IGameToken(tokenAddress).balanceOf(player) < requiredCash) {
-            console.log('checkBalance: NOK');
-            console.logUint(requiredCash);
-            // if the player owns some assets, liquidate them and check again
-            uint256 assetsBalance = IGameAssets(assetsAddress).balanceOf(player);
-            if (assetsBalance > 0) {
-               console.log('checkBalance: perform liquidation');
-                ITransferManager(transferManager).liquidate(player, assetsBalance, playground);
-                // if the play action must continue after liquidation, recheck to see if balance is now enough to pay requiredCash
-                return mustContinue && checkBalance(gameMaster, player, requiredCash, mustContinue);
-            } else {
-                console.log('checkBalance: perform play lost');
-                IGameScheduler(gameMaster).playerLost(player);
-            }
-            return false;
-        }
-        console.log('checkBalance: OK');
-        return true;
+        return ITransferManager(transferManager).checkBalance(gameMaster, player, requiredCash, mustContinue);
     }
 }

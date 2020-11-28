@@ -7,6 +7,10 @@ interface IPlayground {
     function getPlayerPosition(address player) external view returns (uint8);
     function getNbPositions() external view returns (uint8);
     function setPlayerPosition(address player, uint8 newPosition) external;
-    function incrementPlayerPosition(address player, uint8 offset) external;
-    function getAssetData(uint8 assetId) external returns (uint256 assetPrice, uint256 productPrice);
+    function incrementPlayerPosition(address player, int8 offset) external;
+    function getAssetData(uint8 assetId) external view returns (uint256 assetPrice, uint256 productPrice);
+    function giveImmunity(address player) external;
+    function hasImmunity(address player) external view returns (bool);
+    function gotoQuarantine(address player) external;
+    function isInQuarantine(address player)  external view returns (bool);
 }
