@@ -28,6 +28,8 @@ export class DicesComponent implements OnInit {
   dicePOWValue = Math.floor(1 + 6 * Math.random());
   @Input()
   dicePOSValue = Math.floor(1 + 6 * Math.random());
+  @Input()
+  diceWidth = 150;
 
   _animation;
 

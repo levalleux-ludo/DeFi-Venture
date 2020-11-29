@@ -1,3 +1,4 @@
+import { BigNumber } from 'ethers';
 import { ChanceDetailFormComponent } from './../chance-detail-form/chance-detail-form.component';
 import { MatDialog } from '@angular/material/dialog';
 import { eOption, ISpace } from './../../_services/game-master-contract.service';
@@ -31,6 +32,17 @@ export class SpaceDetailsComponent implements OnInit {
   get playground(): ISpace[] {
     return this._playground;
   }
+
+  _currentBalance;
+  @Input()
+  set currentBalance(value: BigNumber) {
+    this._currentBalance = value;
+    this.refreshSpaceDetails();
+  }
+  get currentBalance(): BigNumber {
+    return this._currentBalance;
+  }
+
 
   @Input()
   canValidate: boolean;
@@ -71,6 +83,7 @@ export class SpaceDetailsComponent implements OnInit {
   price;
   productPrice;
   selectedOption: number;
+  insufficientBalance = false;
 
   getOptionValue(optionStr: string) {
     return eOption[optionStr];
@@ -84,6 +97,7 @@ export class SpaceDetailsComponent implements OnInit {
   }
 
   async refreshSpaceDetails() {
+    this.insufficientBalance = false;
     if (this._playground && (this._spaceId !== undefined)) {
       const space = this._playground[this._spaceId];
       // TODO: get options from contract return (RolledDices event)
@@ -124,6 +138,7 @@ export class SpaceDetailsComponent implements OnInit {
           this.price = space.assetPrice;
           this.productPrice = space.productPrice;
           this.image = `assets/blocks/block_${asset.image}`;
+          this.insufficientBalance = (this.currentBalance.lt(space.assetPrice));
           // this.options = [eOption.NOTHING, eOption.BUY_ASSET]; // TODO: check the asset is owned. If so, option = [eOption.Pay_BILL]
           break;
         }

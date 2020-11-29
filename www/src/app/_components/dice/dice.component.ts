@@ -10,6 +10,7 @@ export class DiceComponent implements OnInit {
   @Input() name = '';
   @Input() imagesList = [];
   @Input() value: number;
+  @Input() diceWidth = 150;
   @Input() set target(value: number) {
     this.animateDice(value);
   }

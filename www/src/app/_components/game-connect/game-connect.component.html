@@ -34,14 +34,14 @@
                     <app-test-canvas #board [playground]="playground" [width]="board_width" [height]="board_height" [gameData]="gameData" class="board-canvas"></app-test-canvas>
                     <app-marketplace class="marketplace"></app-marketplace>
                     <app-defi-services class="defi"></app-defi-services>
-                    <div fxLayout="column" fxLayoutAlign="start center" style="text-align: center;">
+                    <div fxLayout="column" fxLayoutAlign="center center" style="text-align: center;">
                         <!-- zone 1 -->
                         <div style="position: absolute; bottom: {{2 * board_height / 3}}px; width: {{board_width / 3}}px; height: {{board_height / 3}}px; z-index: 2;">
-                            <div *ngIf="(gameData.status == 'STARTED') && isNextPlayer && !isCurrentPlayer">
-                                <app-dices #dices class="dices-block"></app-dices>
-                            </div>
                             <div *ngIf="(gameData.status == 'STARTED') && isNextPlayer && isCurrentPlayer">
                                 <app-space-image [spaceId]="position" [owner]="translatorService.getUsername(owner)" [ownerAvatar]="getPlayerAvatar(owner)" [playground]="playground" [canValidate]="canValidate" [chanceCardId]="gameData.chanceCardId" (onValidate)="validate($event)"></app-space-image>
+                            </div>
+                            <div *ngIf="(gameData.status == 'STARTED') && isNextPlayer" [ngStyle]="{'margin-top':isCurrentPlayer ? '0px;' : '25%;' }">
+                                <app-dices #dices [diceWidth]="isCurrentPlayer ? 75 : 150"></app-dices>
                             </div>
                         </div>
                         <!-- zone 2 -->
@@ -55,7 +55,8 @@
                                         </div>
                                     </div>
                                     <div *ngIf="isCurrentPlayer">
-                                        <app-space-details [spaceId]="position" [owner]="translatorService.getUsername(owner)" [playground]="playground" [canValidate]="canValidate" [options]="gameData.currentOptions" [chanceCardId]="gameData.chanceCardId" (onValidate)="validate($event)"></app-space-details>
+                                        <app-space-details [spaceId]="position" [owner]="translatorService.getUsername(owner)" [playground]="playground" [canValidate]="canValidate" [options]="gameData.currentOptions" [chanceCardId]="gameData.chanceCardId" [currentBalance]="balances?.get(currentAccount)"
+                                            (onValidate)="validate($event)"></app-space-details>
                                     </div>
                                 </div>
                             </div>
