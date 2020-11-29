@@ -75,7 +75,7 @@ contract Chance is IChance, Ownable, Initialized {
             IPlayground(playground).giveImmunity(player);
         } else if (chanceType == GO_TO_QUARANTINE) {
             console.log('Chance: gotoQuarantine');
-            IPlayground(playground).gotoQuarantine(player);
+            IPlayground(playground).gotoQuarantine(gameMaster, player);
         }
     }
 

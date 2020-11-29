@@ -44,7 +44,7 @@ contract GameMasterForTest is GameMaster {
         _position = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(player);
         _hasLost = lostPlayers[player];
         _hasImmunity = IPlayground(IGameContracts(contracts).getPlayground()).hasImmunity(player);
-        _isInQuarantine = IPlayground(IGameContracts(contracts).getPlayground()).isInQuarantine(player);
+        _isInQuarantine = IPlayground(IGameContracts(contracts).getPlayground()).isInQuarantine(player, roundCount);
     }
 
     function getPlayersPositions(address[] calldata players) external view returns (

@@ -3,6 +3,7 @@ pragma solidity >=0.6.0 <0.7.0;
 
 import "@nomiclabs/buidler/console.sol";
 import { IGameStatus } from  "./IGameStatus.sol";
+import { IPlayground } from './IPlayground.sol';
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IGameScheduler} from "./IGameScheduler.sol";
@@ -11,6 +12,7 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
     uint8 public status = CREATED;
     uint8 public nbPlayers = 0;
     uint8 public nextPlayerIdx = 0;
+    uint16 public roundCount = 0;
     address public nextPlayer;
     mapping(address => uint8) public players;
     mapping(address => bytes32) public usernames;
@@ -31,6 +33,10 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
 
     function getStatus() view external override returns (uint8) {
         return status;
+    }
+
+    function getRoundCount() view external override returns (uint16) {
+        return roundCount;
     }
 
     // function getNbPlayers() view external override returns (uint8) {
@@ -151,13 +157,16 @@ contract GameScheduler is IGameStatus, Ownable, IGameScheduler {
         emit StatusChanged(status);
     }
 
-    function chooseNextPlayer() internal {
+    function chooseNextPlayer(address playgroundAddress) internal {
         nextPlayerIdx = (nextPlayerIdx + 1) % nbPlayers;
-        nextPlayer = playersSet[nextPlayerIdx];
-        if (this.hasPlayerLost(nextPlayer)) {
-            chooseNextPlayer();
+        if (nextPlayerIdx == 0) {
+            roundCount++;
+            console.log('Increment RoundCount', roundCount);
         }
-        // TODO: if player in quarantine, step over (and remove from quarantine for next time)
+        nextPlayer = playersSet[nextPlayerIdx];
+        if (this.hasPlayerLost(nextPlayer) || IPlayground(playgroundAddress).isInQuarantine(nextPlayer, roundCount)) {
+            chooseNextPlayer(playgroundAddress);
+        }
     }
 
    function compareStrings(string memory a, string memory b) internal pure returns (bool) {

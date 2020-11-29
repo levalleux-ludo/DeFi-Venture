@@ -11,6 +11,6 @@ interface IPlayground {
     function getAssetData(uint8 assetId) external view returns (uint256 assetPrice, uint256 productPrice);
     function giveImmunity(address player) external;
     function hasImmunity(address player) external view returns (bool);
-    function gotoQuarantine(address player) external;
-    function isInQuarantine(address player)  external view returns (bool);
+    function gotoQuarantine(address gameMaster, address player) external;
+    function isInQuarantine(address player, uint16 roundCount)  external view returns (bool);
 }

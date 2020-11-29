@@ -77,7 +77,7 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
             _positions[i] = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(player);
             _hasLost[i] = lostPlayers[player];
             _hasImmunity[i] = IPlayground(IGameContracts(contracts).getPlayground()).hasImmunity(player);
-            _isInQuarantine[i] = IPlayground(IGameContracts(contracts).getPlayground()).isInQuarantine(player);
+            _isInQuarantine[i] = IPlayground(IGameContracts(contracts).getPlayground()).isInQuarantine(player, roundCount);
         }
     }
 
@@ -119,7 +119,7 @@ contract GameMaster is GameScheduler, GameMasterStorage, IGameMaster {
         require((option & currentOptions) == option, "OPTION_NOT_ALLOWED");
         address playOptionsAddress = IGameContracts(contracts).getPlayOptions();
         (uint8 realOption, uint8 newPosition) = IPlayOptions(playOptionsAddress).performOption(address(this), msg.sender, option, currentCardId);
-        chooseNextPlayer();
+        chooseNextPlayer(IGameContracts(contracts).getPlayground());
         uint8 eventCardId = currentCardId;
         currentPlayer = address(0);
         currentOptions = 0;

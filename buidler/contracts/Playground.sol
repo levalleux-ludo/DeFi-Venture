@@ -2,9 +2,9 @@
 pragma solidity >=0.6.0 <0.7.0;
 
 import "@nomiclabs/buidler/console.sol";
-import { IPlayground } from  "./IPlayground.sol";
-
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IPlayground } from  "./IPlayground.sol";
+import { IGameScheduler } from './IGameScheduler.sol';
 
 contract Playground is IPlayground, Ownable {
 
@@ -15,13 +15,15 @@ contract Playground is IPlayground, Ownable {
         uint256 productPrice;
     }
 
+    uint16 internal constant FIRST_ROUND = 1; // do not start at 0 because its the inital value
+    uint16 internal constant NB_ROUND_IN_QUARANTINE = 1; 
     uint8 public nbPositions;
     mapping(address => uint8) public positions;
     bytes32 public playground;
     mapping(uint8 => Space) spaces;
     mapping(uint8 => uint8) assetsPositions;
     mapping(address => bool) immunity;
-    mapping(address => bool) inQuarantine;
+    mapping(address => uint16) inQuarantine;
 
     constructor(
         uint8 _nbPositions,
@@ -96,10 +98,11 @@ contract Playground is IPlayground, Ownable {
         immunity[player] = true;
     }
 
-    function gotoQuarantine(address player) external override {
+    function gotoQuarantine(address gameMaster, address player) external override {
         console.log('Playground: gotoQuarantine', player);
+        uint16 roundCount = IGameScheduler(gameMaster).getRoundCount();
         if (!immunity[player]) {
-            inQuarantine[player] = true;
+            inQuarantine[player] = FIRST_ROUND + roundCount + NB_ROUND_IN_QUARANTINE;
         } else {
             console.log('Playground: reset immunity', player);
             immunity[player] = false; // works only once
@@ -110,8 +113,11 @@ contract Playground is IPlayground, Ownable {
         console.log('Playground: get immunity', player, immunity[player]);
         return immunity[player];
     }
-    function isInQuarantine(address player)  external view override returns (bool) {
-        return inQuarantine[player];
+ 
+    function isInQuarantine(address player, uint16 roundCount)  external view override returns (bool) {
+        console.log('Test isInQuarantine', player, roundCount);
+        console.log(inQuarantine[player]);
+        return (inQuarantine[player] >= FIRST_ROUND + roundCount);
     }
 
 
