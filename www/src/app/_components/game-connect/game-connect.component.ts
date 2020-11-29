@@ -230,6 +230,9 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       this.gameData.players.forEach((aplayer, playerAddress) => {
         this.avatars.set(playerAddress, aplayer.avatar);
+        if (this.board !== undefined) {
+          this.board.setPlayerStatus(aplayer.avatar, aplayer.hasLost, aplayer.inQuarantine);
+        }
       });
       this.gameData.playersPosition.forEach((position, aplayer) => {
         if (this.players !== undefined) {

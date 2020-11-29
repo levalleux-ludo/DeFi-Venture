@@ -55,6 +55,7 @@ export abstract class AbstractContractService<T> {
             await this.setContract(undefined);
           }
           await this.resetData();
+          this._onUpdate.next(undefined);
           await (new Contract(address, this.contractJSON.abi, this.portisL1Service?.provider)).deployed().then(async (contract) => {
             await this.setContract(contract);
             // We use a separate instance of contract to send signed transaction

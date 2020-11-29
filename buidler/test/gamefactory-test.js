@@ -78,12 +78,7 @@ describe("GameFactory", function() {
         const gameMaster = GameMasterFactory.attach(gameMasterAddress);
         await gameMaster.deployed();
         await expect(gameFactory.createGameContracts(
-            gameMasterAddress,
-            NB_MAX_PLAYERS,
-            NB_SPACES,
-            ethers.BigNumber.from(INITIAL_BALANCE),
-            spaces,
-            chances
+            gameMasterAddress
         )).to.emit(gameFactory, 'GameContractsCreated');
         const gameContractsAddress = await gameMaster.contracts();
         console.log('gameContractsAddress', gameContractsAddress);
@@ -94,6 +89,7 @@ describe("GameFactory", function() {
             gameContractsAddress,
             NB_SPACES,
             spaces,
+            NB_CHANCES,
             chances
         );
         await expect(gameFactory.createTransferManager(

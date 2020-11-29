@@ -31,7 +31,9 @@ export const USER_DATA_FIELDS = {
   username: 1,
   avatar: 2,
   position: 3,
-  hasLost: 4
+  hasLost: 4,
+  hasImmunity: 5,
+  isInQuarantine: 6
 };
 
 import GameMasterJSON from '../../../../buidler/artifacts/GameMaster.json';
@@ -73,12 +75,13 @@ export interface IPlayer {
   avatar: eAvatar;
   hasLost: boolean;
   hasWon: boolean;
+  inQuarantine: boolean;
 }
 
 export enum eSpaceType {
     GENESIS= 0,
-    QUARANTINE= 1,
-    LIQUIDATION= 2,
+    COVID= 1,
+    QUARANTINE= 2,
     CHANCE= 3,
     ASSET_CLASS_1= 4,
     ASSET_CLASS_2= 5,
@@ -442,12 +445,14 @@ export class GameMasterContractService extends AbstractContractService<IGameData
       const hasLost = playersData[USER_DATA_FIELDS.hasLost][i];
       console.log('player', username ,'hasLost', hasLost);
       const hasWon = (winner === playerAddress);
+      const inQuarantine = playersData[USER_DATA_FIELDS.isInQuarantine][i];
       const theplayer = players.get(playerAddress);
       if ((theplayer === undefined)
       || (theplayer.username !== ethers.utils.parseBytes32String(username))
       || (theplayer.avatar !== avatar)
       || (theplayer.hasLost !== hasLost)
-      || (theplayer.hasWon !== hasWon)) {
+      || (theplayer.hasWon !== hasWon)
+      || (theplayer.inQuarantine !== inQuarantine)) {
         isChanged = true;
         players.set(
           playerAddress, {
@@ -455,7 +460,8 @@ export class GameMasterContractService extends AbstractContractService<IGameData
             username: ethers.utils.parseBytes32String(username),
             avatar,
             hasLost,
-            hasWon
+            hasWon,
+            inQuarantine
           }
         );
       }

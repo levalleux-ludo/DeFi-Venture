@@ -15,18 +15,26 @@ const STATUS = {
 };
 const eSpaceType = {
     GENESIS: 0,
-    QUARANTINE: 1,
-    LIQUIDATION: 2,
+    COVID: 1,
+    QUARANTINE: 2,
     CHANCE: 3,
     ASSET_CLASS_1: 4,
     ASSET_CLASS_2: 5,
     ASSET_CLASS_3: 6,
     ASSET_CLASS_4: 7
 };
+const eOption = {
+    INVALID: 0, // 0 not allowed
+    NOTHING: 1, // 1
+    BUY_ASSET: 2, // 2
+    PAY_BILL: 4, // 4
+    CHANCE: 8, // 8
+    QUARANTINE: 16 // 16
+};
 const SPACE_TYPE = [
     'GENESIS',
+    'COVID',
     'QUARANTINE',
-    'LIQUIDATION',
     'CHANCE',
     'ASSET_CLASS_1',
     'ASSET_CLASS_2',
@@ -132,7 +140,7 @@ async function createGameMasterBase() {
     await chance.deployed();
     await chance.transferOwnership(contracts.address);
     const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
-    const randomContract = await RandomGenerator.deploy();
+    const randomContract = await RandomGenerator.deploy(NB_CHANCES);
     await randomContract.deployed();
     const PlayOptions = await ethers.getContractFactory('PlayOptions');
     const playOptions = await PlayOptions.deploy();
@@ -162,6 +170,7 @@ async function createGameMasterBase() {
     gameMaster.getNbPositions = () => playgroundContract.nbPositions();
     gameMaster.getOptionsAt = (player, position) => playOptions.getOptionsAt(player, position);
     gameMaster.getSpaceDetails = (spaceId) => playgroundContract.getSpaceDetails(spaceId);
+    gameMaster.getQuarantinePosition = async() => playgroundContract.quarantineSpaceId();
     return gameMaster;
 }
 
@@ -292,4 +301,5 @@ module.exports = {
     createGameAssets,
     createMarketplace,
     avatarCount,
+    eOption
 };

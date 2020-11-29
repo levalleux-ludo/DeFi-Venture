@@ -51,6 +51,7 @@ export interface IGameData {
   nextPlayer: string;
   currentPlayer: string;
   currentOptions: number;
+  currentCardId: number;
 }
 
 export enum eOption {
@@ -161,7 +162,9 @@ export class Game implements IGame {
     const nextPlayer = contractGameData[GAME_DATA_FIELDS.nextPlayer];
     const currentPlayer = contractGameData[GAME_DATA_FIELDS.currentPlayer];
     const currentOptions = contractGameData[GAME_DATA_FIELDS.currentOptions];
+    const currentCardId = contractGameData[GAME_DATA_FIELDS.currentCardId];
     return {
+      currentCardId,
       currentOptions,
       currentPlayer,
       gameMaster: this.address,

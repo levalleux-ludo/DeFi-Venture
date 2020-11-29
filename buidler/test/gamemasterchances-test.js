@@ -2,7 +2,7 @@ const bre = require("@nomiclabs/buidler");
 const { expect } = require("chai");
 const { BigNumber, utils } = require("ethers");
 const { NB_CHANCES, NB_SPACES } = require("../db/playground");
-const { createGameMasterFull, registerPlayers, createGameToken, createGameAssets, createMarketplace, GAME_DATA_FIELDS, USER_DATA_FIELDS, NULL_ADDRESS, STATUS, revertMessage, startGame, INITIAL_BALANCE } = require('./testsUtils');
+const { eOption, createGameMasterFull, registerPlayers, createGameToken, createGameAssets, createMarketplace, GAME_DATA_FIELDS, USER_DATA_FIELDS, NULL_ADDRESS, STATUS, revertMessage, startGame, INITIAL_BALANCE } = require('./testsUtils');
 const ethers = bre.ethers;
 
 var GameMasterFactory;
@@ -106,7 +106,7 @@ describe('Game play with chances', () => {
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 play chance #14 MOVE_N_SPACES_BCK', async() => {
@@ -136,7 +136,7 @@ describe('Game play with chances', () => {
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 play chance #4 PAY', async() => {
@@ -164,7 +164,7 @@ describe('Game play with chances', () => {
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 play chance #0 PAY_PER_ASSET with no assets', async() => {
@@ -198,7 +198,7 @@ describe('Game play with chances', () => {
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 play chance #8 RECEIVE_PER_ASSET with no assets', async() => {
@@ -232,7 +232,7 @@ describe('Game play with chances', () => {
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 play chance #15 IMMUNITY', async() => {
@@ -253,17 +253,19 @@ describe('Game play with chances', () => {
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
         await gameMaster.setCardId(6);
         await gameMaster.setOptions(8); // CHANCE
+        const quarantinePosition = await gameMaster.getQuarantinePosition()
         const playerDataBefore = await gameMaster.getPlayerData(addr2Address);
         expect(playerDataBefore[USER_DATA_FIELDS.hasImmunity]).to.equal(false);
         expect(playerDataBefore[USER_DATA_FIELDS.isInQuarantine]).to.equal(false);
-        await expect(gameMaster.connect(addr2).play(8)).to.emit(gameMaster, 'PlayPerformed');
+        await expect(gameMaster.connect(addr2).play(8)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr2Address, 8, 6, quarantinePosition);
         const playerDataAfter = await gameMaster.getPlayerData(addr2Address);
         expect(playerDataAfter[USER_DATA_FIELDS.isInQuarantine]).to.equal(true);
+        expect(playerDataAfter[USER_DATA_FIELDS.position]).to.equal(quarantinePosition);
     });
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 play chance #6 GO_TO_QUARANTINE with immunity', async() => {
@@ -275,7 +277,7 @@ describe('Game play with chances', () => {
         const playerDataBefore = await gameMaster.getPlayerData(addr1Address);
         expect(playerDataBefore[USER_DATA_FIELDS.hasImmunity]).to.equal(true);
         expect(playerDataBefore[USER_DATA_FIELDS.isInQuarantine]).to.equal(false);
-        await expect(gameMaster.connect(addr1).play(8)).to.emit(gameMaster, 'PlayPerformed');
+        await expect(gameMaster.connect(addr1).play(8)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, 8, 6, playerDataBefore[USER_DATA_FIELDS.position]);
         const playerDataAfter = await gameMaster.getPlayerData(addr1Address);
         expect(playerDataAfter[USER_DATA_FIELDS.hasImmunity]).to.equal(false);
         expect(playerDataAfter[USER_DATA_FIELDS.isInQuarantine]).to.equal(false);
@@ -288,7 +290,7 @@ describe('Game play with chances', () => {
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 play chance #6 GO_TO_QUARANTINE with no immunity anymore', async() => {
@@ -297,24 +299,26 @@ describe('Game play with chances', () => {
         await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
         await gameMaster.setCardId(6);
         await gameMaster.setOptions(8); // CHANCE
+        const quarantinePosition = await gameMaster.getQuarantinePosition()
         const playerDataBefore = await gameMaster.getPlayerData(addr1Address);
         expect(playerDataBefore[USER_DATA_FIELDS.hasImmunity]).to.equal(false);
         expect(playerDataBefore[USER_DATA_FIELDS.isInQuarantine]).to.equal(false);
-        await expect(gameMaster.connect(addr1).play(8)).to.emit(gameMaster, 'PlayPerformed');
+        await expect(gameMaster.connect(addr1).play(8)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, 8, 6, quarantinePosition);
         const playerDataAfter = await gameMaster.getPlayerData(addr1Address);
         expect(playerDataAfter[USER_DATA_FIELDS.hasImmunity]).to.equal(false);
         expect(playerDataAfter[USER_DATA_FIELDS.isInQuarantine]).to.equal(true);
+        expect(playerDataAfter[USER_DATA_FIELDS.position]).to.equal(quarantinePosition);
     });
     it('Player 2 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "current player shall be changed");
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr2).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 can not play (quarantine 1st round))', async() => {
@@ -325,19 +329,19 @@ describe('Game play with chances', () => {
     it('Player 2 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "current player shall be changed");
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr2).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
         await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 1 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "current player shall be changed");
         await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setOptions(1); // NOTHING
+        await gameMaster.setOptions(eOption.NOTHING); // NOTHING
         await expect(gameMaster.connect(addr1).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
 

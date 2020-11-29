@@ -346,20 +346,20 @@ export class PortisL1Service {
             console.log('createGameContracts');
             contractWithSigner.createGameContracts(
               gameMasterAddress,
-              NB_MAX_PLAYERS,
-              NB_SPACES,
-              ethers.BigNumber.from(INITIAL_BALANCE).toString(),
-              SPACES,
-              CHANCES
             );
             await waitCreatedGameContracts.then(async (gameContractsAddress) => {
               console.log('createOtherContracts');
-              contractWithSigner.createOtherContracts(
+              await contractWithSigner.createOtherContracts(
                 gameMasterAddress,
                 gameContractsAddress,
                 NB_SPACES,
                 SPACES,
+                NB_CHANCES,
                 CHANCES
+              );
+              await contractWithSigner.createTransferManager(
+                gameMasterAddress,
+                gameContractsAddress
               );
               await waitCreatedOtherContracts.then(async() => {
                 console.log('createGameToken');

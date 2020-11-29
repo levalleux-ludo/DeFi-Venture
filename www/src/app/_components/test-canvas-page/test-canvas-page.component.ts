@@ -69,6 +69,20 @@ export class TestCanvasPageComponent implements OnInit, AfterContentInit, AfterV
         owner: ''
       },
       {
+        type: eSpaceType.COVID,
+        assetId: 0,
+        assetPrice: 0,
+        productPrice: 0,
+        owner: ''
+      },
+      {
+        type: eSpaceType.QUARANTINE,
+        assetId: 0,
+        assetPrice: 0,
+        productPrice: 0,
+        owner: ''
+      },
+      {
         type: eSpaceType.ASSET_CLASS_1,
         assetId: 4,
         assetPrice: 50,
@@ -80,14 +94,18 @@ export class TestCanvasPageComponent implements OnInit, AfterContentInit, AfterV
     this.canvas.gameData = {
       gameMaster: '0xaaaaaaaaaaaaa',
       players: new Map([
-        ['aaaaaaa', {address: 'aaaaaaa', avatar: 1, username: 'toto', hasLost: false, hasWon: false}],
-        ['bbbbbbb', {address: 'bbbbbbb', avatar: 2, username: 'titi', hasLost: false, hasWon: false}],
-        ['ccccccc', {address: 'ccccccc', avatar: 3, username: 'tata', hasLost: false, hasWon: false}],
+        ['aaaaaaa', {address: 'aaaaaaa', avatar: 4, username: 'toto', hasLost: false, hasWon: false, inQuarantine: true}],
+        ['bbbbbbb', {address: 'bbbbbbb', avatar: 5, username: 'titi', hasLost: false, hasWon: false, inQuarantine: true}],
+        ['ccccccc', {address: 'ccccccc', avatar: 6, username: 'tata', hasLost: false, hasWon: false, inQuarantine: true}],
+        ['ddddddd', {address: 'ccccccc', avatar: 3, username: 'tete', hasLost: false, hasWon: false, inQuarantine: true}],
+        ['eeeeeee', {address: 'ccccccc', avatar: 2, username: 'tutu', hasLost: false, hasWon: false, inQuarantine: true}],
       ]),
       playersPosition: new Map([
-        ['aaaaaaa', 0],
-        ['bbbbbbb', 3],
-        ['ccccccc', 2]
+        ['aaaaaaa', 7],
+        ['bbbbbbb', 7],
+        ['ccccccc', 7],
+        ['ddddddd', 7],
+        ['eeeeeee', 7],
       ]),
       status: '',
       nextPlayer: '',

@@ -180,19 +180,19 @@ export class GameTranslatorService {
         } else {
           switch (space.type) {
             case eSpaceType.GENESIS: {
-              return `Genesis block`;
+              return `Genesis Block`;
               break;
             }
             case eSpaceType.CHANCE: {
-              return `Chance bloc`;
+              return `Chance Block`;
+              break;
+            }
+            case eSpaceType.COVID: {
+              return 'COVID Block';
               break;
             }
             case eSpaceType.QUARANTINE: {
-              return 'COVID bloc';
-              break;
-            }
-            case eSpaceType.LIQUIDATION: {
-              return 'Liquidation bloc';
+              return 'Quarantine Area';
               break;
             }
           }

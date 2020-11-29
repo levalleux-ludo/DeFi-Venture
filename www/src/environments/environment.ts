@@ -32,18 +32,18 @@ export const environment = {
   },
   contracts: {
     5: { // goerli
-      gameFactory: '0xe1b3Fa15d00d011F4572Ca92C708EB475DA6b00E',
-      greeter: '0x98897Bad75F2Fc3D172F3c52FDb87f69580f01Fa',
+      gameFactory: '',
+      greeter: '',
       gasRelay: 'tbd'
     },
     80001: { // mumbai
-      gameFactory: '0x66C703021aDEa4f908339199cDf1447899C947Ba',
-      greeter: '0x83a4BcdD650f67b7DbC92346B20e97fef660Ee20',
+      gameFactory: '0x7B69C0104B49E7aF7322F262002A0e48564D36f5',
+      greeter: '',
       gasRelay: 'tbd'
     },
     1337: { // ganache
-      gameFactory: '0x4FF43d90A4Fb973fc025E5B743D0264beb949d5B',
-      greeter: '0xe9c1fFc3E73C549c3061363ba2aa5D3522c49355',
+      gameFactory: '0x15d5BDF7112CC31F1BBcbB3AffBe0FA5786737c0',
+      greeter: '',
       gasRelay: 'tbd'
     }
   }

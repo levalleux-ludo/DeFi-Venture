@@ -119,6 +119,9 @@ export class Bot {
         // I'm the current player and I didn't play yet --> I must send the play transaction with the chosen option
         this._playStatus[game.address] = ePlayStatus.PLAYING;
         console.log('bot', this._username, `must play now`);
+        if (gameData.currentOptions & eOption.CHANCE) {
+          console.log('chance', gameData.currentCardId);
+        }
         await this.play(game, gameData.currentOptions)
           .then(() => {
             console.log(
@@ -306,7 +309,8 @@ export class Bot {
         if (player !== this._address) {
           this.check(game);
         } else {
-          console.log('do not react to my own play event');
+          //console.log('do not react to my own play event');
+          this.check(game);
         }
       },
       onRolledDices: (

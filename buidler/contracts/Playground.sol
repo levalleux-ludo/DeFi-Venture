@@ -17,6 +17,7 @@ contract Playground is IPlayground, Ownable {
 
     uint16 internal constant FIRST_ROUND = 1; // do not start at 0 because its the inital value
     uint16 internal constant NB_ROUND_IN_QUARANTINE = 1; 
+    uint8 public quarantineSpaceId;
     uint8 public nbPositions;
     mapping(address => uint8) public positions;
     bytes32 public playground;
@@ -36,6 +37,9 @@ contract Playground is IPlayground, Ownable {
             spaces[spaceId].spaceType = spaceCode & 0x7;
             spaces[spaceId].assetId = spaceCode >> 3;
             assetsPositions[spaces[spaceId].assetId] = spaceId;
+            if (spaces[spaceId].spaceType == 2) { // Quarantine
+                quarantineSpaceId = spaceId;
+            }
             if ((spaces[spaceId].spaceType >= 4) && (spaces[spaceId].spaceType < 8)) {
                 // spaceType: 4 <=> ASSET_CLASS_1, price = 50
                 // .. 
@@ -103,6 +107,7 @@ contract Playground is IPlayground, Ownable {
         uint16 roundCount = IGameScheduler(gameMaster).getRoundCount();
         if (!immunity[player]) {
             inQuarantine[player] = FIRST_ROUND + roundCount + NB_ROUND_IN_QUARANTINE;
+            _setPlayerPosition(player, quarantineSpaceId);
         } else {
             console.log('Playground: reset immunity', player);
             immunity[player] = false; // works only once

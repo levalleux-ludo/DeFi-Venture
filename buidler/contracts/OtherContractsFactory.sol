@@ -12,14 +12,14 @@ import { PlayOptions } from './PlayOptions.sol';
 import { IGameContracts } from './IGameContracts.sol';
 
 contract OtherContractsFactory is IOtherContractsFactory {
-    function create(address gameContracts, uint8 _nbPositions, bytes32 _playground, bytes32 _chances) external override 
+    function create(address gameContracts, uint8 _nbPositions, bytes32 _playground, uint8 _nbChances, bytes32 _chances) external override 
         returns (address contractsAddress) {
         IGameContracts contracts = IGameContracts(gameContracts);
         Playground playground = new Playground(_nbPositions, _playground);
         Chance chances = new Chance(_chances);
         console.log('give chances ownership to gameContracts');
         chances.transferOwnership(gameContracts);
-        RandomGenerator randomGenerator = new RandomGenerator();
+        RandomGenerator randomGenerator = new RandomGenerator(_nbChances);
         PlayOptions playOptions = new PlayOptions();
         contracts.initialize(
             address(chances),

@@ -24,11 +24,11 @@ export const config = {
   bots: {
     80001: [
       // mumbai
-      { name: 'R1D1', address: '0x01A04638569e6D0D454B35a126D7b8c7bE035629' },
-      { name: 'R2D2', address: '0xE92F42cf109a7aE902A7BD215d3fe519445e013e' },
-      { name: 'R3D3', address: '0x957B28Ead878b4e8b6A74251445891e22F7fb6b4' },
-      { name: 'R4D4', address: '0x8f32a03441bEb231Fb0AcA4bdb2fd99e33433254' },
-      { name: 'R5D5', address: '0xC136494e1Dc8A6F7c08B17ed40BF42C25B2b6576' },
+      { name: 'R1D1', address: '0x2Fef88fa213BB229506a573ca58D0D1D16bb1306'},
+      { name: 'R2D2', address: '0xbdcC0c77C8A772f679c9808396e112F1Ac290020'},
+      { name: 'R3D3', address: '0xe1b1DD04ef13CA5E60ED8ffe72BED2d1293c4858'},
+      { name: 'R4D4', address: '0xA6452f2226f23F3b7a69eE347760F871dEe78Fbc'},
+      { name: 'R5D5', address: '0xfB564B658CF8de9657371B5bD025C0CFfF4cdF2E'},
     ],
     1337: [
       // ganache
@@ -54,8 +54,8 @@ export const config = {
     },
   },
   gameFactory: {
-    80001: '0x66C703021aDEa4f908339199cDf1447899C947Ba', // mumbai
-    1337: '0x4FF43d90A4Fb973fc025E5B743D0264beb949d5B', // ganache
+    80001: '0x7B69C0104B49E7aF7322F262002A0e48564D36f5', // mumbai
+    1337: '0x15d5BDF7112CC31F1BBcbB3AffBe0FA5786737c0', // ganache
   },
   networks: {
     ganache: {

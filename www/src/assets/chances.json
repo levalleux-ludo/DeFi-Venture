@@ -63,7 +63,7 @@
             "impl": "RECEIVE_PER_ASSET"
         },
         {
-            "text": "Advance to %SPACE%. If you pass the Genesis Block, you receive Universal Basic Income",
+            "text": "Advance to %SPACE%. If you pass the Genesis Block, you receive Universal Basic Income (UBI)",
             "params": {
                 "space": 14
             },

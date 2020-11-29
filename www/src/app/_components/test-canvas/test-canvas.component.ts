@@ -60,6 +60,9 @@ export class TestCanvasComponent implements OnInit {
         image = startup.image;
       }
       this.block_imgs.push(`assets/blocks/block_${image}`);
+      if (space.type === eSpaceType.QUARANTINE) {
+        this.indexQuarantine = this.block_imgs.length - 1;
+      }
     }
     if (this.ctx) {
       this.load_images().then(() => {
@@ -71,6 +74,9 @@ export class TestCanvasComponent implements OnInit {
   @Input()
   public set gameData(gameData: IGameData) {
     if (gameData) {
+      gameData.players.forEach((aplayer, playerAddress) => {
+        this.setPlayerStatus(aplayer.avatar, aplayer.hasLost, aplayer.inQuarantine);
+      })
       gameData.playersPosition.forEach((position, player) => {
         const avatar = gameData.players.get(player).avatar as any;
         this.setPlayerPosition(avatar, position);
@@ -81,8 +87,8 @@ export class TestCanvasComponent implements OnInit {
   images = {
     CHANCE: 'chance.png',
     GENESIS: 'genesis.png',
-    QUARANTINE: 'Covid.png',
-    LIQUIDATION: 'Quarantine.png'
+    COVID: 'Covid.png',
+    QUARANTINE: 'Quarantine.png'
   };
 
   block_imgs = [];
@@ -98,8 +104,12 @@ export class TestCanvasComponent implements OnInit {
     'assets/avatars/r4d4.png',
     'assets/avatars/r5d5.png'
   ];
+  face_cover = 'assets/avatars/face_cover.png';
+  indexQuarantine = -1;
   avatarsPosition = new Map<number, number[]>();
   owners = new Map<number, number>();
+  playersInQuarantine = new Map<number, boolean>();
+  lostPlayers = new Map<number, boolean>();
   blocks_geometry = [];
   nbSteps = 0;
   private ctx: CanvasRenderingContext2D;
@@ -113,6 +123,7 @@ export class TestCanvasComponent implements OnInit {
   }
   loaded_images = [];
   loaded_avatars = [];
+  img_face_cover;
   _currentAngle = 0;
   _targetAngle = 0;
   _increment_deg = 1;
@@ -175,6 +186,16 @@ export class TestCanvasComponent implements OnInit {
     if (this.ctx) {
       this.draw(this._currentAngle);
     }
+  }
+
+  public setPlayerStatus(player: number, hasLost: boolean, inQuarantine: boolean) {
+    const avatarId = player - 1; // avatar 0 does not exist
+    this.lostPlayers.set(avatarId, hasLost);
+    // if (hasLost) {
+    //   // remove avatar from any positions
+    //   this.setPlayerPosition(avatarId, -1);
+    // }
+    this.playersInQuarantine.set(avatarId, inQuarantine);
   }
 
   public setPlayerPosition(player: number, newPosition, animate = false) {
@@ -280,6 +301,13 @@ export class TestCanvasComponent implements OnInit {
         };
       }));
     }
+    this.img_face_cover = new Image();
+    this.img_face_cover.src = this.face_cover;
+    promises.push(new Promise((resolve) => {
+      this.img_face_cover.onload = () => {
+        resolve();
+      };
+    }));
     await Promise.all(promises);
   }
 
@@ -287,6 +315,7 @@ export class TestCanvasComponent implements OnInit {
   private drawImage(index: number, posX: number, posY: number, angle_rad: number) {
     // create a new image
     const img = this.loaded_images[index];
+    const isQuarantine = (index === this.indexQuarantine);
     // declare a function to call once the image has loaded
     if (img.complete) {
       // Save the current context
@@ -304,9 +333,11 @@ export class TestCanvasComponent implements OnInit {
         const avatars = this.avatarsPosition.get(index);
         for (let i = 0; i < avatars.length; i++) {
           const avatar = avatars[i];
-          if (avatar !== this.lockedAvatar) {
+          if ((avatar !== this.lockedAvatar) && !this.lostPlayers.get(avatar)) {
             const offsetX = (15 * i - 5 * avatars.length) * this.zoom;
-            this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
+            const offsetY = this.playersInQuarantine.get(avatar) ? 55*this.zoom : 0;
+            // this.ctx.drawImage(this.loaded_avatars[avatar], offsetX + posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
+            this.drawAvatar(avatar, offsetX + posX, posY + offsetY, isQuarantine);
           }
         }
       }
@@ -324,7 +355,7 @@ export class TestCanvasComponent implements OnInit {
     }
   }
 
-  private drawAvatar(avatar: number, posX, posY) {
+  private drawAvatar(avatar: number, posX, posY, isQuarantine = false) {
     const img = this.loaded_avatars[avatar];
     if (img.complete) {
       // this.ctx.save();
@@ -333,6 +364,11 @@ export class TestCanvasComponent implements OnInit {
       // this.ctx.translate(-posX, -posY);
       this.ctx.drawImage(img, posX - 10*this.zoom, posY - 50*this.zoom, 30*this.zoom, 30*this.zoom);
       // this.ctx.restore();
+    }
+    if (isQuarantine) {
+      if (this.img_face_cover.complete) {
+        this.ctx.drawImage(this.img_face_cover, posX - 10*this.zoom, posY - 42*this.zoom, 30*this.zoom, 14*this.zoom);
+      }
     }
   }
 

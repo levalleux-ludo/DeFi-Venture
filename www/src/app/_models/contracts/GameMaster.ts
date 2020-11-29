@@ -68,12 +68,14 @@ export class GameMaster {
       const avatar = playersData[USER_DATA_FIELDS.avatar][i];
       const hasLost = playersData[USER_DATA_FIELDS.hasLost][i];
       const hasWon = (status === eGameStatus.ENDED) && (winner === playerAddress);
+      const inQuarantine = playersData[USER_DATA_FIELDS.isInQuarantine][i];
       players.set(playerAddress, {
         username: ethers.utils.parseBytes32String(username),
         address: playerAddress,
         avatar,
         hasLost,
-        hasWon
+        hasWon,
+        inQuarantine
       });
     }
     return players;
