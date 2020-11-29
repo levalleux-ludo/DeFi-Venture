@@ -24,11 +24,11 @@ export const config = {
   bots: {
     80001: [
       // mumbai
-      { name: 'R1D1', address: '0x2Fef88fa213BB229506a573ca58D0D1D16bb1306'},
-      { name: 'R2D2', address: '0xbdcC0c77C8A772f679c9808396e112F1Ac290020'},
-      { name: 'R3D3', address: '0xe1b1DD04ef13CA5E60ED8ffe72BED2d1293c4858'},
-      { name: 'R4D4', address: '0xA6452f2226f23F3b7a69eE347760F871dEe78Fbc'},
-      { name: 'R5D5', address: '0xfB564B658CF8de9657371B5bD025C0CFfF4cdF2E'},
+      { name: 'R1D1', address: '0x2Fef88fa213BB229506a573ca58D0D1D16bb1306' },
+      { name: 'R2D2', address: '0xbdcC0c77C8A772f679c9808396e112F1Ac290020' },
+      { name: 'R3D3', address: '0xe1b1DD04ef13CA5E60ED8ffe72BED2d1293c4858' },
+      { name: 'R4D4', address: '0xA6452f2226f23F3b7a69eE347760F871dEe78Fbc' },
+      { name: 'R5D5', address: '0xfB564B658CF8de9657371B5bD025C0CFfF4cdF2E' },
     ],
     1337: [
       // ganache
