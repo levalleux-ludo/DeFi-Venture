@@ -7,6 +7,7 @@ interface IGameScheduler {
     event PlayerLost(address indexed player);
     event PlayerWin(address indexed player);
     function getStatus() view external returns (uint8);
+    function getRoundCount() view external returns (uint16);
     // function getNbPlayers() view external returns (uint8);
     // function getNextPlayer() view external returns (address);
     function isPlayerRegistered(address player) view external returns (bool);

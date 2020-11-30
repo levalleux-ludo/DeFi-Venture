@@ -1,8 +1,8 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 const bre = require("@nomiclabs/buidler");
-const playground = require("../db/playground");
-const { createGameMasterFull, STATUS, PLAYGROUND, NB_POSITIONS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
+const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
+const { createGameMasterFull, STATUS, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
 const ethers = bre.ethers;
 
 async function createGameMaster() {
@@ -29,33 +29,37 @@ describe("GameMaster", function() {
         const allowance = await token.allowance(addr1Address, gameMaster.transferManagerAddress());
         expect(allowance.toString()).to.equal('0');
         expect(await gameMaster.nbPlayers()).to.equal(0);
-        await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.be.revertedWith(revertMessage("SENDER_MUST_APPROVE_GAME_MASTER"));
+        await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.be.revertedWith(revertMessage("PLAYER_MUST_APPROVE_TRANSFER_MANAGER_FOR_TOKEN"));
     });
     it("Should allow to register", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const { gameMaster, token } = await createGameMaster();
+        const { gameMaster, token, assets } = await createGameMaster();
         const addr1Address = await addr1.getAddress();
         await token.connect(addr1).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr1).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await expect(gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr1Address, 1);
         expect(await gameMaster.nbPlayers()).to.equal(1);
         expect(await gameMaster.nextPlayer()).to.equal(addr1Address);
         const addr2Address = await addr2.getAddress();
         await token.connect(addr2).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr2).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await expect(gameMaster.connect(addr2).register(utils.formatBytes32String('titi'), 2)).to.emit(gameMaster, 'PlayerRegistered').withArgs(addr2Address, 2);
         expect(await gameMaster.nbPlayers()).to.equal(2);
     });
     it("Should not allow to register same player twice", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const { gameMaster, token } = await createGameMaster();
+        const { gameMaster, token, assets } = await createGameMaster();
         await token.connect(addr1).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr1).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1);
         expect(await gameMaster.nbPlayers()).to.equal(1);
         await gameMaster.connect(addr1).register(utils.formatBytes32String('titi'), 2).then(shouldFail.then).catch(shouldFail.catch);
     });
     it("Should not allow to start game if less than 2 players", async function() {
         const [owner, addr1, addr2] = await ethers.getSigners();
-        const { gameMaster, token } = await createGameMaster();
+        const { gameMaster, token, assets } = await createGameMaster();
         await token.connect(addr1).approveMax(gameMaster.transferManagerAddress());
+        await assets.connect(addr1).setApprovalForAll(gameMaster.transferManagerAddress(), true);
         await gameMaster.connect(owner).start().then(shouldFail.then).catch(shouldFail.catch);
         await gameMaster.connect(addr1).register(utils.formatBytes32String('toto'), 1);
         await expect(gameMaster.connect(owner).start()).to.be.revertedWith(revertMessage("NOT_ENOUGH_PLAYERS"));
@@ -191,14 +195,14 @@ describe('GameMaster play phases', () => {
         checkDice(dices[0]);
         checkDice(dices[1]);
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "next player shall be changed");
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
         expect(await gameMaster.nextPlayer()).to.equal(addr1Address, "next player shall be changed");
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
     });
@@ -211,14 +215,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -232,14 +236,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -253,14 +257,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -274,14 +278,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -295,14 +299,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -316,14 +320,14 @@ describe('GameMaster play phases', () => {
         dices = await playTurn(gameMaster, addr1);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position1 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position1 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr1Address)).to.equal(newPosition);
         position1 = newPosition;
         console.log('Player1 moves at', position1);
         dices = await playTurn(gameMaster, addr2);
         checkDice(dices[0]);
         checkDice(dices[1]);
-        newPosition = (position2 + dices[0] + dices[1]) % NB_POSITIONS;
+        newPosition = (position2 + dices[0] + dices[1]) % NB_SPACES;
         expect(await gameMaster.getPositionOf(addr2Address)).to.equal(newPosition);
         position2 = newPosition;
         console.log('Player2 moves at', position2);
@@ -347,7 +351,7 @@ describe('GameMaster Playground', () => {
     });
     it('getPlayground', async() => {
         const playground = await gameMaster.getPlayground();
-        expect(playground).to.equal(PLAYGROUND, 'Playground is wrong');
+        expect(playground).to.equal(SPACES, 'Playground is wrong');
     });
     it('check Genesis code', async() => {
         const playground = await gameMaster.getPlayground();
@@ -406,7 +410,7 @@ describe('Game play options', () => {
     it('play at GENESIS', async() => {
         await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.currentPlayer()).to.equal(addr1Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr1Address, 0); // GENESIS
+        await gameMaster.setPlayerPosition(addr1Address, 0, false); // GENESIS
         await gameMaster.setOptions(1);
         await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr1).play(2)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -421,7 +425,7 @@ describe('Game play options', () => {
     it('play NOTHING at ASSET 0', async() => {
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.currentPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr2Address, 1); // ASSET id 0
+        await gameMaster.setPlayerPosition(addr2Address, 1, false); // ASSET id 0
         await gameMaster.setOptions(3);
         await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr2).play(4)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -435,7 +439,7 @@ describe('Game play options', () => {
     it('play BUY_ASSET at ASSET 1', async() => {
         await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.currentPlayer()).to.equal(addr1Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr1Address, 3); // ASSET id 1
+        await gameMaster.setPlayerPosition(addr1Address, 3, false); // ASSET id 1
         await gameMaster.setOptions(3);
         await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr1).play(4)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -449,7 +453,7 @@ describe('Game play options', () => {
     it('play CHANCE', async() => {
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.currentPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr2Address, 2); // CHANCE
+        await gameMaster.setPlayerPosition(addr2Address, 2, false); // CHANCE
         await gameMaster.setOptions(8);
         await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr2).play(2)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));

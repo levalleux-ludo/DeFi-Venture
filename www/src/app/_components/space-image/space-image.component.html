@@ -1,3 +1,5 @@
 <img src='{{image}}' height="280">
-<div *ngIf='owner != undefined'>Owner: {{owner}}</div>
-<div *ngIf='ownerAvatar != undefined'><img src='{{avatars[ownerAvatar]}}' height="36"></div>
+<div class="owner">
+    <div *ngIf='owner != undefined'>Owner: {{owner}}</div>
+    <div *ngIf='ownerAvatar != undefined'><img src='{{avatars[ownerAvatar]}}' height="36"></div>
+</div>

@@ -18,10 +18,14 @@ interface IGameMaster is IGameScheduler {
     // function getPositionOf(address player) external view returns (uint8);
     // function getChances() external view returns (bytes32);
     // function getPlayground() external view returns (bytes32);
-    function getSpaceDetails(uint8 spaceId) external view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice);
-    function getChanceDetails(uint8 chanceId) external view returns (uint8 chanceType, uint8 chanceParam);
-    function getOptionsAt(address player, uint8 position) external view returns (uint8 options);
+    // function getSpaceDetails(uint8 spaceId) external view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice);
+    // function getChanceDetails(uint8 chanceId) external view returns (uint8 chanceType, uint8 chanceParam);
+    // function getOptionsAt(address player, uint8 position) external view returns (uint8 options);
     function rollDices() external;
     function play(uint8 option) external;
+    // function goto(address player, uint8 position) external;
+    // function move(address player, int8 offset) external;
+    // function giveImmunity(address player) external;
+    // function gotoQuarantine(address player) external;
     // function setContracts(address gameContractsAddr) external;
 }

@@ -8,7 +8,7 @@ import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import greeterABI from '../../../../buidler/artifacts/Greeter.json';
 import gameFactoryABI from '../../../../buidler/artifacts/GameFactory.json';
 // import { Contract } from 'web3-eth-contract';
-import { getSpaces, getChances } from '../../../../buidler/db/playground';
+import { SPACES, NB_SPACES, CHANCES, NB_CHANCES } from '../../../../buidler/db/playground';
 
 // import Portis from '@portis/web3';
 import {Portis} from './portis-hack/Portis';
@@ -26,8 +26,7 @@ import { ethers, BigNumber } from 'ethers';
 const PORTIS_API_KEY = '9e5dce20-042d-456f-bfca-4850e23555c8';
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 300;
-const NB_POSITIONS = 24;
-const NB_CHANCES = 32;
+const UBI_AMOUNT = 100;
 
 @Injectable({
   providedIn: 'root'
@@ -294,10 +293,10 @@ export class PortisL1Service {
     return new Promise((resolve, reject) => {
       // this.gameFactory.methods.create(
       //   NB_MAX_PLAYERS,
-      //   NB_POSITIONS,
+      //   NB_SPACES,
       //   ethers.BigNumber.from(INITIAL_BALANCE).toString(),
-      //   getSpaces(NB_POSITIONS),
-      //   getChances(NB_CHANCES, NB_POSITIONS)
+      //   SPACES,
+      //   CHANCES
       // ).send({from: this._accounts[0]})
       // .on('transactionHash', function(hash){
 
@@ -327,37 +326,74 @@ export class PortisL1Service {
           resolve2(gameContractsAddress);
         });
       });
+      const waitCreatedOtherContracts = new Promise<void>((resolve2, reject2) => {
+        contractWithSigner.once('GameCreated', (gameMaster, index) => {
+            console.log('other contracts created:');
+            resolve2();
+        });
+    });
+      console.log('createGameMaster');
       contractWithSigner.createGameMaster(
         NB_MAX_PLAYERS,
-        NB_POSITIONS,
+        NB_SPACES,
         ethers.BigNumber.from(INITIAL_BALANCE).toString(),
-        getSpaces(NB_POSITIONS),
-        getChances(NB_CHANCES, NB_POSITIONS)
+        SPACES,
+        CHANCES
       ).then((response) => {
         this.provider.pollingInterval = 1000;
         (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = 1000;
         response.wait().then(() => {
           waitCreatedGameMaster.then(async (gameMasterAddress) => {
+            console.log('createGameContracts');
             contractWithSigner.createGameContracts(
               gameMasterAddress,
-              NB_MAX_PLAYERS,
-              NB_POSITIONS,
-              ethers.BigNumber.from(INITIAL_BALANCE).toString(),
-              getSpaces(NB_POSITIONS),
-              getChances(NB_CHANCES, NB_POSITIONS)
             );
             await waitCreatedGameContracts.then(async (gameContractsAddress) => {
-              await contractWithSigner.createGameToken(gameMasterAddress);
-              await contractWithSigner.createGameAssets(gameMasterAddress);
-              await contractWithSigner.createMarketplace(gameMasterAddress);
-              this.provider.pollingInterval = pollingInterval1;
-              (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
-              resolve();
+              console.log('createOtherContracts');
+              await contractWithSigner.createOtherContracts(
+                gameMasterAddress,
+                gameContractsAddress,
+                NB_SPACES,
+                SPACES,
+                NB_CHANCES,
+                CHANCES
+              ).catch(e => {
+                console.error(e);
+                throw e;
+              });
+              console.log('createTransferManager');
+              await contractWithSigner.createTransferManager(
+                gameMasterAddress,
+                gameContractsAddress,
+                ethers.BigNumber.from(UBI_AMOUNT).toString(),
+              ).catch(e => {
+                console.error(e);
+                throw e;
+              });
+              await waitCreatedOtherContracts.then(async() => {
+                console.log('createGameToken');
+                await contractWithSigner.createGameToken(gameMasterAddress);
+                console.log('createGameAssets');
+                await contractWithSigner.createGameAssets(gameMasterAddress);
+                console.log('createMarketplace');
+                await contractWithSigner.createMarketplace(gameMasterAddress);
+                this.provider.pollingInterval = pollingInterval1;
+                (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+                resolve();
+              }).catch(e => {
+                this.provider.pollingInterval = pollingInterval1;
+                (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+                reject(e);
+              });
             }).catch(e => {
               this.provider.pollingInterval = pollingInterval1;
               (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
               reject(e);
             });
+          }).catch(e => {
+            this.provider.pollingInterval = pollingInterval1;
+            (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+            reject(e);
           });
         }).catch(e => {
           this.provider.pollingInterval = pollingInterval1;

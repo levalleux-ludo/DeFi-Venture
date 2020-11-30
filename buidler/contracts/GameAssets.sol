@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0 <0.7.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/EnumerableSet.sol";
 import { IGameAssets } from "./IGameAssets.sol";
@@ -38,5 +38,11 @@ contract GameAssets is ERC721, Ownable, IGameAssets {
         }
         assert(totalSupply() == 0);
     }
+
+    function burn(uint256 tokenId) external override {
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "GameAssets: caller is not owner nor approved");
+        _burn((tokenId));
+    }
+
 
 }

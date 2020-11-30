@@ -5,6 +5,7 @@ import {
   IGame,
   IPlayer,
   IGameData,
+  eOption,
 } from './../game/game';
 import { AppDiscord, shortAddress } from './discord';
 export class GameObserver {
@@ -157,7 +158,8 @@ export class GameObserver {
   ) => {
     this.refreshData().then(gameData => {
       this.displayRolledDices(player, dice1, dice2, newPosition);
-      if (this.isChance(newPosition)) {
+      // tslint:disable-next-line: no-bitwise
+      if (options & eOption.CHANCE) {
         this.displayChance(player, cardId);
       }
       this.displayOptions(player, options);

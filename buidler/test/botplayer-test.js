@@ -1,14 +1,6 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const { getSpaces, getChances } = require("../db/playground");
 const { createGameMasterFull } = require('./testsUtils');
-
-const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const PLAYGROUND = '0x0000000000000000867d776f030203645f554c01463d03342e261e170f030600';
-const NB_CHANCES = 32;
-const CHANCES = '0x1305169c190e120508051c05201e1034543a0520055c1e1118b4181c052643bc';
 
 const OWNABLE_ERROR = 'Ownable: caller is not the owner';
 
@@ -34,13 +26,13 @@ function revertMessage(error) {
     return 'VM Exception while processing transaction: revert ' + error;
 }
 
-async function playTurn(botPlayer, gameMaster, signer) {
+async function playTurn(botPlayer, gameMaster, signer, overrideOptions = 255, option = 1) {
     return new Promise(async(resolve) => {
         let filter = gameMaster.filters.RolledDices(botPlayer.address);
         gameMaster.once(filter, async(player, dice1, dice2, cardId, newPosition, options) => {
             console.log('RolledDices', player, dice1, dice2, cardId, newPosition, options);
-            await gameMaster.setOptions(255);
-            await botPlayer.connect(signer).play(gameMaster.address, 1);
+            await gameMaster.setOptions(overrideOptions);
+            await botPlayer.connect(signer).play(gameMaster.address, option);
             resolve([dice1, dice2]);
         });
         await botPlayer.connect(signer).rollDices(gameMaster.address);
@@ -120,6 +112,24 @@ describe('BotPlayer', () => {
         expect(await gameMaster1.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
         await playTurn(botPlayer1, gameMaster2, owner);
         expect(await gameMaster2.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
+    })
+    it('Bot2 plays on both games', async() => {
+        await playTurn(botPlayer2, gameMaster1, owner);
+        expect(await gameMaster1.nextPlayer()).to.equal(botPlayer1.address, "next player shall be changed");
+        await playTurn(botPlayer2, gameMaster2, owner);
+        expect(await gameMaster2.nextPlayer()).to.equal(botPlayer1.address, "next player shall be changed");
+    })
+    it('Bot1 plays COVID on both games', async() => {
+        await playTurn(botPlayer1, gameMaster1, owner, 16, 16);
+        expect(await gameMaster1.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
+        await playTurn(botPlayer1, gameMaster2, owner, 16, 16);
+        expect(await gameMaster2.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
+    })
+    it('Bot2 plays on both games', async() => {
+        await playTurn(botPlayer2, gameMaster1, owner);
+        expect(await gameMaster1.nextPlayer()).to.equal(botPlayer2.address, "next player shall NOT be changed");
+        await playTurn(botPlayer2, gameMaster2, owner);
+        expect(await gameMaster2.nextPlayer()).to.equal(botPlayer2.address, "next player shall NOT be changed");
     })
     it('Bot2 plays on both games', async() => {
         await playTurn(botPlayer2, gameMaster1, owner);

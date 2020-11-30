@@ -12,7 +12,7 @@
   </button>
     <mat-menu #menuEth="matMenu" xPosition="before">
         <div class="mat-toolbar">
-            <div>{{(network?.chainId == 80001) ? 'MATIC' : 'ETH'}} balance: {{balanceEth}}</div>
+            <div>{{network?.symbol}} balance: {{balanceEth}}</div>
             <div>USDc balance: {{balanceUSDc}}</div>
             <button mat-raised-button (click)="logout()" [disabled]="network == undefined">Logout</button>
             <!-- <button mat-menu-item>Expand</button>

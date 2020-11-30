@@ -16,9 +16,11 @@ export enum eChanceImpl {
 export interface IChance {
   text: string;
   impl: string;
-  amount?: number;
-  nb?: number;
-  space?: number;
+  params: {
+    amount?: number;
+    nb?: number;
+    space?: number;
+  };
 }
 @Injectable({
   providedIn: 'root'
@@ -39,17 +41,17 @@ export class ChancesLibraryService {
     const chance = this.getChanceFromId(chanceId);
     if (chance) {
       let text = chance.text;
-      if (chance.amount !== undefined) {
-        text = text.replace('%AMOUNT%', chance.amount.toString());
+      if (chance.params.amount !== undefined) {
+        text = text.replace('%AMOUNT%', chance.params.amount.toString());
       }
-      if (chance.nb !== undefined) {
-        text = text.replace('%NB%', chance.nb.toString());
+      if (chance.params.nb !== undefined) {
+        text = text.replace('%NB%', chance.params.nb.toString());
       }
-      if (chance.space !== undefined) {
-        text = text.replace('%SPACE%', chance.space.toString());
+      if (chance.params.space !== undefined) {
+        text = text.replace('%SPACE%', chance.params.space.toString());
       }
       return text;
     }
-    return 'unknown chance';
+    return `unknown chance #${chanceId}`;
   }
 }

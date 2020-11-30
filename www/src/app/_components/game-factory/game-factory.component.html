@@ -3,8 +3,8 @@
 </p>
 <div *ngIf="balanceEth <= 0.02">
     <h2>Warning !</h2>
-    <p>Your account balance is too low. You need to purchase native tokens ({{(network?.chainId == 80001) ? 'MATIC' : 'ETH'}})</p>
-    <button mat-raised-button (click)="callFaucet()">Get Tokens</button>
+    <p>Your account balance is too low. You need to purchase native tokens ({{network?.symbol}})</p>
+    <button *ngIf="(network?.chainId == 80001)" mat-raised-button (click)="callFaucet()">Get Tokens</button>
 </div>
 <div *ngIf="(gameFactory == undefined)">
     <h1>Connecting blockchain ...</h1>

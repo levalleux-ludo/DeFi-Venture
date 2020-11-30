@@ -41,6 +41,7 @@ export class SpaceImageComponent implements OnInit {
   ownerAvatar: number;
 
   avatars = [
+    undefined,
     'assets/avatars/nobody.png',
     'assets/avatars/camel.png',
     'assets/avatars/crypto-chip.png',
@@ -76,25 +77,25 @@ export class SpaceImageComponent implements OnInit {
   }
 
   async refreshSpaceDetails() {
-    if (this._playground && this._spaceId) {
+    if (this._playground && (this._spaceId !== undefined)) {
       const space = this._playground[this._spaceId];
       // TODO: get options from contract return (RolledDices event)
       switch (space.type) {
         case eSpaceType.GENESIS: {
           this.name = 'Genesis Block';
-          this.detail = 'Each time you land or pass this block, you earn 200 LOUIS';
+          this.detail = 'Each time you land or pass this block, you receive the Universal Basic Income (UBI)';
           this.image = 'assets/blocks/block_genesis.png';
           // this.options = [eOption.NOTHING];
           break;
         }
-        case eSpaceType.LIQUIDATION: {
-          this.name = 'Liquidation Block';
-          this.detail = "When you're running out of cash, you'll come here to liquidate your assets and miss your next turn.";
+        case eSpaceType.QUARANTINE: {
+          this.name = 'Quarantine Block';
+          this.detail = "Please wear a face covering in this area";
           this.image = 'assets/blocks/block_Quarantine.png'; // TODO: replace with Liquidation block
           // this.options = [eOption.NOTHING];
           break;
         }
-        case eSpaceType.QUARANTINE: {
+        case eSpaceType.COVID: {
           this.name = 'COVID';
           this.detail = "You've caught COVID-19. You need to lock on quarantine and you miss you next turn";
           this.image = 'assets/blocks/block_Covid.png';

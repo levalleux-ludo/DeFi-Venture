@@ -1,15 +1,12 @@
 const bre = require("@nomiclabs/buidler");
 const { BigNumber } = require("ethers");
-const { getSpaces, getChances } = require("../db/playground");
+const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
 const { expect } = require("chai");
-const playground = require("../db/playground");
 const ethers = bre.ethers;
 const utils = ethers.utils;
 const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const PLAYGROUND = '0x0000000000000000867d776f030203645f554c01463d03342e261e170f030600';
-const NB_CHANCES = 32;
+const INITIAL_BALANCE = 300;
+const UBI_AMOUNT = 100;
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 const STATUS = {
     created: 0,
@@ -17,6 +14,72 @@ const STATUS = {
     frozen: 2,
     ended: 3
 };
+const eSpaceType = {
+    GENESIS: 0,
+    COVID: 1,
+    QUARANTINE: 2,
+    CHANCE: 3,
+    ASSET_CLASS_1: 4,
+    ASSET_CLASS_2: 5,
+    ASSET_CLASS_3: 6,
+    ASSET_CLASS_4: 7
+};
+const eOption = {
+    INVALID: 0, // 0 not allowed
+    NOTHING: 1, // 1
+    BUY_ASSET: 2, // 2
+    PAY_BILL: 4, // 4
+    CHANCE: 8, // 8
+    QUARANTINE: 16 // 16
+};
+const SPACE_TYPE = [
+    'GENESIS',
+    'COVID',
+    'QUARANTINE',
+    'CHANCE',
+    'ASSET_CLASS_1',
+    'ASSET_CLASS_2',
+    'ASSET_CLASS_3',
+    'ASSET_CLASS_4'
+];
+
+let USER_DATA_FIELDS = {}; {
+    let index = 0;
+    let keys = [
+        'address',
+        'username',
+        'avatar',
+        'position',
+        'hasLost',
+        'hasImmunity',
+        'isInQuarantine'
+    ];
+    for (let key of keys) {
+        USER_DATA_FIELDS[key] = index++;
+    }
+}
+
+let GAME_DATA_FIELDS = {}; {
+    let index = 0;
+    let keys = [
+        'status',
+        'nbPlayers',
+        'nbPositions',
+        'token',
+        'assets',
+        'marketplace',
+        'nextPlayer',
+        'currentPlayer',
+        'currentOptions',
+        'currentCardId'
+    ];
+    for (let key of keys) {
+        GAME_DATA_FIELDS[key] = index++;
+    }
+};
+
+
+
 // generic handlers to test exceptions
 const shouldFail = {
     then: () => {
@@ -27,28 +90,6 @@ const shouldFail = {
     }
 };
 var avatarCount = 1;
-
-module.exports = {
-    createGameMasterFull,
-    STATUS,
-    PLAYGROUND,
-    NB_MAX_PLAYERS,
-    INITIAL_BALANCE,
-    NB_POSITIONS,
-    NB_CHANCES,
-    NULL_ADDRESS,
-    shouldFail,
-    revertMessage,
-    registerPlayers,
-    startGame,
-    checkDice,
-    extractSpaceCode,
-    playTurn,
-    createGameToken,
-    createGameAssets,
-    createMarketplace,
-    avatarCount
-};
 
 function revertMessage(error) {
     return 'VM Exception while processing transaction: revert ' + error;
@@ -83,46 +124,57 @@ async function createGameMasterFull() {
     gameMaster.assetsAddress = () => gameContracts.getAssets();
     gameMaster.marketplaceAddress = () => gameContracts.getMarketplace();
     gameMaster.transferManagerAddress = () => gameContracts.getTransferManager();
+    gameMaster.chancesAddress = () => gameContracts.getChances();
     return { gameMaster, token, assets, marketplace };
 }
 
 async function createGameMasterBase() {
-    const Contracts = await ethers.getContractFactory("GameContracts");
-    const contracts = await Contracts.deploy();
-    await contracts.deployed();
-    const Playground = await ethers.getContractFactory("Playground");
-    const playgroundContract = await Playground.deploy(NB_POSITIONS, PLAYGROUND);
-    await playgroundContract.deployed();
-    await contracts.setPlayground(playgroundContract.address)
-    const Chance = await ethers.getContractFactory("Chance");
-    const chance = await Chance.deploy(getChances(NB_CHANCES, NB_POSITIONS));
-    await chance.deployed();
-    await chance.transferOwnership(contracts.address);
-    await contracts.setChances(chance.address)
-    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
-    const randomContract = await RandomGenerator.deploy();
-    await randomContract.deployed();
-    await contracts.setRandomGenerator(randomContract.address)
-    const PlayOptions = await ethers.getContractFactory('PlayOptions');
-    const playOptions = await PlayOptions.deploy();
-    await playOptions.deployed();
-    await contracts.setPlayOptions(playOptions.address)
-    const TransferManager = await ethers.getContractFactory('TransferManager');
-    const transferManager = await TransferManager.deploy();
-    await transferManager.deployed();
-    await contracts.setTransferManager(transferManager.address)
-
     const GameMaster = await ethers.getContractFactory("GameMasterForTest");
     const gameMaster = await GameMaster.deploy(
         NB_MAX_PLAYERS,
         ethers.BigNumber.from(INITIAL_BALANCE),
     );
     await gameMaster.deployed();
+    const Contracts = await ethers.getContractFactory("GameContracts");
+    const contracts = await Contracts.deploy(gameMaster.address);
+    await contracts.deployed();
+    const Playground = await ethers.getContractFactory("Playground");
+    const playgroundContract = await Playground.deploy(NB_SPACES, SPACES);
+    await playgroundContract.deployed();
+    await playgroundContract.transferOwnership(contracts.address);
+    const Chance = await ethers.getContractFactory("Chance");
+    console.log('create Chances contract with', CHANCES);
+    const chance = await Chance.deploy(CHANCES);
+    await chance.deployed();
+    await chance.transferOwnership(contracts.address);
+    const RandomGenerator = await ethers.getContractFactory('RandomGenerator');
+    const randomContract = await RandomGenerator.deploy(NB_CHANCES);
+    await randomContract.deployed();
+    const PlayOptions = await ethers.getContractFactory('PlayOptions');
+    const playOptions = await PlayOptions.deploy();
+    await playOptions.deployed();
+    // await playOptions.transferOwnership(contracts.address);
+    const TransferManager = await ethers.getContractFactory('TransferManager');
+    const transferManager = await TransferManager.deploy(UBI_AMOUNT);
+    await transferManager.deployed();
+    await transferManager.transferOwnership(contracts.address);
+
+    await contracts.initialize(
+        chance.address,
+        playgroundContract.address,
+        playOptions.address,
+        randomContract.address
+    );
+    await contracts.setTransferManager(transferManager.address);
+
     await gameMaster.setContracts(contracts.address);
-    await playgroundContract.transferOwnership(gameMaster.address);
+    // await playgroundContract.transferOwnership(gameMaster.address);
     gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
     gameMaster.getPlayground = () => playgroundContract.playground();
     gameMaster.getNbPositions = () => playgroundContract.nbPositions();
+    gameMaster.getOptionsAt = (player, position) => playOptions.getOptionsAt(player, position);
+    gameMaster.getSpaceDetails = (spaceId) => playgroundContract.getSpaceDetails(spaceId);
+    gameMaster.getQuarantinePosition = async() => playgroundContract.quarantineSpaceId();
     return gameMaster;
 }
 
@@ -161,8 +213,11 @@ async function registerPlayers(gameMaster, players) {
                 await tokenContract.connect(player).approveMax(marketplaceAddr);
             }
         }
-        if (assetsContract && marketplaceAddr) {
-            await assetsContract.connect(player).setApprovalForAll(marketplaceAddr, true);
+        if (assetsContract) {
+            await assetsContract.connect(player).setApprovalForAll(transferManager.address, true);
+            if (marketplaceAddr) {
+                await assetsContract.connect(player).setApprovalForAll(marketplaceAddr, true);
+            }
         }
         await gameMaster.connect(player).register(utils.formatBytes32String('user' + avatarCount), avatarCount++);
     }
@@ -185,6 +240,14 @@ async function playTurn(gameMaster, signer) {
         await gameMaster.connect(signer).rollDices();
     });
 }
+
+async function playAndGoTo(gameMaster, player, newPosition, giveUBI = false) {
+    const playerAddress = await player.getAddress();
+    await gameMaster.setPlayerPosition(playerAddress, giveUBI ? NB_SPACES - 1 : 0, false);
+    await expect(gameMaster.connect(player).rollDices()).to.emit(gameMaster, 'RolledDices');
+    await gameMaster.setPlayerPosition(playerAddress, newPosition, false);
+}
+
 
 function checkDice(dice) {
     expect(dice).to.be.lessThan(7, 'dices cannot exceed 6');
@@ -213,3 +276,44 @@ async function createMarketplace(MarketplaceFactory) {
     await marketplace.deployed();
     return marketplace;
 }
+
+function decodePlayground(playground, nbSpaces) {
+    console.log('decodePlayground');
+    for (let i = 0; i < nbSpaces; i++) {
+        const spaceCodeStr = '0x' + extractSpaceCode(playground, i);
+        const spaceCode = parseInt(spaceCodeStr, 16);
+        const type = spaceCode & 0x7;
+        const isAsset = ((type >= eSpaceType.ASSET_CLASS_1) && (type <= eSpaceType.ASSET_CLASS_4));
+        const assetId = spaceCode >> 3;
+        const assetClass = isAsset ? type - eSpaceType.ASSET_CLASS_1 + 1 : 0;
+        const assetPrice = isAsset ? 50 * assetClass : 0;
+        const productPrice = isAsset ? 15 * assetClass : 0;
+        console.log(`#${i} ${SPACE_TYPE[type]} ${isAsset ? 'asset #' + assetId + ', price:' + assetPrice + ',bill:' + productPrice : ''}`);
+    }
+}
+
+decodePlayground(SPACES, NB_SPACES);
+
+module.exports = {
+    createGameMasterFull,
+    STATUS,
+    NB_MAX_PLAYERS,
+    INITIAL_BALANCE,
+    UBI_AMOUNT,
+    NULL_ADDRESS,
+    USER_DATA_FIELDS,
+    GAME_DATA_FIELDS,
+    shouldFail,
+    revertMessage,
+    registerPlayers,
+    startGame,
+    checkDice,
+    extractSpaceCode,
+    playTurn,
+    playAndGoTo,
+    createGameToken,
+    createGameAssets,
+    createMarketplace,
+    avatarCount,
+    eOption
+};

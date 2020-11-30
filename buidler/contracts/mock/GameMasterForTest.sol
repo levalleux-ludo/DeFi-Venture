@@ -16,9 +16,9 @@ contract GameMasterForTest is GameMaster {
         currentOptions = options;
     }
 
-    function setPlayerPosition(address player, uint8 newPosition) public onlyOwner {
+    function setPlayerPosition(address player, uint8 newPosition, bool giveUBI) public onlyOwner {
         address playgroundAddress = IGameContracts(contracts).getPlayground();
-        IPlayground(playgroundAddress).setPlayerPosition(player, newPosition);
+        IPlayground(playgroundAddress).setPlayerPosition(player, newPosition, giveUBI);
     }
 
     function setCardId(uint8 cardId) public onlyOwner {
@@ -29,5 +29,31 @@ contract GameMasterForTest is GameMaster {
         initialAmount = _initialAmount;
     }
 
+    function getPlayerData(address player) external view returns (
+        address _address,
+        bytes32 _username,
+        uint8 _avatar,
+        uint8 _position,
+        bool _hasLost,
+        bool _hasImmunity,
+        bool _isInQuarantine
+    ) {
+        _address = player;
+        _username = usernames[player];
+        _avatar = players[player];
+        _position = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(player);
+        _hasLost = lostPlayers[player];
+        _hasImmunity = IPlayground(IGameContracts(contracts).getPlayground()).hasImmunity(player);
+        _isInQuarantine = IPlayground(IGameContracts(contracts).getPlayground()).isInQuarantine(player, roundCount);
+    }
+
+    function getPlayersPositions(address[] calldata players) external view returns (
+        uint8[] memory _positions
+    ) {
+        _positions = new uint8[](players.length);
+        for (uint i = 0; i < players.length; i++) {
+            _positions[i] = IPlayground(IGameContracts(contracts).getPlayground()).getPlayerPosition(players[i]);
+        }
+    }
 
 }

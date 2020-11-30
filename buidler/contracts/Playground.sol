@@ -1,15 +1,33 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity >=0.6.0 <0.7.0;
 
-import { IPlayground } from  "./IPlayground.sol";
-
+import "@nomiclabs/buidler/console.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IPlayground } from  "./IPlayground.sol";
+import { IGameScheduler } from './IGameScheduler.sol';
+import { Initialized } from './Initialized.sol';
+import { ITransferManager } from './ITransferManager.sol';
 
-contract Playground is IPlayground, Ownable {
+contract Playground is IPlayground, Ownable, Initialized {
 
+    struct Space {
+        uint8 spaceType;
+        uint8 assetId;
+        uint256 assetPrice;
+        uint256 productPrice;
+    }
+
+    uint16 internal constant FIRST_ROUND = 1; // do not start at 0 because its the inital value
+    uint16 internal constant NB_ROUND_IN_QUARANTINE = 1; 
+    uint8 public quarantineSpaceId;
     uint8 public nbPositions;
+    address private transferManager;
     mapping(address => uint8) public positions;
     bytes32 public playground;
+    mapping(uint8 => Space) spaces;
+    mapping(uint8 => uint8) assetsPositions;
+    mapping(address => bool) immunity;
+    mapping(address => uint16) inQuarantine;
 
     constructor(
         uint8 _nbPositions,
@@ -17,22 +35,38 @@ contract Playground is IPlayground, Ownable {
      ) public Ownable() {
         nbPositions = _nbPositions;
         playground = _playground;
+        for (uint8 spaceId = 0; spaceId < nbPositions; spaceId++) {
+            uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
+            spaces[spaceId].spaceType = spaceCode & 0x7;
+            spaces[spaceId].assetId = spaceCode >> 3;
+            assetsPositions[spaces[spaceId].assetId] = spaceId;
+            if (spaces[spaceId].spaceType == 2) { // Quarantine
+                quarantineSpaceId = spaceId;
+            }
+            if ((spaces[spaceId].spaceType >= 4) && (spaces[spaceId].spaceType < 8)) {
+                // spaceType: 4 <=> ASSET_CLASS_1, price = 50
+                // .. 
+                // spaceType: 7 <=> ASSET_CLASS_4, price = 200
+                uint8 assetClass = spaces[spaceId].spaceType - 3;
+                // TODO: call assetsManager.setAssetData(assetId, assetClass)
+                spaces[spaceId].assetPrice = 50 * assetClass;
+                spaces[spaceId].productPrice = 15 * assetClass;
+            }
+        }
+    }
+
+    function initialize(address _transferManager) external override {
+        transferManager = _transferManager;
+        super.initialize();
     }
 
     function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
         require(spaceId < nbPositions, "INVALID_ARGUMENT");
-        uint8 spaceCode = uint8(playground[31 - spaceId]);// Important storage reverse (end-endian)
-        spaceType = spaceCode & 0x7;
-        assetId = spaceCode >> 3;
-        if ((spaceType >= 4) && (spaceType < 8)) {
-            // spaceType: 4 <=> ASSET_CLASS_1, price = 50
-            // .. 
-            // spaceType: 7 <=> ASSET_CLASS_4, price = 200
-            uint8 assetClass = spaceType - 3;
-            assetPrice = 50 * assetClass;
-            productPrice = assetPrice / 4;
-            // TODO: get productPrice from InvestmentManager contract
-        }
+        spaceType = spaces[spaceId].spaceType;
+        assetId = spaces[spaceId].assetId;
+        // TODO: get assetPrice/productPrice from assetsManager
+        assetPrice = spaces[spaceId].assetPrice;
+        productPrice = spaces[spaceId].productPrice;
     }
 
     // function getPlayground() external override view returns (bytes32) {
@@ -47,17 +81,62 @@ contract Playground is IPlayground, Ownable {
         return nbPositions;
     }
 
-    function setPlayerPosition(address player, uint8 newPosition) external override onlyOwner {
-        _setPlayerPosition(player, newPosition);
+    function setPlayerPosition(address player, uint8 newPosition, bool giveUBI) external override {
+        _setPlayerPosition(player, newPosition, giveUBI);
     }
 
-    function incrementPlayerPosition(address player, uint8 offset) external override onlyOwner {
+    function incrementPlayerPosition(address player, int8 offset) external override {
+        require(offset < int8(nbPositions), "OFFSET_OUT_OF_BOUNDS");
+        require(offset > -int8(nbPositions), "OFFSET_OUT_OF_BOUNDS");
         uint8 oldPosition = positions[player];
-        _setPlayerPosition(player, (oldPosition + offset) % nbPositions);
+        int8 newPosition = int8(oldPosition) + offset;
+        if (newPosition < 0) {
+            newPosition += int8(nbPositions);
+        }
+        _setPlayerPosition(player, uint8(newPosition) % nbPositions, offset > 0);
     }
 
-    function _setPlayerPosition(address player, uint8 newPosition) internal {
+    function _setPlayerPosition(address player, uint8 newPosition, bool giveUBI) internal initialized {
+        uint8 oldPosition = positions[player];
         positions[player] = newPosition;
+        if (giveUBI && (oldPosition > newPosition)) {
+            console.log('giveUBI: oldPosition', oldPosition, 'newPosition', newPosition);
+            ITransferManager(transferManager).giveUBI(player);
+        }
+    }
+
+    function getAssetData(uint8 assetId) external view override returns (uint256 assetPrice, uint256 productPrice) {
+        uint8 spaceId = assetsPositions[assetId];
+        assetPrice = spaces[spaceId].assetPrice;
+        productPrice = spaces[spaceId].productPrice;
+    }
+
+    function giveImmunity(address player) external override {
+        console.log('Playground: set immunity', player);
+        immunity[player] = true;
+    }
+
+    function gotoQuarantine(address gameMaster, address player) external override {
+        console.log('Playground: gotoQuarantine', player);
+        uint16 roundCount = IGameScheduler(gameMaster).getRoundCount();
+        if (!immunity[player]) {
+            inQuarantine[player] = FIRST_ROUND + roundCount + NB_ROUND_IN_QUARANTINE;
+            _setPlayerPosition(player, quarantineSpaceId, false);
+        } else {
+            console.log('Playground: reset immunity', player);
+            immunity[player] = false; // works only once
+        }
+    }
+
+    function hasImmunity(address player) external view override returns (bool) {
+        console.log('Playground: get immunity', player, immunity[player]);
+        return immunity[player];
+    }
+ 
+    function isInQuarantine(address player, uint16 roundCount)  external view override returns (bool) {
+        console.log('Test isInQuarantine', player, roundCount);
+        console.log(inQuarantine[player]);
+        return (inQuarantine[player] >= FIRST_ROUND + roundCount);
     }
 
 

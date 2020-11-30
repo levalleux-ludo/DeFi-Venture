@@ -18,7 +18,8 @@
 <div *ngIf="isOptionValid(getOptionValue('BUY_ASSET'))">
     <h3> Take the opportunity to found the startup '{{name}}' <br> Founding capital: {{price}}<br>
         <mat-radio-group aria-label="Select an option" [(ngModel)]="selectedOption" style="display: inline-grid;">
-            <mat-radio-button value="{{getOptionValue('BUY_ASSET')}}">Yes, great idea !</mat-radio-button>
+            <mat-radio-button value="{{getOptionValue('BUY_ASSET')}}" [disabled]="insufficientBalance">Yes, great idea !</mat-radio-button>
+            <div *ngIf="insufficientBalance" style="color: red;">&#x26A0; Your account balance is insufficient to found this startup!</div>
             <mat-radio-button value="{{getOptionValue('NOTHING')}}">Sorry, not interested</mat-radio-button>
         </mat-radio-group>
     </h3>

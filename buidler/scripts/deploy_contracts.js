@@ -5,13 +5,11 @@
 const bre = require("@nomiclabs/buidler");
 const { BigNumber } = require("ethers");
 const ethers = bre.ethers;
-const { getSpaces, getChances } = require("../db/playground");
+const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
 const { test_factory } = require('./test_factory');
 
 const NB_MAX_PLAYERS = 8;
-const INITIAL_BALANCE = 1000;
-const NB_POSITIONS = 24;
-const NB_CHANCES = 32;
+const INITIAL_BALANCE = 300;
 
 function getBalanceAsNumber(bn, decimals, accuracy) {
     const r1 = BigNumber.from(10).pow(decimals - accuracy);
@@ -29,8 +27,9 @@ async function main() {
 
     const GameFactoryFactory = await ethers.getContractFactory("GameFactory");
     const GameMasterFactoryFactory = await ethers.getContractFactory("GameMasterFactory");
-    const GameContractsWrapper = await ethers.getContractFactory("GameContractsWrapper");
     const GameContractsFactoryFactory = await ethers.getContractFactory("GameContractsFactory");
+    const OtherContractsFactoryFactory = await ethers.getContractFactory("OtherContractsFactory");
+    const TransferManagerFactoryFactory = await ethers.getContractFactory("TransferManagerFactory");
     const TokenFactoryFactory = await ethers.getContractFactory("TokenFactory");
     const AssetsFactoryFactory = await ethers.getContractFactory("AssetsFactory");
     const MarketplaceFactoryFactory = await ethers.getContractFactory("MarketplaceFactory");
@@ -44,13 +43,17 @@ async function main() {
     const gameMasterFactory = await GameMasterFactoryFactory.deploy();
     await gameMasterFactory.deployed();
     console.log('new balance', getBalanceAsNumber(await deployer.getBalance(), 18, 4))
-    console.log('deploy gameContractsWrapper');
-    const gameContractsWrapper = await GameContractsWrapper.deploy();
-    await gameContractsWrapper.deployed();
-    console.log('new balance', getBalanceAsNumber(await deployer.getBalance(), 18, 4))
     console.log('deploy gameContractsFactory');
     const gameContractsFactory = await GameContractsFactoryFactory.deploy();
     await gameContractsFactory.deployed();
+    console.log('new balance', getBalanceAsNumber(await deployer.getBalance(), 18, 4))
+    console.log('deploy otherContractsFactory');
+    const otherContractsFactory = await OtherContractsFactoryFactory.deploy();
+    await otherContractsFactory.deployed();
+    console.log('new balance', getBalanceAsNumber(await deployer.getBalance(), 18, 4))
+    console.log('deploy transferManagerFactory');
+    const transferManagerFactory = await TransferManagerFactoryFactory.deploy();
+    await transferManagerFactory.deployed();
     console.log('new balance', getBalanceAsNumber(await deployer.getBalance(), 18, 4))
     console.log('deploy tokenFactory');
     const tokenFactory = await TokenFactoryFactory.deploy();
@@ -67,8 +70,9 @@ async function main() {
     console.log('deploy gameFactory');
     gameFactory = await GameFactoryFactory.deploy(
         gameMasterFactory.address,
-        gameContractsWrapper.address,
         gameContractsFactory.address,
+        otherContractsFactory.address,
+        transferManagerFactory.address,
         tokenFactory.address,
         assetsFactory.address,
         marketplaceFactory.address,

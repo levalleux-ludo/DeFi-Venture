@@ -1,83 +1,113 @@
 {
     "chances": [{
-            "text": "Electricity Prices raise. All mining farms must pay %AMOUNT%",
-            "amount": 100,
-            "impl": "pay_amount_per_mining_farm"
+            "text": "Electricity Prices raise. Transaction fees rise. You must pay %AMOUNT% per owned company",
+            "params": {
+                "amount": 15
+            },
+            "impl": "PAY_PER_ASSET"
         },
         {
             "text": "Hacker group find vulnerabilities in your product. You must pay %AMOUNT% for each company you own",
-            "amount": 100,
-            "impl": "pay_amount_per_company"
+            "params": {
+                "amount": 50
+            },
+            "impl": "PAY_PER_ASSET"
         },
         {
-            "text": "You win the first prize at ETHOnline Hackathon. Receive %AMOUNT%",
-            "amount": 100,
-            "impl": "receive_amount"
+            "text": "You win the first prize at ETHGLOBAL Hackathon. Receive %AMOUNT%",
+            "params": {
+                "amount": 100
+            },
+            "impl": "RECEIVE"
         },
         {
-            "text": "Delegation rewards. All bakeries must pay %AMOUNT%",
-            "amount": 100,
-            "impl": "pay_amount_per_bakery"
+            "text": "Pandemmic cases surge in your area. You lost %AMOUNT% per owned company",
+            "params": {
+                "amount": 25
+            },
+            "impl": "PAY_PER_ASSET"
         },
         {
             "text": "States debt crisis. You must pay %AMOUNT%",
-            "amount": 100,
-            "impl": "pay_amount"
+            "params": {
+                "amount": 100
+            },
+            "impl": "PAY"
         },
         {
             "text": "Cryptos banned in your country. You must pay %AMOUNT%",
-            "amount": 100,
-            "impl": "pay_amount"
+            "params": {
+                "amount": 100
+            },
+            "impl": "PAY"
         },
         {
             "text": "You've caught COVID-19. Go to quarantine and you miss you next turn.",
-            "amount": 0,
-            "impl": "go_to_quarantine"
+            "params": {
+                "amount": 0
+            },
+            "impl": "GO_TO_QUARANTINE"
         },
         {
             "text": "You've got support from Crypto activists. They give you %AMOUNT%",
-            "amount": 100,
-            "impl": "receive_amount"
+            "params": {
+                "amount": 100
+            },
+            "impl": "RECEIVE"
         },
         {
-            "text": "One of your crypto startup gets listed on a major exchanges. You receive %AMOUNT%",
-            "amount": 100,
-            "impl": "receive_amount"
+            "text": "Your crypto startups get listed on a major exchanges. You receive %AMOUNT% per company",
+            "params": {
+                "amount": 10
+            },
+            "impl": "RECEIVE_PER_ASSET"
         },
         {
-            "text": "Advance to %SPACE%. If you pass the Genesis Block, you receive %AMOUNT%",
-            "amount": 100,
-            "space": 12,
-            "impl": "go_to_space"
+            "text": "Advance to %SPACE%. If you pass the Genesis Block, you receive Universal Basic Income (UBI)",
+            "params": {
+                "space": 14
+            },
+            "impl": "GOTO_SPACE"
         },
         {
             "text": "You've completed a bug bounty. You receive %AMOUNT%",
-            "amount": 100,
-            "impl": "receive_amount"
+            "params": {
+                "amount": 100
+            },
+            "impl": "RECEIVE"
         },
         {
             "text": "Crypto-Market is getting bullish. You receive %AMOUNT%",
-            "amount": 100,
-            "impl": "receive_amount"
+            "params": {
+                "amount": 100
+            },
+            "impl": "RECEIVE"
         },
         {
             "text": "Crypto-Market is manipulated. You loose %AMOUNT%",
-            "amount": 100,
-            "impl": "pay_amount"
+            "params": {
+                "amount": 50
+            },
+            "impl": "PAY"
         },
         {
             "text": "Capital Gain Tax recall. You must pay %AMOUNT%",
-            "amount": 100,
-            "impl": "pay_amount"
+            "params": {
+                "amount": 50
+            },
+            "impl": "PAY"
         },
         {
             "text": "Go back %NB% Spaces",
-            "nb": -3,
-            "impl": "move_n_spaces"
+            "params": {
+                "nb": 3
+            },
+            "impl": "MOVE_N_SPACES_BCK"
         },
         {
             "text": "COVID-19 Immunity Passport. You're not be going to quarantine anymore",
-            "impl": "covid_immunity"
+            "params": {},
+            "impl": "IMMUNITY"
         }
     ]
 }

@@ -1,3 +1,4 @@
+import { BigNumber } from 'ethers';
 import { ChanceDetailFormComponent } from './../chance-detail-form/chance-detail-form.component';
 import { MatDialog } from '@angular/material/dialog';
 import { eOption, ISpace } from './../../_services/game-master-contract.service';
@@ -31,6 +32,17 @@ export class SpaceDetailsComponent implements OnInit {
   get playground(): ISpace[] {
     return this._playground;
   }
+
+  _currentBalance;
+  @Input()
+  set currentBalance(value: BigNumber) {
+    this._currentBalance = value;
+    this.refreshSpaceDetails();
+  }
+  get currentBalance(): BigNumber {
+    return this._currentBalance;
+  }
+
 
   @Input()
   canValidate: boolean;
@@ -71,6 +83,7 @@ export class SpaceDetailsComponent implements OnInit {
   price;
   productPrice;
   selectedOption: number;
+  insufficientBalance = false;
 
   getOptionValue(optionStr: string) {
     return eOption[optionStr];
@@ -84,25 +97,26 @@ export class SpaceDetailsComponent implements OnInit {
   }
 
   async refreshSpaceDetails() {
+    this.insufficientBalance = false;
     if (this._playground && (this._spaceId !== undefined)) {
       const space = this._playground[this._spaceId];
       // TODO: get options from contract return (RolledDices event)
       switch (space.type) {
         case eSpaceType.GENESIS: {
           this.name = 'Genesis Block';
-          this.detail = 'Each time you land or pass this block, you earn 200 LOUIS';
+          this.detail = 'Each time you land or pass this block, you receive the Universal Basic Income (UBI)';
           this.image = 'assets/blocks/block_genesis.png';
           // this.options = [eOption.NOTHING];
           break;
         }
-        case eSpaceType.LIQUIDATION: {
-          this.name = 'Liquidation Block';
-          this.detail = "When you're running out of cash, you'll come here to liquidate your assets and miss your next turn.";
+        case eSpaceType.QUARANTINE: {
+          this.name = 'Quarantine Block';
+          this.detail = "Please wear a face covering in this area";
           this.image = 'assets/blocks/block_Quarantine.png'; // TODO: replace with Liquidation block
           // this.options = [eOption.NOTHING];
           break;
         }
-        case eSpaceType.QUARANTINE: {
+        case eSpaceType.COVID: {
           this.name = 'COVID';
           this.detail = "You've caught COVID-19. You need to lock on quarantine and you miss you next turn";
           this.image = 'assets/blocks/block_Covid.png';
@@ -124,6 +138,7 @@ export class SpaceDetailsComponent implements OnInit {
           this.price = space.assetPrice;
           this.productPrice = space.productPrice;
           this.image = `assets/blocks/block_${asset.image}`;
+          this.insufficientBalance = (this.currentBalance !== undefined) && (this.currentBalance.lt(space.assetPrice));
           // this.options = [eOption.NOTHING, eOption.BUY_ASSET]; // TODO: check the asset is owned. If so, option = [eOption.Pay_BILL]
           break;
         }

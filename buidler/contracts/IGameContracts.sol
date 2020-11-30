@@ -5,10 +5,11 @@ interface IGameContracts {
     function setToken(address _token) external;
     function setAssets(address _assets) external;
     function setMarketplace(address _marketplace) external;
-    function setChances(address _chances) external;
-    function setRandomGenerator(address _radomGenerator) external;
-    function setPlayground(address _playground) external;
-    function setPlayOptions(address _playOptions) external;
+    function initialize(address _chances, address _playground, address _playOptions, address _randomGenerator) external;
+    // function setChances(address _chances) external;
+    // function setRandomGenerator(address _radomGenerator) external;
+    // function setPlayground(address _playground) external;
+    // function setPlayOptions(address _playOptions) external;
     function setTransferManager(address _transferManager) external;
     function getToken() external view returns (address);
     function getAssets() external view returns (address);

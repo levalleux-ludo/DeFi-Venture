@@ -230,6 +230,9 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
       }
       this.gameData.players.forEach((aplayer, playerAddress) => {
         this.avatars.set(playerAddress, aplayer.avatar);
+        if (this.board !== undefined) {
+          this.board.setPlayerStatus(aplayer.avatar, aplayer.hasLost, aplayer.inQuarantine);
+        }
       });
       this.gameData.playersPosition.forEach((position, aplayer) => {
         if (this.players !== undefined) {
@@ -282,6 +285,7 @@ export class GameConnectComponent implements OnInit, OnDestroy, AfterViewInit {
         this.otherPlayers.portfolios = assetsData.portfolios;
       }
       if ((this.board !== undefined) && (this.playground !== undefined)) {
+        this.board.clearOwners();
         this.assetsData.owners.forEach((player, assetId) => {
           const assetPosition = this.playground.findIndex(space => space.assetId === assetId);
           if (assetPosition === -1) {
