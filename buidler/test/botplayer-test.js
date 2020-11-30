@@ -26,13 +26,13 @@ function revertMessage(error) {
     return 'VM Exception while processing transaction: revert ' + error;
 }
 
-async function playTurn(botPlayer, gameMaster, signer) {
+async function playTurn(botPlayer, gameMaster, signer, overrideOptions = 255, option = 1) {
     return new Promise(async(resolve) => {
         let filter = gameMaster.filters.RolledDices(botPlayer.address);
         gameMaster.once(filter, async(player, dice1, dice2, cardId, newPosition, options) => {
             console.log('RolledDices', player, dice1, dice2, cardId, newPosition, options);
-            await gameMaster.setOptions(255);
-            await botPlayer.connect(signer).play(gameMaster.address, 1);
+            await gameMaster.setOptions(overrideOptions);
+            await botPlayer.connect(signer).play(gameMaster.address, option);
             resolve([dice1, dice2]);
         });
         await botPlayer.connect(signer).rollDices(gameMaster.address);
@@ -112,6 +112,24 @@ describe('BotPlayer', () => {
         expect(await gameMaster1.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
         await playTurn(botPlayer1, gameMaster2, owner);
         expect(await gameMaster2.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
+    })
+    it('Bot2 plays on both games', async() => {
+        await playTurn(botPlayer2, gameMaster1, owner);
+        expect(await gameMaster1.nextPlayer()).to.equal(botPlayer1.address, "next player shall be changed");
+        await playTurn(botPlayer2, gameMaster2, owner);
+        expect(await gameMaster2.nextPlayer()).to.equal(botPlayer1.address, "next player shall be changed");
+    })
+    it('Bot1 plays COVID on both games', async() => {
+        await playTurn(botPlayer1, gameMaster1, owner, 16, 16);
+        expect(await gameMaster1.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
+        await playTurn(botPlayer1, gameMaster2, owner, 16, 16);
+        expect(await gameMaster2.nextPlayer()).to.equal(botPlayer2.address, "next player shall be changed");
+    })
+    it('Bot2 plays on both games', async() => {
+        await playTurn(botPlayer2, gameMaster1, owner);
+        expect(await gameMaster1.nextPlayer()).to.equal(botPlayer2.address, "next player shall NOT be changed");
+        await playTurn(botPlayer2, gameMaster2, owner);
+        expect(await gameMaster2.nextPlayer()).to.equal(botPlayer2.address, "next player shall NOT be changed");
     })
     it('Bot2 plays on both games', async() => {
         await playTurn(botPlayer2, gameMaster1, owner);

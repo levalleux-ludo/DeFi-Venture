@@ -196,6 +196,10 @@ export class Bot {
     if (options & eOption.BUY_ASSET && enoughCash) {
       return eOption.BUY_ASSET;
     }
+    // tslint:disable-next-line: no-bitwise
+    if (options & eOption.QUARANTINE) {
+      return eOption.QUARANTINE;
+    }
     // else choose the first allowed option
     for (const option of Object.values(eOption)) {
       // tslint:disable-next-line: no-bitwise
