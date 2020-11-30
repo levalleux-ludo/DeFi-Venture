@@ -8,9 +8,9 @@ import { IGameContracts } from './IGameContracts.sol';
 import { TransferManager } from './TransferManager.sol';
 
 contract TransferManagerFactory is ITransferManagerFactory {
-    function create(address gameContracts) external override returns (address contractsAddress) {
+    function create(address gameContracts, uint256 ubiAmount) external override returns (address contractsAddress) {
         IGameContracts contracts = IGameContracts(gameContracts);
-        TransferManager transferManager = new TransferManager();
+        TransferManager transferManager = new TransferManager( ubiAmount);
         contracts.setTransferManager(
             address(transferManager)
         );

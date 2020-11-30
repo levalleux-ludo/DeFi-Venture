@@ -6,6 +6,7 @@ const ethers = bre.ethers;
 const utils = ethers.utils;
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 300;
+const UBI_AMOUNT = 100;
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 const STATUS = {
     created: 0,
@@ -146,7 +147,7 @@ async function createGameMasterBase() {
     const playOptions = await PlayOptions.deploy();
     await playOptions.deployed();
     const TransferManager = await ethers.getContractFactory('TransferManager');
-    const transferManager = await TransferManager.deploy();
+    const transferManager = await TransferManager.deploy(UBI_AMOUNT);
     await transferManager.deployed();
 
     await contracts.initialize(
@@ -237,6 +238,14 @@ async function playTurn(gameMaster, signer) {
     });
 }
 
+async function playAndGoTo(gameMaster, player, newPosition, giveUBI = false) {
+    const playerAddress = await player.getAddress();
+    await gameMaster.setPlayerPosition(playerAddress, giveUBI ? NB_SPACES - 1 : 0, false);
+    await expect(gameMaster.connect(player).rollDices()).to.emit(gameMaster, 'RolledDices');
+    await gameMaster.setPlayerPosition(playerAddress, newPosition, false);
+}
+
+
 function checkDice(dice) {
     expect(dice).to.be.lessThan(7, 'dices cannot exceed 6');
     expect(dice).to.be.greaterThan(0, 'dices cannot be under 1');
@@ -287,6 +296,7 @@ module.exports = {
     STATUS,
     NB_MAX_PLAYERS,
     INITIAL_BALANCE,
+    UBI_AMOUNT,
     NULL_ADDRESS,
     USER_DATA_FIELDS,
     GAME_DATA_FIELDS,
@@ -297,6 +307,7 @@ module.exports = {
     checkDice,
     extractSpaceCode,
     playTurn,
+    playAndGoTo,
     createGameToken,
     createGameAssets,
     createMarketplace,

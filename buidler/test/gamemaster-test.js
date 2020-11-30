@@ -410,7 +410,7 @@ describe('Game play options', () => {
     it('play at GENESIS', async() => {
         await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.currentPlayer()).to.equal(addr1Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr1Address, 0); // GENESIS
+        await gameMaster.setPlayerPosition(addr1Address, 0, false); // GENESIS
         await gameMaster.setOptions(1);
         await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr1).play(2)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -425,7 +425,7 @@ describe('Game play options', () => {
     it('play NOTHING at ASSET 0', async() => {
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.currentPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr2Address, 1); // ASSET id 0
+        await gameMaster.setPlayerPosition(addr2Address, 1, false); // ASSET id 0
         await gameMaster.setOptions(3);
         await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr2).play(4)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -439,7 +439,7 @@ describe('Game play options', () => {
     it('play BUY_ASSET at ASSET 1', async() => {
         await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.currentPlayer()).to.equal(addr1Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr1Address, 3); // ASSET id 1
+        await gameMaster.setPlayerPosition(addr1Address, 3, false); // ASSET id 1
         await gameMaster.setOptions(3);
         await expect(gameMaster.connect(addr1).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr1).play(4)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -453,7 +453,7 @@ describe('Game play options', () => {
     it('play CHANCE', async() => {
         await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
         expect(await gameMaster.currentPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr2Address, 2); // CHANCE
+        await gameMaster.setPlayerPosition(addr2Address, 2, false); // CHANCE
         await gameMaster.setOptions(8);
         await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr2).play(2)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));

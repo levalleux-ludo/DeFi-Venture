@@ -37,12 +37,12 @@ export const environment = {
       gasRelay: 'tbd'
     },
     80001: { // mumbai
-      gameFactory: '0x7B69C0104B49E7aF7322F262002A0e48564D36f5',
+      gameFactory: '0x287993768c3Af8A91a04ABD724247430246F34b9',
       greeter: '',
       gasRelay: 'tbd'
     },
     1337: { // ganache
-      gameFactory: '0x15d5BDF7112CC31F1BBcbB3AffBe0FA5786737c0',
+      gameFactory: '0xBdF22b5230C7Dd9e23F97e4906E94aC1d92970Ea',
       greeter: '',
       gasRelay: 'tbd'
     }

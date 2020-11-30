@@ -13,10 +13,16 @@ import { Initialized } from './Initialized.sol';
 
 contract TransferManager is ITransferManager, Initialized {
     uint256 constant public MAX_UINT256 = 2**256 - 1;
+    uint256 public ubiAmount;
     address private token;
     address private assets;
     address public playground;
+
     event PlayerLiquidated(address indexed player);
+
+    constructor(uint256 _ubiAmount) public {
+        ubiAmount = _ubiAmount;
+    }
 
     function initialize(address _token, address _assets, address _playground) external override {
         token = _token;
@@ -61,6 +67,7 @@ contract TransferManager is ITransferManager, Initialized {
         while (balance > 0) {
             uint256 assetId = IGameAssets(assets).tokenOfOwnerByIndex(player, 0);
             IGameAssets(assets).burn(assetId);
+            // TODO: call AssetManager instead of playground to get dynamic assetPrice
             (uint256 assetPrice, uint256 productPrice) = IPlayground(playground).getAssetData(uint8(assetId));
             amount += assetPrice / 2;
             balance = IGameAssets(assets).balanceOf(player);
@@ -103,6 +110,10 @@ contract TransferManager is ITransferManager, Initialized {
             return false;
         }
         return true;
+    }
+
+    function giveUBI(address player) external override initialized {
+        this.receiveAmount(player, ubiAmount);
     }
 
 

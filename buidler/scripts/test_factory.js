@@ -3,6 +3,7 @@ const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
 
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 300;
+const UBI_AMOUNT = 100;
 
 const STATUS = {
     created: 0,
@@ -83,7 +84,8 @@ const test_factory = async(gameFactoryAddr, standalone) => {
             );
             await gameFactory.createTransferManager(
                 gameMasterAddress,
-                gameContractsAddress
+                gameContractsAddress,
+                UBI_AMOUNT
             );
             await waitCreatedOtherContracts.then(async() => {
                 console.log('game created:', gameMasterAddress);

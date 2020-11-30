@@ -5,8 +5,10 @@ import "@nomiclabs/buidler/console.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IPlayground } from  "./IPlayground.sol";
 import { IGameScheduler } from './IGameScheduler.sol';
+import { Initialized } from './Initialized.sol';
+import { ITransferManager } from './ITransferManager.sol';
 
-contract Playground is IPlayground, Ownable {
+contract Playground is IPlayground, Ownable, Initialized {
 
     struct Space {
         uint8 spaceType;
@@ -19,6 +21,7 @@ contract Playground is IPlayground, Ownable {
     uint16 internal constant NB_ROUND_IN_QUARANTINE = 1; 
     uint8 public quarantineSpaceId;
     uint8 public nbPositions;
+    address private transferManager;
     mapping(address => uint8) public positions;
     bytes32 public playground;
     mapping(uint8 => Space) spaces;
@@ -52,6 +55,11 @@ contract Playground is IPlayground, Ownable {
         }
     }
 
+    function initialize(address _transferManager) external override {
+        transferManager = _transferManager;
+        super.initialize();
+    }
+
     function getSpaceDetails(uint8 spaceId) external override view returns (uint8 spaceType, uint8 assetId, uint256 assetPrice, uint256 productPrice) {
         require(spaceId < nbPositions, "INVALID_ARGUMENT");
         spaceType = spaces[spaceId].spaceType;
@@ -72,8 +80,8 @@ contract Playground is IPlayground, Ownable {
         return nbPositions;
     }
 
-    function setPlayerPosition(address player, uint8 newPosition) external override {
-        _setPlayerPosition(player, newPosition);
+    function setPlayerPosition(address player, uint8 newPosition, bool giveUBI) external override {
+        _setPlayerPosition(player, newPosition, giveUBI);
     }
 
     function incrementPlayerPosition(address player, int8 offset) external override {
@@ -84,11 +92,16 @@ contract Playground is IPlayground, Ownable {
         if (newPosition < 0) {
             newPosition += int8(nbPositions);
         }
-        _setPlayerPosition(player, uint8(newPosition) % nbPositions);
+        _setPlayerPosition(player, uint8(newPosition) % nbPositions, offset > 0);
     }
 
-    function _setPlayerPosition(address player, uint8 newPosition) internal {
+    function _setPlayerPosition(address player, uint8 newPosition, bool giveUBI) internal initialized {
+        uint8 oldPosition = positions[player];
         positions[player] = newPosition;
+        if (giveUBI && (oldPosition > newPosition)) {
+            console.log('giveUBI: oldPosition', oldPosition, 'newPosition', newPosition);
+            ITransferManager(transferManager).giveUBI(player);
+        }
     }
 
     function getAssetData(uint8 assetId) external view override returns (uint256 assetPrice, uint256 productPrice) {
@@ -107,7 +120,7 @@ contract Playground is IPlayground, Ownable {
         uint16 roundCount = IGameScheduler(gameMaster).getRoundCount();
         if (!immunity[player]) {
             inQuarantine[player] = FIRST_ROUND + roundCount + NB_ROUND_IN_QUARANTINE;
-            _setPlayerPosition(player, quarantineSpaceId);
+            _setPlayerPosition(player, quarantineSpaceId, false);
         } else {
             console.log('Playground: reset immunity', player);
             immunity[player] = false; // works only once

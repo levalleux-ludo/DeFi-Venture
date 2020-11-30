@@ -16,9 +16,9 @@ contract GameMasterForTest is GameMaster {
         currentOptions = options;
     }
 
-    function setPlayerPosition(address player, uint8 newPosition) public onlyOwner {
+    function setPlayerPosition(address player, uint8 newPosition, bool giveUBI) public onlyOwner {
         address playgroundAddress = IGameContracts(contracts).getPlayground();
-        IPlayground(playgroundAddress).setPlayerPosition(player, newPosition);
+        IPlayground(playgroundAddress).setPlayerPosition(player, newPosition, giveUBI);
     }
 
     function setCardId(uint8 cardId) public onlyOwner {

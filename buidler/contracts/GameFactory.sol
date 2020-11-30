@@ -74,9 +74,9 @@ contract GameFactory is IGameStatus {
         IOtherContractsFactory(otherContractsFactory).transferOwnership(gameMasterAddress, IGameContracts(contracts).getPlayground());
     }
 
-    function createTransferManager(address gameMasterAddress, address gameContractsAddr) external {
+    function createTransferManager(address gameMasterAddress, address gameContractsAddr, uint256 ubiAmount) external {
         require(transferManagerFactory != address(0), "TRANSFER_MANAGER_FACTORY_NOT_DEFINED");
-        (address contracts) = ITransferManagerFactory(transferManagerFactory).create(gameContractsAddr);
+        (address contracts) = ITransferManagerFactory(transferManagerFactory).create(gameContractsAddr, ubiAmount);
         console.log('created transferManager', contracts, gameContractsAddr);
         emit GameCreated(gameMasterAddress, gamesSet.length() - 1);
     }

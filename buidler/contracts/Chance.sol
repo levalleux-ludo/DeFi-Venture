@@ -52,7 +52,7 @@ contract Chance is IChance, Ownable, Initialized {
         console.log('performChance', cardId);
         (uint8 chanceType, uint8 chanceParam) = this.getChanceDetails(cardId);
         if (chanceType == GOTO_SPACE) {
-            IPlayground(playground).setPlayerPosition(player, chanceParam);
+            IPlayground(playground).setPlayerPosition(player, chanceParam, true);
         } else if (chanceType == MOVE_N_SPACES_BCK) {
             int8 move = -int8(chanceParam);
             IPlayground(playground).incrementPlayerPosition(player, move);

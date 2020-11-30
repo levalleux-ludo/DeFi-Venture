@@ -11,6 +11,7 @@ import { IGameToken } from './IGameToken.sol';
 import { IPlayOptions } from './IPlayOptions.sol';
 import { ITransferManager } from './ITransferManager.sol';
 import { IChance } from './IChance.sol';
+import { IPlayground } from './IPlayground.sol';
 import { Initialized } from './Initialized.sol';
 
 contract GameContracts is IGameContracts, Initialized {
@@ -155,6 +156,7 @@ contract GameContracts is IGameContracts, Initialized {
     }
 
     function make_dependencies() internal {
+        IPlayground(playground).initialize(transferManager);
         IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
         ITransferManager(transferManager).initialize(token, assets, playground);
         console.log('transfer chances ownership to transferManager');

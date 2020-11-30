@@ -3,7 +3,7 @@ const { BigNumber, utils } = require("ethers");
 const { SPACES, NB_SPACES, CHANCES, NB_CHANCES } = require("../db/playground");
 const bre = require("@nomiclabs/buidler");
 const ethers = bre.ethers;
-const { createGameMasterFull, STATUS, NB_MAX_PLAYERS, INITIAL_BALANCE, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
+const { createGameMasterFull, STATUS, NB_MAX_PLAYERS, INITIAL_BALANCE, UBI_AMOUNT, shouldFail, revertMessage, startGame, registerPlayers, checkDice, extractSpaceCode, playTurn } = require('./testsUtils');
 
 var gameFactory;
 var GameMasterFactory;
@@ -95,6 +95,7 @@ describe("GameFactory", function() {
         await expect(gameFactory.createTransferManager(
             gameMasterAddress,
             gameContractsAddress,
+            UBI_AMOUNT
         )).to.emit(gameFactory, 'GameCreated');
         await gameFactory.createGameToken(gameMasterAddress);
         await gameFactory.createGameAssets(gameMasterAddress);

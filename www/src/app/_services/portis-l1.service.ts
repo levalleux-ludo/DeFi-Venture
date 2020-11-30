@@ -26,6 +26,7 @@ import { ethers, BigNumber } from 'ethers';
 const PORTIS_API_KEY = '9e5dce20-042d-456f-bfca-4850e23555c8';
 const NB_MAX_PLAYERS = 8;
 const INITIAL_BALANCE = 300;
+const UBI_AMOUNT = 100;
 
 @Injectable({
   providedIn: 'root'
@@ -356,11 +357,19 @@ export class PortisL1Service {
                 SPACES,
                 NB_CHANCES,
                 CHANCES
-              );
+              ).catch(e => {
+                console.error(e);
+                throw e;
+              });
+              console.log('createTransferManager');
               await contractWithSigner.createTransferManager(
                 gameMasterAddress,
-                gameContractsAddress
-              );
+                gameContractsAddress,
+                ethers.BigNumber.from(UBI_AMOUNT).toString(),
+              ).catch(e => {
+                console.error(e);
+                throw e;
+              });
               await waitCreatedOtherContracts.then(async() => {
                 console.log('createGameToken');
                 await contractWithSigner.createGameToken(gameMasterAddress);
@@ -381,6 +390,10 @@ export class PortisL1Service {
               (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
               reject(e);
             });
+          }).catch(e => {
+            this.provider.pollingInterval = pollingInterval1;
+            (contractWithSigner.provider as ethers.providers.Web3Provider).pollingInterval = pollingInterval2;
+            reject(e);
           });
         }).catch(e => {
           this.provider.pollingInterval = pollingInterval1;

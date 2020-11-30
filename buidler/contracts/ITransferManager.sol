@@ -15,4 +15,5 @@ interface ITransferManager {
     function payAmountPerAsset(address gameMaster, address player, uint256 amount) external;
     function receiveAmountPerAsset(address player, uint256 amount) external;
     function checkBalance(address gameMaster, address player, uint256 requiredCash, bool mustContinue) external returns(bool);
+    function giveUBI(address player) external;
 }

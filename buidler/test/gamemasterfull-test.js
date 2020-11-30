@@ -1,7 +1,7 @@
 const bre = require("@nomiclabs/buidler");
 const { expect } = require("chai");
 const { BigNumber, utils } = require("ethers");
-const { createGameMasterFull, registerPlayers, createGameToken, createGameAssets, createMarketplace, NULL_ADDRESS, STATUS, revertMessage, startGame } = require('./testsUtils');
+const { playAndGoTo, createGameMasterFull, registerPlayers, createGameToken, createGameAssets, createMarketplace, NULL_ADDRESS, STATUS, revertMessage, startGame, UBI_AMOUNT } = require('./testsUtils');
 const ethers = bre.ethers;
 
 var GameMasterFactory;
@@ -50,9 +50,8 @@ describe('Game play with token and assets', () => {
 
     })
     it('play BUY_ASSET at ASSET 1', async() => {
-        await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr1, 3); // ASSET id 1
         expect(await gameMaster.currentPlayer()).to.equal(addr1Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr1Address, 3); // ASSET id 1
         const position = await gameMaster.getPositionOf(addr1Address);
         console.log('position', position);
         await gameMaster.setOptions(3);
@@ -70,9 +69,8 @@ describe('Game play with token and assets', () => {
         expect(assetId1.toString()).to.equal('1');
     })
     it('option PAY_BILL shall be available if asset owned by another player', async() => {
-        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr2, 3); // ASSET id 1
         expect(await gameMaster.currentPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr2Address, 3); // ASSET id 1
         const position = await gameMaster.getPositionOf(addr2Address);
         const options = await gameMaster.getOptionsAt(addr2Address, position);
         await gameMaster.setOptions(options);
@@ -82,9 +80,8 @@ describe('Game play with token and assets', () => {
         await expect(gameMaster.connect(addr2).play(4)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr2Address, 4, 12, position);
     })
     it('option PAY_BILL shall NOT be available if asset owned by same player', async() => {
-        await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr1, 3); // ASSET id 1
         expect(await gameMaster.currentPlayer()).to.equal(addr1Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr1Address, 3); // ASSET id 1
         const position = await gameMaster.getPositionOf(addr1Address);
         const options = await gameMaster.getOptionsAt(addr1Address, position);
         expect(options).to.equal(1);
@@ -94,9 +91,8 @@ describe('Game play with token and assets', () => {
         await expect(gameMaster.connect(addr1).play(1)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr1Address, 1, 12, position);
     })
     it('play CHANCE', async() => {
-        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr2, 2); // CHANCE
         expect(await gameMaster.currentPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await gameMaster.setPlayerPosition(addr2Address, 2); // CHANCE
         await gameMaster.setOptions(8);
         await expect(gameMaster.connect(addr2).play(0)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
         await expect(gameMaster.connect(addr2).play(2)).to.be.revertedWith(revertMessage("OPTION_NOT_ALLOWED"));
@@ -138,6 +134,12 @@ describe('Game play with token and assets', () => {
         expect(balance2Before.sub(balance2After).toString()).to.equal('90');
 
     })
+    it('check UBI when passing genesis block', async() => {
+        const balanceBefore = await token.balanceOf(addr1Address);
+        await playAndGoTo(gameMaster, addr1, 0, true);
+        const balanceAfter = await token.balanceOf(addr1Address);
+        expect(balanceAfter.sub(balanceBefore).toString()).to.equal(UBI_AMOUNT.toString());
+    })
 })
 
 describe('Losing player', () => {
@@ -171,8 +173,7 @@ describe('Losing player', () => {
         addr4Address = await addr4.getAddress();
     });
     it('Player 1 spend all his cash buying asset #1 @position 3', async() => {
-        await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr1Address, 3); // ASSET id 1
+        await playAndGoTo(gameMaster, addr1, 3); // ASSET id 1
         const position = await gameMaster.getPositionOf(addr1Address);
         console.log('position', position);
         await gameMaster.setOptions(3);
@@ -188,8 +189,7 @@ describe('Losing player', () => {
         expect(balanceAfter.toString()).to.equal('0');
     });
     it('Player 2 buy asset #2 at position 4', async() => {
-        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr2Address, 4); // ASSET id 2
+        await playAndGoTo(gameMaster, addr2, 4); // ASSET id 2
         const position = await gameMaster.getPositionOf(addr2Address);
         console.log('position', position);
         await gameMaster.setOptions(3);
@@ -197,8 +197,7 @@ describe('Losing player', () => {
         await expect(gameMaster.connect(addr2).play(2)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr2Address, 2, 12, position);
     });
     it('Player 3 buy asset #6 at position 8', async() => {
-        await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr3Address, 8); // ASSET id 6
+        await playAndGoTo(gameMaster, addr3, 8); // ASSET id 6
         const position = await gameMaster.getPositionOf(addr3Address);
         console.log('position', position);
         await gameMaster.setOptions(3);
@@ -206,13 +205,12 @@ describe('Losing player', () => {
         await expect(gameMaster.connect(addr3).play(2)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr3Address, 2, 12, position);
     });
     it('Player 4 play nothing', async() => {
-        await expect(gameMaster.connect(addr4).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr4, 0);
         await gameMaster.setOptions(1); // NOTHING
         await expect(gameMaster.connect(addr4).play(1)).to.emit(gameMaster, 'PlayPerformed');
     })
     it('Player 1 must pay bill with not enough cash', async() => {
-        await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr1Address, 4); // ASSET id 2
+        await playAndGoTo(gameMaster, addr1, 4); // ASSET id 2
         const position = await gameMaster.getPositionOf(addr1Address);
         console.log('position', position);
         await gameMaster.setCardId(12);
@@ -256,13 +254,12 @@ describe('Losing player', () => {
     });
     it('Player 2 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr2, 0);
         await gameMaster.setOptions(1); // NOTHING
         await expect(gameMaster.connect(addr2).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 3 buy asset #9 at position 13', async() => {
-        await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr3Address, 13); // ASSET id 9
+        await playAndGoTo(gameMaster, addr3, 13); // ASSET id 9
         const position = await gameMaster.getPositionOf(addr3Address);
         console.log('position', position);
         await gameMaster.setOptions(3);
@@ -270,8 +267,7 @@ describe('Losing player', () => {
         await expect(gameMaster.connect(addr3).play(2)).to.emit(gameMaster, 'PlayPerformed').withArgs(addr3Address, 2, 12, position);
     });
     it('Player 4 spend all his cash buying asset #1 @position 3', async() => {
-        await expect(gameMaster.connect(addr4).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr4Address, 3); // ASSET id 1
+        await playAndGoTo(gameMaster, addr4, 3); // ASSET id 1
         const position = await gameMaster.getPositionOf(addr4Address);
         console.log('position', position);
         await gameMaster.setOptions(3);
@@ -287,8 +283,7 @@ describe('Losing player', () => {
         expect(balanceAfter.toString()).to.equal('0');
     });
     it('Player 1 must pay bill with not enough cash', async() => {
-        await expect(gameMaster.connect(addr1).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr1Address, 4); // ASSET id 2
+        await playAndGoTo(gameMaster, addr1, 4); // ASSET id 2
         const position = await gameMaster.getPositionOf(addr1Address);
         console.log('position', position);
         await gameMaster.setCardId(12);
@@ -319,13 +314,12 @@ describe('Losing player', () => {
     });
     it('Player 2 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr2, 0);
         await gameMaster.setOptions(1); // NOTHING
         await expect(gameMaster.connect(addr2).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 3 buy asset #12 at position 16', async() => {
-        await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr3Address, 16); // ASSET id 12
+        await playAndGoTo(gameMaster, addr3, 16); // ASSET id 12
         const position = await gameMaster.getPositionOf(addr3Address);
         console.log('position', position);
         await gameMaster.setOptions(3);
@@ -335,8 +329,7 @@ describe('Losing player', () => {
     it('Player 4, owning asset #1 tries buying asset #3 with no cash anymore', async() => {
         const balanceBefore = await token.balanceOf(addr4Address);
         expect(balanceBefore.toString()).to.equal('0');
-        await expect(gameMaster.connect(addr4).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr4Address, 5); // ASSET id 3
+        await playAndGoTo(gameMaster, addr4, 5); // ASSET id 3
         const position = await gameMaster.getPositionOf(addr4Address);
         console.log('position', position);
         await gameMaster.setCardId(12);
@@ -363,21 +356,20 @@ describe('Losing player', () => {
     });
     it('Player 2 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr2, 0);
         await gameMaster.setOptions(1); // NOTHING
         await expect(gameMaster.connect(addr2).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 3 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr3Address, "current player shall be changed");
-        await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr3, 0);
         const balance3 = await token.balanceOf(addr3Address);
         console.log('Player3 balance:', balance3.toString());
         await gameMaster.setOptions(1); // NOTHING
         await expect(gameMaster.connect(addr3).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
     it('Player 4 must pay bill with not enough cash', async() => {
-        await expect(gameMaster.connect(addr4).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr4Address, 4); // ASSET id 2
+        await playAndGoTo(gameMaster, addr4, 4); // ASSET id 2
         const position = await gameMaster.getPositionOf(addr4Address);
         await gameMaster.setCardId(12);
         const spaceDetails = await gameMaster.getSpaceDetails(position);
@@ -408,7 +400,7 @@ describe('Losing player', () => {
     });
     it('Player 2 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr2, 0);
         await gameMaster.setOptions(1); // NOTHING
         await expect(gameMaster.connect(addr2).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
@@ -417,8 +409,7 @@ describe('Losing player', () => {
         await token.connect(addr3).transfer(addr2Address, balanceBefore);
         const balanceAfter = await token.balanceOf(addr3Address);
         expect(balanceAfter.toString()).to.equal('0');
-        await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr3Address, 4); // ASSET id 2
+        await playAndGoTo(gameMaster, addr3, 4); // ASSET id 2
         const position = await gameMaster.getPositionOf(addr3Address);
         console.log('position', position);
         await gameMaster.setCardId(12);
@@ -451,7 +442,7 @@ describe('Losing player', () => {
     });
     it('Player 2 can play', async() => {
         expect(await gameMaster.nextPlayer()).to.equal(addr2Address, "current player shall be changed");
-        await expect(gameMaster.connect(addr2).rollDices()).to.emit(gameMaster, 'RolledDices');
+        await playAndGoTo(gameMaster, addr2, 0);
         await gameMaster.setOptions(1); // NOTHING
         await expect(gameMaster.connect(addr2).play(1)).to.emit(gameMaster, 'PlayPerformed');
     });
@@ -461,8 +452,7 @@ describe('Losing player', () => {
         await token.connect(addr3).transfer(addr2Address, balanceBefore);
         const balanceAfter = await token.balanceOf(addr3Address);
         expect(balanceAfter.toString()).to.equal('0');
-        await expect(gameMaster.connect(addr3).rollDices()).to.emit(gameMaster, 'RolledDices');
-        await gameMaster.setPlayerPosition(addr3Address, 4); // ASSET id 2
+        await playAndGoTo(gameMaster, addr3, 4); // ASSET id 2
         const position = await gameMaster.getPositionOf(addr3Address);
         console.log('position', position);
         await gameMaster.setCardId(12);
