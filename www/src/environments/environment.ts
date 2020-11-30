@@ -10,6 +10,7 @@ export interface INetwork {
   gasPrice: string;
   gasLimit: number;
   explorer: string;
+  symbol: string;
 }
 
 export interface IContracts {
@@ -21,18 +22,25 @@ export const environment = {
   production: false,
   // botServerUrl: 'http://localhost:8899',
   botServerUrl: 'https://defibot.levalleux.online',
-  defaultNetwork: 'l2',
+  defaultNetwork: 'matic',
   networks: {
     l1: { name: 'L1 (Goerli)', portisId: 'goerli', chainId: 5, nodeUrl: `https://goerli.infura.io/v3/833d4fef573b4c429e7f283dac2ba507`,
-     gasPrice: '100000000', gasLimit: 400000, explorer: 'https://goerli.etherscan.io/'  },
-    l2: { name: 'L2 (Mumbai)', portisId: 'maticMumbai', chainId: 80001, nodeUrl: 'https://rpc-mumbai.maticvigil.com/v1/aab3069bd822af86609df80c02f9d0e8642b3b6b',
-     gasPrice: '1000000000', gasLimit: 4000000, explorer: 'https://mumbai-explorer.matic.today/' },
+     gasPrice: '100000000', gasLimit: 400000, explorer: 'https://goerli.etherscan.io/', symbol: 'ETH'  },
+    matic: { name: 'MATIC', portisId: 'matic', chainId: 137, nodeUrl: 'https://rpc-mainnet.maticvigil.com/v1/aab3069bd822af86609df80c02f9d0e8642b3b6b',
+     gasPrice: '1000000000', gasLimit: 4000000, explorer: 'https://explorer-mainnet.maticvigil.com', symbol: 'MATIC' },
+    mumbai: { name: 'Mumbai', portisId: 'maticMumbai', chainId: 80001, nodeUrl: 'https://rpc-mumbai.maticvigil.com/v1/aab3069bd822af86609df80c02f9d0e8642b3b6b',
+     gasPrice: '1000000000', gasLimit: 4000000, explorer: 'https://mumbai-explorer.matic.today/', symbol: 'MATIC' },
     local: { name: 'Local (Ganache)', portisId: 'local', chainId: 1337, nodeUrl: 'http://localhost:7545',
-    gasPrice: '100000000', gasLimit: 400000, explorer: 'http://localhost:7545/'}
+    gasPrice: '100000000', gasLimit: 400000, explorer: 'http://localhost:7545/', symbol: 'ETH'}
   },
   contracts: {
     5: { // goerli
       gameFactory: '',
+      greeter: '',
+      gasRelay: 'tbd'
+    },
+    137: { // matic
+      gameFactory: '0x9a5B2B6D0fDfAE2208ACc9CebE75f4782C5274b6',
       greeter: '',
       gasRelay: 'tbd'
     },

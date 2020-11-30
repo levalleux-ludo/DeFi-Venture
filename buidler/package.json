@@ -11,10 +11,12 @@
         "deploy:bots": "buidler run scripts/deploy_bots.js",
         "deploy:bots:ganache": "buidler run scripts/deploy_bots.js --network ganache",
         "deploy:bots:mumbai": "buidler run scripts/deploy_bots.js --network mumbai",
+        "deploy:bots:matic": "buidler run scripts/deploy_bots.js --network matic",
         "deploy:ganache": "buidler run scripts/deploy_contracts.js --network ganache",
         "deploy:mocks": "buidler run scripts/deploy_mocks.js --network ganache",
         "deploy:goerli": "buidler run scripts/deploy_contracts.js --network goerli",
         "deploy:mumbai": "buidler run scripts/deploy_contracts.js --network mumbai",
+        "deploy:matic": "buidler run scripts/deploy_contracts.js --network matic",
         "test:factory:ganache": "node scripts//test_factory.js -f 0x687748919Cb88508C9f5ad5E3A26855b45048C17 -n ganache"
     },
     "author": "",

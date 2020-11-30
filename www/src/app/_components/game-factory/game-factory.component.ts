@@ -240,7 +240,7 @@ export class GameFactoryComponent implements OnInit, OnDestroy {
   }
 
   callFaucet() {
-    if (this.network.chainId === 80001) {
+    if (this.network.chainId === 80001) { // mumbai
       this.refreshing = true;
       const body = {network: 'mumbai', address: this.account, token: 'maticToken'}
       this.http.post<{hash: string}>(
@@ -262,6 +262,7 @@ export class GameFactoryComponent implements OnInit, OnDestroy {
         console.error(error);
         this.refreshing = false;
       });
+    } else if (this.network.chainId) { // matic mainnet
     }
   }
 

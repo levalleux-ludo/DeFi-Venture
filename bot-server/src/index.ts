@@ -78,6 +78,17 @@ const main = async () => {
   });
 };
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(`Unhandled Rejection at:${(reason as any).stack || reason}`);
+  process.exit(1);
+})
+
+process.on('uncaughtException', (error) => {
+  console.error(`Uncaught Exception:${error}`);
+  process.exit(1);
+})
+
 main().catch(e => {
   console.error(e);
 });
+
