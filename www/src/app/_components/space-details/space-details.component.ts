@@ -138,7 +138,7 @@ export class SpaceDetailsComponent implements OnInit {
           this.price = space.assetPrice;
           this.productPrice = space.productPrice;
           this.image = `assets/blocks/block_${asset.image}`;
-          this.insufficientBalance = (this.currentBalance.lt(space.assetPrice));
+          this.insufficientBalance = (this.currentBalance !== undefined) && (this.currentBalance.lt(space.assetPrice));
           // this.options = [eOption.NOTHING, eOption.BUY_ASSET]; // TODO: check the asset is owned. If so, option = [eOption.Pay_BILL]
           break;
         }

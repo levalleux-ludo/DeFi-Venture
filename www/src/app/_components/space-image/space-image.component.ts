@@ -77,7 +77,7 @@ export class SpaceImageComponent implements OnInit {
   }
 
   async refreshSpaceDetails() {
-    if (this._playground && this._spaceId) {
+    if (this._playground && (this._spaceId !== undefined)) {
       const space = this._playground[this._spaceId];
       // TODO: get options from contract return (RolledDices event)
       switch (space.type) {
