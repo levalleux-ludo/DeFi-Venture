@@ -11,6 +11,7 @@ contract TransferManagerFactory is ITransferManagerFactory {
     function create(address gameContracts, uint256 ubiAmount) external override returns (address contractsAddress) {
         IGameContracts contracts = IGameContracts(gameContracts);
         TransferManager transferManager = new TransferManager( ubiAmount);
+        transferManager.transferOwnership(gameContracts);
         contracts.setTransferManager(
             address(transferManager)
         );

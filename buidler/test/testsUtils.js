@@ -129,12 +129,19 @@ async function createGameMasterFull() {
 }
 
 async function createGameMasterBase() {
+    const GameMaster = await ethers.getContractFactory("GameMasterForTest");
+    const gameMaster = await GameMaster.deploy(
+        NB_MAX_PLAYERS,
+        ethers.BigNumber.from(INITIAL_BALANCE),
+    );
+    await gameMaster.deployed();
     const Contracts = await ethers.getContractFactory("GameContracts");
-    const contracts = await Contracts.deploy();
+    const contracts = await Contracts.deploy(gameMaster.address);
     await contracts.deployed();
     const Playground = await ethers.getContractFactory("Playground");
     const playgroundContract = await Playground.deploy(NB_SPACES, SPACES);
     await playgroundContract.deployed();
+    await playgroundContract.transferOwnership(contracts.address);
     const Chance = await ethers.getContractFactory("Chance");
     console.log('create Chances contract with', CHANCES);
     const chance = await Chance.deploy(CHANCES);
@@ -146,9 +153,11 @@ async function createGameMasterBase() {
     const PlayOptions = await ethers.getContractFactory('PlayOptions');
     const playOptions = await PlayOptions.deploy();
     await playOptions.deployed();
+    // await playOptions.transferOwnership(contracts.address);
     const TransferManager = await ethers.getContractFactory('TransferManager');
     const transferManager = await TransferManager.deploy(UBI_AMOUNT);
     await transferManager.deployed();
+    await transferManager.transferOwnership(contracts.address);
 
     await contracts.initialize(
         chance.address,
@@ -158,14 +167,8 @@ async function createGameMasterBase() {
     );
     await contracts.setTransferManager(transferManager.address);
 
-    const GameMaster = await ethers.getContractFactory("GameMasterForTest");
-    const gameMaster = await GameMaster.deploy(
-        NB_MAX_PLAYERS,
-        ethers.BigNumber.from(INITIAL_BALANCE),
-    );
-    await gameMaster.deployed();
     await gameMaster.setContracts(contracts.address);
-    await playgroundContract.transferOwnership(gameMaster.address);
+    // await playgroundContract.transferOwnership(gameMaster.address);
     gameMaster.getPositionOf = (player) => playgroundContract.positions(player);
     gameMaster.getPlayground = () => playgroundContract.playground();
     gameMaster.getNbPositions = () => playgroundContract.nbPositions();

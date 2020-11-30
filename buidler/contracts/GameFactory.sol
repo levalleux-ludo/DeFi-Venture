@@ -61,7 +61,7 @@ contract GameFactory is IGameStatus {
 
     function createGameContracts(address gameMasterAddress) external {
         require(gameContractsFactory != address(0), "GAME_CONTRACTS_WRAPPER_NOT_DEFINED");
-        address gameContractsAddr = IGameContractsFactory(gameContractsFactory).create();
+        address gameContractsAddr = IGameContractsFactory(gameContractsFactory).create(gameMasterAddress);
         console.log('created gameContracts', gameContractsAddr);
         GameMasterStorage(gameMasterAddress).setContracts(gameContractsAddr);
         emit GameContractsCreated(gameContractsAddr);
@@ -71,7 +71,7 @@ contract GameFactory is IGameStatus {
         require(otherContractsFactory != address(0), "GAME_CONTRACTS_FACTORY_NOT_DEFINED");
         (address contracts) = IOtherContractsFactory(otherContractsFactory).create(gameContractsAddr, _nbPositions, _playground, _nbChances, _chances);
         console.log('created other contracts', contracts, gameContractsAddr);
-        IOtherContractsFactory(otherContractsFactory).transferOwnership(gameMasterAddress, IGameContracts(contracts).getPlayground());
+        // IOtherContractsFactory(otherContractsFactory).transferOwnership(gameMasterAddress, IGameContracts(contracts).getPlayground());
     }
 
     function createTransferManager(address gameMasterAddress, address gameContractsAddr, uint256 ubiAmount) external {

@@ -18,7 +18,7 @@ import { IGameContracts } from './IGameContracts.sol';
 import { ITransferManager } from './ITransferManager.sol';
 import { IPlayground } from './IPlayground.sol';
 import { Initialized } from './Initialized.sol';
-
+// import { AuthorizedContracts } from './AuthorizedContracts.sol';
 
 contract PlayOptions is IPlayOptions, Initialized {
     uint8 public constant OPTION_NOTHING = 1;

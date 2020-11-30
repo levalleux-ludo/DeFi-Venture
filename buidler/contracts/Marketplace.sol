@@ -104,7 +104,7 @@ contract Marketplace is Ownable, IMarketplace {
         }
     }
 
-    function _computePrice(uint256 assetId, uint256 bidPrice) internal returns(uint256) {
+    function _computePrice(uint256 assetId, uint256 bidPrice) internal view returns(uint256) {
         Asset storage asset = assetsPerId[assetId];
         if (bidPrice >= asset.fairPrice) {
             return asset.fairPrice;

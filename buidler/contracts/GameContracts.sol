@@ -13,8 +13,10 @@ import { ITransferManager } from './ITransferManager.sol';
 import { IChance } from './IChance.sol';
 import { IPlayground } from './IPlayground.sol';
 import { Initialized } from './Initialized.sol';
+import { AuthorizedContracts } from './AuthorizedContracts.sol';
 
 contract GameContracts is IGameContracts, Initialized {
+    address gameMaster;
     address token;
     address assets;
     address marketplace;
@@ -24,7 +26,9 @@ contract GameContracts is IGameContracts, Initialized {
     address playOptions;
     address transferManager;
 
-    constructor() public {}
+    constructor(address _gameMaster) public {
+        gameMaster = _gameMaster;
+    }
     function setToken(address _token) external override initialized {
         token = _token;
         console.log('gameContracts.setToken');
@@ -158,7 +162,13 @@ contract GameContracts is IGameContracts, Initialized {
     function make_dependencies() internal {
         IPlayground(playground).initialize(transferManager);
         IPlayOptions(playOptions).initialize(token, assets, chances, transferManager, playground);
+        // AuthorizedContracts(playOptions).setAuthorizedContracts(address(0), address(0), address(0), address(0), address(0), address(0), address(0));
         ITransferManager(transferManager).initialize(token, assets, playground);
+        // AuthorizedContracts(transferManager).setAuthorizedContracts(gameMaster, address(0), playground, playOptions, chances, address(0), address(0));
+        AuthorizedContracts(transferManager).setAuthorizedContract(AuthorizedContracts.eContracts.GameMaster, gameMaster);
+        AuthorizedContracts(transferManager).setAuthorizedContract(AuthorizedContracts.eContracts.Playground, playground);
+        AuthorizedContracts(transferManager).setAuthorizedContract(AuthorizedContracts.eContracts.PlayOptions, playOptions);
+        AuthorizedContracts(transferManager).setAuthorizedContract(AuthorizedContracts.eContracts.Chances, chances);
         console.log('transfer chances ownership to transferManager');
         Ownable(chances).transferOwnership(playOptions);
         IChance(chances).initialize(transferManager, playground);

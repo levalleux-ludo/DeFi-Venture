@@ -10,8 +10,9 @@ import { IGameToken } from './IGameToken.sol';
 import { IGameScheduler } from './IGameScheduler.sol';
 import { IPlayground } from './IPlayground.sol';
 import { Initialized } from './Initialized.sol';
+import { AuthorizedContracts } from './AuthorizedContracts.sol';
 
-contract TransferManager is ITransferManager, Initialized {
+contract TransferManager is AuthorizedContracts, ITransferManager, Initialized {
     uint256 constant public MAX_UINT256 = 2**256 - 1;
     uint256 public ubiAmount;
     address private token;
@@ -20,11 +21,11 @@ contract TransferManager is ITransferManager, Initialized {
 
     event PlayerLiquidated(address indexed player);
 
-    constructor(uint256 _ubiAmount) public {
+    constructor(uint256 _ubiAmount) public AuthorizedContracts() {
         ubiAmount = _ubiAmount;
     }
 
-    function initialize(address _token, address _assets, address _playground) external override {
+    function initialize(address _token, address _assets, address _playground) external override onlyOwner {
         token = _token;
         assets = _assets;
         playground = _playground;
@@ -36,7 +37,8 @@ contract TransferManager is ITransferManager, Initialized {
     function getAssets() external view override returns (address) {
         return assets;
     }
-    function buyAsset(uint256 assetId, address buyer, uint256 assetPrice) external override initialized {
+    function buyAsset(uint256 assetId, address buyer, uint256 assetPrice) 
+      external override initialized authorized(uint8(eContracts.PlayOptions)) {
         console.log('mint asset');
         console.logUint(assetId);
         console.log('for player', buyer);
@@ -44,7 +46,8 @@ contract TransferManager is ITransferManager, Initialized {
         IGameAssets(assets).safeMint(buyer, assetId);
     }
 
-    function payAssetOwner(uint256 assetId, address player, uint256 productPrice) external override initialized {
+    function payAssetOwner(uint256 assetId, address player, uint256 productPrice)
+      external override initialized authorized(uint8(eContracts.PlayOptions)) {
         address owner = IGameAssets(assets).ownerOf(uint256(assetId));
         IGameToken(token).transferFrom(player, owner, productPrice);
     }
@@ -54,14 +57,15 @@ contract TransferManager is ITransferManager, Initialized {
         require(IGameAssets(assets).isApprovedForAll(account, address(this)), "PLAYER_MUST_APPROVE_TRANSFER_MANAGER_FOR_ASSETS");
     }
 
-    function giveAmount(uint256 amount, address[] calldata players, uint nbPlayers) external override initialized {
+    function giveAmount(uint256 amount, address[] calldata players, uint nbPlayers)
+      external override initialized authorized(uint8(eContracts.Chances) | uint8(eContracts.GameMaster)) {
         for (uint i = 0; i < nbPlayers; i++) {
             address player = players[i];
             this.receiveAmount(player, amount);
         }
     }
 
-    function liquidate(address player, uint256 assetsBalance) external override initialized {
+    function liquidate(address player, uint256 assetsBalance) internal {
         uint256 amount = 0;
         uint256 balance = IGameAssets(assets).balanceOf(player);
         while (balance > 0) {
@@ -76,36 +80,42 @@ contract TransferManager is ITransferManager, Initialized {
         emit PlayerLiquidated(player);
     }
 
-    function payAmount(address gameMaster, address player, uint256 amount) external override initialized {
+    function payAmount(address gameMaster, address player, uint256 amount)
+      external override initialized authorized(uint8(eContracts.Chances) | uint8(eContracts.PlayOptions)) {
         if (this.checkBalance(gameMaster, player, amount, true)) {
             IGameToken(token).burnTokensFrom(player, amount);
         }
     }
 
-    function payAmount(address player, uint256 amount) external override initialized {
+    function payAmount(address player, uint256 amount)
+      external override initialized authorized(uint8(eContracts.Chances)) {
         IGameToken(token).burnTokensFrom(player, amount);
     }
 
-    function receiveAmount(address player, uint256 amount) external override initialized {
+    function receiveAmount(address player, uint256 amount)
+      external override initialized authorized(uint8(eContracts.Chances) | uint8(eContracts.GameMaster)) {
         IGameToken(token).mint(player, amount);
     }
 
-    function payAmountPerAsset(address gameMaster, address player, uint256 amount) external override initialized {
+    function payAmountPerAsset(address gameMaster, address player, uint256 amount)
+      external override initialized authorized(uint8(eContracts.Chances)) {
         uint256 balance = IGameAssets(assets).balanceOf(player);
         this.payAmount(gameMaster, player, amount * balance);
     }
 
-    function receiveAmountPerAsset(address player, uint256 amount) external override initialized {
+    function receiveAmountPerAsset(address player, uint256 amount)
+      external override initialized authorized(uint8(eContracts.Chances)) {
         uint256 balance = IGameAssets(assets).balanceOf(player);
         this.receiveAmount(player, amount * balance);
     }
 
-    function checkBalance(address gameMaster, address player, uint256 requiredCash, bool mustContinue) external override initialized returns(bool) {
+    function checkBalance(address gameMaster, address player, uint256 requiredCash, bool mustContinue)
+      external override initialized authorized(uint8(eContracts.Chances) | uint8(eContracts.PlayOptions)) returns(bool) {
         if (IGameToken(token).balanceOf(player) < requiredCash) {
             // if the player owns some assets, liquidate them and check again
             uint256 assetsBalance = IGameAssets(assets).balanceOf(player);
             if (assetsBalance > 0) {
-                this.liquidate(player, assetsBalance);
+                liquidate(player, assetsBalance);
                 // if the play action must continue after liquidation, recheck to see if balance is now enough to pay requiredCash
                 return mustContinue && this.checkBalance(gameMaster, player, requiredCash, mustContinue);
             } else {
@@ -116,7 +126,8 @@ contract TransferManager is ITransferManager, Initialized {
         return true;
     }
 
-    function giveUBI(address player) external override initialized {
+    function giveUBI(address player)
+      external override initialized authorized(uint8(eContracts.Playground)) {
         this.receiveAmount(player, ubiAmount);
     }
 

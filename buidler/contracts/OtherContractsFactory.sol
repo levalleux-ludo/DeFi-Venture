@@ -16,11 +16,13 @@ contract OtherContractsFactory is IOtherContractsFactory {
         returns (address contractsAddress) {
         IGameContracts contracts = IGameContracts(gameContracts);
         Playground playground = new Playground(_nbPositions, _playground);
+        playground.transferOwnership(gameContracts);
         Chance chances = new Chance(_chances);
         console.log('give chances ownership to gameContracts');
         chances.transferOwnership(gameContracts);
         RandomGenerator randomGenerator = new RandomGenerator(_nbChances);
         PlayOptions playOptions = new PlayOptions();
+        // playOptions.transferOwnership(gameContracts);
         contracts.initialize(
             address(chances),
             address(playground),
