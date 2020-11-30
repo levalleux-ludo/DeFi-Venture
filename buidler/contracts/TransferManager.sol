@@ -82,6 +82,10 @@ contract TransferManager is ITransferManager, Initialized {
         }
     }
 
+    function payAmount(address player, uint256 amount) external override initialized {
+        IGameToken(token).burnTokensFrom(player, amount);
+    }
+
     function receiveAmount(address player, uint256 amount) external override initialized {
         IGameToken(token).mint(player, amount);
     }

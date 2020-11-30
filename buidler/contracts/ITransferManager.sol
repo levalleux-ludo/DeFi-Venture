@@ -10,6 +10,7 @@ interface ITransferManager {
     function checkAllowance(address account) external view;
     function giveAmount(uint256 amount, address[] calldata players, uint nbPlayers) external;
     function liquidate(address player, uint256 assetsBalance) external;
+    function payAmount(address player, uint256 amount) external;
     function payAmount(address gameMaster, address player, uint256 amount) external;
     function receiveAmount(address player, uint256 amount) external;
     function payAmountPerAsset(address gameMaster, address player, uint256 amount) external;

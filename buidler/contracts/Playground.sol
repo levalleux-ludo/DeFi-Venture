@@ -48,9 +48,9 @@ contract Playground is IPlayground, Ownable, Initialized {
                 // .. 
                 // spaceType: 7 <=> ASSET_CLASS_4, price = 200
                 uint8 assetClass = spaces[spaceId].spaceType - 3;
+                // TODO: call assetsManager.setAssetData(assetId, assetClass)
                 spaces[spaceId].assetPrice = 50 * assetClass;
                 spaces[spaceId].productPrice = 15 * assetClass;
-                // TODO: get productPrice from InvestmentManager contract
             }
         }
     }
@@ -64,6 +64,7 @@ contract Playground is IPlayground, Ownable, Initialized {
         require(spaceId < nbPositions, "INVALID_ARGUMENT");
         spaceType = spaces[spaceId].spaceType;
         assetId = spaces[spaceId].assetId;
+        // TODO: get assetPrice/productPrice from assetsManager
         assetPrice = spaces[spaceId].assetPrice;
         productPrice = spaces[spaceId].productPrice;
     }
