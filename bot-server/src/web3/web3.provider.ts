@@ -8,11 +8,15 @@ export interface INetwork {
   wssUrl: string;
 }
 
-function getBalanceAsNumber(bn: ethers.BigNumber, decimals: number, accuracy: number): number {
+function getBalanceAsNumber(
+  bn: ethers.BigNumber,
+  decimals: number,
+  accuracy: number
+): number {
   const r1 = ethers.BigNumber.from(10).pow(decimals - accuracy);
   const r2 = bn.div(r1);
   const r3 = r2.toNumber();
-  const r4 = r3 / (10 ** accuracy);
+  const r4 = r3 / 10 ** accuracy;
   return r4;
 }
 

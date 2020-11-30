@@ -24,11 +24,11 @@ export const config = {
   bots: {
     137: [
       // matic
-      { name: 'R1D1', address: '0x81309778Ff320c113D206a61f8b8C2C64305BBEf'},
-      { name: 'R2D2', address: '0xE053E117d372Cd7C4a42DeC0F60B59f2d524f147'},
-      { name: 'R3D3', address: '0x52106f096Cae1b0cD3BD0486b380392853497f47'},
-      { name: 'R4D4', address: '0x0B09e8dfdB6342C4590B09362e464961bbD22d4e'},
-      { name: 'R5D5', address: '0x3CcBbdda90317562Bf57fa90D8751296D2e4cc0D'},
+      { name: 'R1D1', address: '0x81309778Ff320c113D206a61f8b8C2C64305BBEf' },
+      { name: 'R2D2', address: '0xE053E117d372Cd7C4a42DeC0F60B59f2d524f147' },
+      { name: 'R3D3', address: '0x52106f096Cae1b0cD3BD0486b380392853497f47' },
+      { name: 'R4D4', address: '0x0B09e8dfdB6342C4590B09362e464961bbD22d4e' },
+      { name: 'R5D5', address: '0x3CcBbdda90317562Bf57fa90D8751296D2e4cc0D' },
     ],
     80001: [
       // mumbai
