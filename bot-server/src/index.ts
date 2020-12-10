@@ -11,7 +11,7 @@ import { AppDiscord } from './discord/discord';
 import { DiscordController } from './discord/discord.controller';
 import { IGame } from './game/game';
 import { GameFactory } from './game/game.factory';
-import { Web3Provider } from './web3/web3.provider';
+import { EthersWeb3Provider, Web3Provider, WebJSWeb3Provider } from './web3/web3.provider';
 
 interface ICLArguments {
   network: string;
@@ -35,9 +35,10 @@ console.log('NODE_ENV', process.env.NODE_ENV);
 
 const main = async () => {
   // Initialize web3 provider
-  const web3 = new Web3Provider(config.networks[args.network]);
-  const network = await web3.provider.getNetwork();
-  await web3.signer.getAddress().then(address => {
+  // const web3: Web3Provider = new EthersWeb3Provider(config.networks[args.network]);
+  const web3: Web3Provider = new WebJSWeb3Provider(config.networks[args.network]);
+  const network = await web3.getNetwork();
+  await web3.getCurrentAccount().then(address => {
     console.log('Web3 initialized', network.name, 'Current account', address);
   });
   console.log('Web3 initialized. Current network', network);

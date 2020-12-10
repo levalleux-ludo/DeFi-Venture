@@ -72,7 +72,7 @@ export const config = {
       name: 'local (Ganache)',
       nodeUrl: `http://127.0.0.1:7545`,
       portisId: 'unknown',
-      wssUrl: 'unknown',
+      wssUrl: 'ws://127.0.0.1:7545',
     },
     ganache_docker: {
       chainId: 1337,

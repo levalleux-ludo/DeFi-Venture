@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { IGameMaster } from '../contracts/IGameMaster';
 import { Web3Provider } from '../web3/web3.provider';
 
 export interface ICallbacks {
@@ -101,7 +102,7 @@ export const GAME_DATA_FIELDS = {
 };
 
 export class Game implements IGame {
-  private _contract: ethers.Contract;
+  private _contract: IGameMaster;
   private _onRolledDices:
     | ((player, dice1, dice2, cardId, newPosition, options) => void)
     | undefined;
@@ -112,7 +113,7 @@ export class Game implements IGame {
     abi: ethers.ContractInterface
   ) {
     // this._contract = new ethers.Contract(this._address, abi, _web3.signer);
-    this._contract = _web3.getContract(this._address, abi);
+    this._contract = this._web3.getGameMasterContract(this._address, abi);
     this._contract.on(
       'RolledDices',
       (player, dice1, dice2, cardId, newPosition, options) => {
@@ -157,12 +158,12 @@ export class Game implements IGame {
 
   public async getGameData(): Promise<IGameData> {
     const contractGameData = await this._contract.getGameData();
-    const status = contractGameData[GAME_DATA_FIELDS.status];
-    const nbPlayers = contractGameData[GAME_DATA_FIELDS.nbPlayers];
+    const status = +contractGameData[GAME_DATA_FIELDS.status];
+    const nbPlayers = +contractGameData[GAME_DATA_FIELDS.nbPlayers];
     const nextPlayer = contractGameData[GAME_DATA_FIELDS.nextPlayer];
     const currentPlayer = contractGameData[GAME_DATA_FIELDS.currentPlayer];
-    const currentOptions = contractGameData[GAME_DATA_FIELDS.currentOptions];
-    const currentCardId = contractGameData[GAME_DATA_FIELDS.currentCardId];
+    const currentOptions = +contractGameData[GAME_DATA_FIELDS.currentOptions];
+    const currentCardId = +contractGameData[GAME_DATA_FIELDS.currentCardId];
     return {
       currentCardId,
       currentOptions,
@@ -188,7 +189,7 @@ export class Game implements IGame {
         for (let i = 0; i < nbPlayers; i++) {
           const playerAddress = playersData[USER_DATA_FIELDS.address][i];
           const username = playersData[USER_DATA_FIELDS.username][i];
-          const avatar = playersData[USER_DATA_FIELDS.avatar][i];
+          const avatar = +playersData[USER_DATA_FIELDS.avatar][i];
           players.push({
             address: playerAddress,
             avatar,

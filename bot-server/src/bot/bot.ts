@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { IBotPlayer } from '../contracts/IBotPlayer';
 import { Game } from '../game/game';
 import { Web3Provider } from '../web3/web3.provider';
 import { eGameStatus, eOption, IGame } from './../game/game';
@@ -16,7 +17,7 @@ interface IPlayStatus {
 export class Bot {
   private _games: IGame[] = [];
   private _playStatus: IPlayStatus = {};
-  private _contract: ethers.Contract;
+  private _contract: IBotPlayer;
   private _onRolledDices:
     | ((player, dice1, dice2, cardId, newPosition, options) => void)
     | undefined;
@@ -29,7 +30,7 @@ export class Bot {
     private _avatar: number
   ) {
     console.log('created Bot with address', _address);
-    this._contract = new ethers.Contract(this._address, abi, _web3.signer);
+    this._contract = this._web3.getBotPlayerContract(this._address, abi);
   }
 
   public isRegistered(game: IGame) {
@@ -47,6 +48,7 @@ export class Bot {
   public async check(game: IGame) {
     const gameData = await game.getGameData();
     const gameStatus = gameData.status;
+    console.log('gameStatus', game.address, gameStatus);
     const nextPlayer = gameData.nextPlayer;
     const currentPlayer = gameData.currentPlayer;
     if (

@@ -42,8 +42,10 @@
         "docker:run:remote": "docker pull levalleuxludo/my_repo:defibot && docker run -p 8899:8899 --env PORT=8899 --env-file ./.env  levalleuxludo/my_repo:defibot"
     },
     "dependencies": {
+        "@truffle/hdwallet-provider": "^1.2.0",
         "@typeit/discord": "^4.0.8",
         "abab": "^2.0.5",
+        "bignumber.js": "^9.0.1",
         "body-parser": "^1.19.0",
         "btoa": "^1.2.1",
         "command-line-args": "^5.1.1",
@@ -55,7 +57,8 @@
         "forever": "^3.0.4",
         "node-fetch": "^2.6.1",
         "node-schedule": "^1.3.2",
-        "ts-command-line-args": "^1.7.0"
+        "ts-command-line-args": "^1.7.0",
+        "web3": "^1.3.0"
     },
     "devDependencies": {
         "@types/body-parser": "^1.19.0",
