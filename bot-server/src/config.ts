@@ -79,7 +79,7 @@ export const config = {
       name: 'local (Ganache)',
       nodeUrl: `http://host.docker.internal:7545`,
       portisId: 'unknown',
-      wssUrl: 'unknown',
+      wssUrl: 'ws://host.docker.internal:7545',
     },
     matic: {
       chainId: 137,
@@ -92,10 +92,11 @@ export const config = {
     mumbai: {
       chainId: 80001,
       name: 'Mumbai',
-      // nodeUrl: 'https://rpc-mumbai.maticvigil.com',
+      // nodeUrl: 'https://rpc-mumbai.matic.today',
       nodeUrl: `https://rpc-mumbai.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
       portisId: 'maticMumbai',
       wssUrl: `wss://rpc-mumbai.maticvigil.com/ws/v1/${process.env.MATICVIGIL_API_KEY}`,
+      // wssUrl: `wss://ws-mumbai.matic.today`,
     },
   },
   schedule: '0/20 * * * * *', // every 20 seconds

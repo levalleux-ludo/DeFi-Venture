@@ -315,7 +315,7 @@ export class Bot {
         if (player !== this._address) {
           this.check(game);
         } else {
-          //console.log('do not react to my own play event');
+          // console.log('do not react to my own play event');
           this.check(game);
         }
       },

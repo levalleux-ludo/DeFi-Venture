@@ -7,8 +7,17 @@ export interface IBigNumber {
 }
 
 export interface IBotPlayer extends IContract {
-  register(gameMasterAddress: string, bytes32username: string, avatar: number): Promise<ITransactionResponse>;
-  estimateGas: {rollDices: (gameMasterAddress: string) => Promise<IBigNumber>};
-  rollDices(gameMasterAddress: string, options?: any): Promise<ITransactionResponse>;
+  estimateGas: {
+    rollDices: (gameMasterAddress: string) => Promise<IBigNumber>;
+  };
+  register(
+    gameMasterAddress: string,
+    bytes32username: string,
+    avatar: number
+  ): Promise<ITransactionResponse>;
+  rollDices(
+    gameMasterAddress: string,
+    options?: any
+  ): Promise<ITransactionResponse>;
   play(gameMasterAddress, option: number): Promise<ITransactionResponse>;
 }

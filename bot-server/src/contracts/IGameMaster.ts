@@ -1,4 +1,4 @@
-import { IContract } from "./IContract";
+import { IContract } from './IContract';
 
 export interface IGameMaster extends IContract {
   isPlayerRegistered(player): Promise<boolean>;

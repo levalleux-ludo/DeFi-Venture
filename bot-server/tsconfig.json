@@ -22,7 +22,11 @@
     "resolveJsonModule": true, // required to read JSON file
     "esModuleInterop": true, // required to read JSON file
     "strictPropertyInitialization": false,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/web3-providers/types"
+    ]
   },
   "include": [
     "src/**/*"

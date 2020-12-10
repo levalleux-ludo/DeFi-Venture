@@ -1,6 +1,5 @@
 import { EthersContract } from './EthersContract';
-import { ethers } from 'ethers';
-import { IGameMaster } from "../IGameMaster";
+import { IGameMaster } from '../IGameMaster';
 
 export class GameMaster extends EthersContract implements IGameMaster {
   public isPlayerRegistered(player: any): Promise<boolean> {

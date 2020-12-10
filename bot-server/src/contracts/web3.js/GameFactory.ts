@@ -1,15 +1,18 @@
-import { IGameFactory } from "../IGameFactory";
-import { WebJSContract } from "./WebJSContract";
+import { IGameFactory } from '../IGameFactory';
+import { WebJSContract } from './WebJSContract';
 
 export class GameFactory extends WebJSContract implements IGameFactory {
-
-  nbGames(): Promise<number> {
+  public nbGames(): Promise<number> {
     return this.contract.methods.nbGames().call();
   }
-  getGameAt(index: number): Promise<string> {
+  public getGameAt(index: number): Promise<string> {
     return this.contract.methods.getGameAt(index).call();
   }
-  protected translateEvent(eventName: string, eventData: any, callback: (...args: any[]) => void) {
+  protected translateEvent(
+    eventName: string,
+    eventData: any,
+    callback: (...args: any[]) => void
+  ) {
     switch (eventName) {
       case 'GameCreated': {
         callback(eventData.gameMasterAddress, eventData.index);
@@ -21,5 +24,4 @@ export class GameFactory extends WebJSContract implements IGameFactory {
       }
     }
   }
-
 }

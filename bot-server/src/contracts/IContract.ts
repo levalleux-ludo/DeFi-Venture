@@ -10,9 +10,6 @@ export interface ITransactionResponse {
 }
 
 export interface IContract {
-  on(
-    eventName: string,
-    callback: (...args: any[]) => void
-  );
+  on(eventName: string, callback: (...args: any[]) => void);
   deployed(): Promise<IContract>;
 }
